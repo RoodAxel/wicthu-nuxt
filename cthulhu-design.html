@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arkham Codex — Appel de Cthulhu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       ARKHAM CODEX — CHARTE GRAPHIQUE
+       Appel de Cthulhu / Lovecraftian RPG Companion
+    ============================================================ */
+
+    /* ── PALETTE ─────────────────────────────────────────────── */
+    :root {
+      /* Fonds */
+      --color-abyssal:     #080a0c;   /* noir abyssal */
+      --color-deep:        #0d1117;   /* fond principal */
+      --color-surface:     #131820;   /* cartes / panneaux */
+      --color-elevated:    #1a2230;   /* éléments surélevés */
+      --color-border:      #2a3545;   /* bordures subtiles */
+      --color-border-glow: #3d5a4a;   /* bordures actives */
+
+      /* Textes */
+      --color-text-primary:   #d4c9b0;  /* ivoire vieilli */
+      --color-text-secondary: #8a8070;  /* parchemin fané */
+      --color-text-muted:     #4a4540;  /* encre effacée */
+      --color-text-inverse:   #080a0c;
+
+      /* Accents */
+      --color-arcane:      #7fb38a;   /* vert sauge occulte */
+      --color-arcane-dim:  #3d6647;   /* vert profond */
+      --color-arcane-glow: rgba(127,179,138,0.15);
+      --color-crimson:     #8b3a3a;   /* rouge sang sombre */
+      --color-crimson-dim: #5c2020;
+      --color-gold:        #b8924a;   /* or patiné */
+      --color-gold-dim:    #7a5e28;
+      --color-fog:         #4a5568;   /* brume de Kingsport */
+
+      /* Typographie */
+      --font-display:  'Cinzel Decorative', serif;
+      --font-heading:  'Cinzel', serif;
+      --font-body:     'Crimson Text', serif;
+      --font-flavor:   'IM Fell English', serif;
+
+      /* Espacements */
+      --space-xs:  0.25rem;
+      --space-sm:  0.5rem;
+      --space-md:  1rem;
+      --space-lg:  1.5rem;
+      --space-xl:  2.5rem;
+      --space-2xl: 4rem;
+
+      /* Rayons */
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 8px;
+
+      /* Ombres */
+      --shadow-card:  0 4px 24px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.4);
+      --shadow-glow:  0 0 20px rgba(127,179,138,0.12);
+      --shadow-deep:  0 8px 40px rgba(0,0,0,0.8);
+
+      /* Transitions */
+      --transition-fast:   150ms ease;
+      --transition-normal: 280ms ease;
+      --transition-slow:   500ms ease;
+    }
+
+    /* ── RESET ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--color-deep);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── TEXTURE DE FOND ─────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(127,179,138,0.06) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────────────── */
+    .app-wrapper { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--color-abyssal);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-xl) 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 0 var(--space-lg) var(--space-xl);
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: var(--space-xl);
+      text-align: center;
+    }
+    .sidebar-logo .sigil {
+      font-size: 2.4rem;
+      display: block;
+      margin-bottom: var(--space-sm);
+      filter: drop-shadow(0 0 8px rgba(127,179,138,0.4));
+      animation: pulse-sigil 4s ease-in-out infinite;
+    }
+    @keyframes pulse-sigil {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(127,179,138,0.4)); }
+      50%       { filter: drop-shadow(0 0 16px rgba(127,179,138,0.7)); }
+    }
+    .sidebar-logo h1 {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      color: var(--color-arcane);
+      letter-spacing: 0.08em;
+      line-height: 1.4;
+    }
+    .sidebar-logo small {
+      font-family: var(--font-flavor);
+      font-style: italic;
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .nav-section {
+      padding: 0 var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .nav-section-label {
+      font-family: var(--font-heading);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      padding: 0 var(--space-sm) var(--space-sm);
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      color: var(--color-text-secondary);
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    .nav-item:hover {
+      background: var(--color-elevated);
+      color: var(--color-text-primary);
+      border-color: var(--color-border);
+    }
+    .nav-item.active {
+      background: rgba(127,179,138,0.08);
+      color: var(--color-arcane);
+      border-color: var(--color-arcane-dim);
+    }
+    .nav-item .icon { font-size: 0.9rem; opacity: 0.7; }
+
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Topbar */
+    .topbar {
+      background: rgba(8,10,12,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--space-md) var(--space-xl);
+      display: flex;
+      align-items: center;
+      gap: var(--space-lg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .breadcrumb {
+      font-family: var(--font-heading);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .breadcrumb-sep { color: var(--color-border-glow); }
+    .breadcrumb-current { color: var(--color-arcane); }
+
+    .search-bar {
+      margin-left: auto;
+      position: relative;
+    }
+    .search-bar input {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      width: 240px;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      outline: none;
+    }
+    .search-bar input::placeholder { color: var(--color-text-muted); font-style: italic; }
+    .search-bar input:focus {
+      border-color: var(--color-arcane-dim);
+      box-shadow: var(--shadow-glow);
+    }
+    .search-bar .search-icon {
+      position: absolute;
+      left: var(--space-sm);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: var(--space-xl);
+      overflow-y: auto;
+    }
+
+    /* Page header */
+    .page-header {
+      margin-bottom: var(--space-xl);
+      padding-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--color-border);
+      position: relative;
+    }
+    .page-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0;
+      width: 80px; height: 1px;
+      background: var(--color-arcane);
+    }
+    .page-title {
+      font-family: var(--font-heading);
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-xs);
+    }
+    .page-subtitle {
+      font-family: var(--font-flavor);
+      font-style: italic;
+      color: var(--color-text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* ── COMPOSANTS ──────────────────────────────────────────── */
+
+    /* Filtres / Tags */
+    .filters {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+      margin-bottom: var(--space-xl);
+    }
+    .tag {
+      font-family: var(--font-heading);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      background: transparent;
+    }
+    .tag:hover { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
+    .tag.active {
+      background: var(--color-arcane-dim);
+      border-color: var(--color-arcane);
+      color: var(--color-arcane);
+    }
+    .tag.rare  { border-color: var(--color-gold-dim);    color: var(--color-gold); }
+    .tag.danger { border-color: var(--color-crimson-dim); color: var(--color-crimson); }
+
+    /* Grille de cartes */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    /* Carte de compétence */
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      transition: all var(--transition-normal);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top left, rgba(127,179,138,0.05), transparent 60%);
+      opacity: 0;
+      transition: opacity var(--transition-normal);
+    }
+    .card:hover {
+      border-color: var(--color-border-glow);
+      box-shadow: var(--shadow-card), var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card.is-category {
+      border-color: var(--color-gold-dim);
+      background: linear-gradient(135deg, var(--color-surface), rgba(184,146,74,0.04));
+    }
+    .card.is-category::before {
+      background: radial-gradient(ellipse at top left, rgba(184,146,74,0.08), transparent 60%);
+    }
+    .card.is-category:hover { border-color: var(--color-gold); box-shadow: var(--shadow-card), 0 0 20px rgba(184,146,74,0.12); }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+    }
+    .card-name {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+    }
+    .card-badge {
+      font-family: var(--font-heading);
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      margin-left: var(--space-sm);
+    }
+    .badge-category { background: rgba(184,146,74,0.15); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
+    .badge-rare     { background: rgba(139,58,58,0.15);  color: #c47070;           border: 1px solid var(--color-crimson-dim); }
+    .badge-modern   { background: rgba(127,179,138,0.15);color: var(--color-arcane);border: 1px solid var(--color-arcane-dim); }
+
+    .card-category-label {
+      font-family: var(--font-flavor);
+      font-style: italic;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-sm);
+    }
+    .card-category-label span { color: var(--color-gold); }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: var(--space-md);
+      padding-top: var(--space-md);
+      border-top: 1px solid var(--color-border);
+    }
+    .base-value {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .base-value-label {
+      font-family: var(--font-heading);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+    .base-value-number {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-arcane);
+    }
+    .base-value-pct {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Ornement séparateur */
+    .ornament {
+      text-align: center;
+      margin: var(--space-xl) 0;
+      color: var(--color-text-muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+    .ornament::before,
+    .ornament::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--color-border), transparent);
+    }
+
+    /* Citation / Flavor text */
+    .flavor-quote {
+      background: var(--color-abyssal);
+      border-left: 2px solid var(--color-arcane-dim);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-xl);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    }
+    .flavor-quote p {
+      font-family: var(--font-flavor);
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--color-text-secondary);
+      line-height: 1.8;
+    }
+    .flavor-quote cite {
+      display: block;
+      margin-top: var(--space-sm);
+      font-family: var(--font-heading);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    /* Stats panel */
+    .stats-panel {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+    .stat-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      text-align: center;
+    }
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--color-arcane);
+      display: block;
+      line-height: 1;
+      margin-bottom: var(--space-xs);
+    }
+    .stat-label {
+      font-family: var(--font-heading);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    /* Boutons */
+    .btn {
+      font-family: var(--font-heading);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: var(--space-sm) var(--space-lg);
+      border-radius: var(--radius-sm);
+      border: 1px solid;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      background: transparent;
+    }
+    .btn-primary {
+      border-color: var(--color-arcane-dim);
+      color: var(--color-arcane);
+    }
+    .btn-primary:hover {
+      background: var(--color-arcane-dim);
+      color: var(--color-text-primary);
+      box-shadow: var(--shadow-glow);
+    }
+    .btn-secondary {
+      border-color: var(--color-border);
+      color: var(--color-text-secondary);
+    }
+    .btn-secondary:hover {
+      border-color: var(--color-border-glow);
+      color: var(--color-text-primary);
+    }
+
+    /* Animation d'entrée */
+    .cards-grid .card {
+      animation: fadeInUp 0.4s ease both;
+    }
+    .cards-grid .card:nth-child(1)  { animation-delay: 0ms;  }
+    .cards-grid .card:nth-child(2)  { animation-delay: 60ms; }
+    .cards-grid .card:nth-child(3)  { animation-delay: 120ms;}
+    .cards-grid .card:nth-child(4)  { animation-delay: 180ms;}
+    .cards-grid .card:nth-child(5)  { animation-delay: 240ms;}
+    .cards-grid .card:nth-child(6)  { animation-delay: 300ms;}
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--color-abyssal); }
+    ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-border-glow); }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="sigil">⬡</span>
+      <h1>Arkham<br>Codex</h1>
+      <small>Appel de Cthulhu · 7ème édition</small>
+    </div>
+
+    <nav>
+      <div class="nav-section">
+        <div class="nav-section-label">Ressources</div>
+        <a class="nav-item active" href="#">
+          <span class="icon">◈</span> Compétences
+        </a>
+        <a class="nav-item" href="#">
+          <span class="icon">◈</span> Occupations
+        </a>
+        <a class="nav-item" href="#">
+          <span class="icon">◈</span> Sorts & Rituels
+        </a>
+        <a class="nav-item" href="#">
+          <span class="icon">◈</span> Ouvrages
+        </a>
+        <a class="nav-item" href="#">
+          <span class="icon">◈</span> Créatures
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Outils</div>
+        <a class="nav-item" href="#">
+          <span class="icon">◈</span> Générateur PJ
+        </a>
+        <a class="nav-item" href="#">
+          <span class="icon">◈</span> Tables aléatoires
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="breadcrumb">
+        <span>Arkham Codex</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Compétences</span>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Rechercher une compétence…" />
+      </div>
+    </header>
+
+    <!-- Contenu -->
+    <main class="content">
+
+      <!-- En-tête page -->
+      <div class="page-header">
+        <h2 class="page-title">Compétences</h2>
+        <p class="page-subtitle">Savoir-faire et aptitudes des investigateurs de Providence</p>
+      </div>
+
+      <!-- Citation -->
+      <div class="flavor-quote">
+        <p>L'homme cultivé n'est jamais sans ressource — c'est dans la connaissance que réside la mince barrière entre la raison et l'abîme.</p>
+        <cite>— Manuel de l'Investigateur, Arkham 1923</cite>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="stats-panel">
+        <div class="stat-card">
+          <span class="stat-number">68</span>
+          <span class="stat-label">Compétences</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">12</span>
+          <span class="stat-label">Catégories</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">8</span>
+          <span class="stat-label">Rares</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">24</span>
+          <span class="stat-label">Modernes</span>
+        </div>
+      </div>
+
+      <!-- Filtres -->
+      <div class="filters">
+        <button class="tag active">Toutes</button>
+        <button class="tag">Catégories</button>
+        <button class="tag">Combat</button>
+        <button class="tag">Social</button>
+        <button class="tag">Académique</button>
+        <button class="tag">Survie</button>
+        <button class="tag rare">Rare</button>
+        <button class="tag">Moderne</button>
+        <button class="btn btn-secondary" style="margin-left:auto">+ Ajouter</button>
+      </div>
+
+      <!-- Grille -->
+      <div class="cards-grid">
+
+        <!-- Catégorie -->
+        <div class="card is-category">
+          <div class="card-header">
+            <span class="card-name">Social</span>
+            <span class="card-badge badge-category">Catégorie</span>
+          </div>
+          <p style="font-family:var(--font-flavor);font-style:italic;font-size:0.85rem;color:var(--color-text-secondary);">
+            Aptitudes liées à l'interaction humaine, la persuasion et la manipulation.
+          </p>
+          <div class="card-footer">
+            <span class="stat-label">5 compétences</span>
+            <button class="btn btn-primary">Voir tout</button>
+          </div>
+        </div>
+
+        <!-- Compétence normale -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-name">Charme</span>
+            <span class="card-badge badge-modern">Moderne</span>
+          </div>
+          <p class="card-category-label">Catégorie : <span>Social</span></p>
+          <p style="font-family:var(--font-flavor);font-style:italic;font-size:0.85rem;color:var(--color-text-secondary);">
+            Capacité à séduire et influencer par l'attrait personnel et le charisme naturel.
+          </p>
+          <div class="card-footer">
+            <div class="base-value">
+              <span class="base-value-label">Base</span>
+              <span class="base-value-number">15</span>
+              <span class="base-value-pct">%</span>
+            </div>
+            <button class="btn btn-secondary">Détails</button>
+          </div>
+        </div>
+
+        <!-- Compétence rare -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-name">Mythe de Cthulhu</span>
+            <span class="card-badge badge-rare">Rare</span>
+          </div>
+          <p class="card-category-label">Catégorie : <span>Académique</span></p>
+          <p style="font-family:var(--font-flavor);font-style:italic;font-size:0.85rem;color:var(--color-text-secondary);">
+            Connaissance des mythes et entités des Grands Anciens. Chaque point acquis est une brèche dans la santé mentale.
+          </p>
+          <div class="card-footer">
+            <div class="base-value">
+              <span class="base-value-label">Base</span>
+              <span class="base-value-number">0</span>
+              <span class="base-value-pct">%</span>
+            </div>
+            <button class="btn btn-secondary">Détails</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-name">Discrétion</span>
+          </div>
+          <p class="card-category-label">Catégorie : <span>Survie</span></p>
+          <p style="font-family:var(--font-flavor);font-style:italic;font-size:0.85rem;color:var(--color-text-secondary);">
+            Art de se mouvoir sans être vu ni entendu, essentiel dans les ruelles sombres d'Arkham.
+          </p>
+          <div class="card-footer">
+            <div class="base-value">
+              <span class="base-value-label">Base</span>
+              <span class="base-value-number">20</span>
+              <span class="base-value-pct">%</span>
+            </div>
+            <button class="btn btn-secondary">Détails</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-name">Bibliothèque</span>
+          </div>
+          <p class="card-category-label">Catégorie : <span>Académique</span></p>
+          <p style="font-family:var(--font-flavor);font-style:italic;font-size:0.85rem;color:var(--color-text-secondary);">
+            Maîtrise de la recherche documentaire dans les archives et bibliothèques.
+          </p>
+          <div class="card-footer">
+            <div class="base-value">
+              <span class="base-value-label">Base</span>
+              <span class="base-value-number">20</span>
+              <span class="base-value-pct">%</span>
+            </div>
+            <button class="btn btn-secondary">Détails</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-name">Écoute</span>
+          </div>
+          <p class="card-category-label">Catégorie : <span>Perception</span></p>
+          <p style="font-family:var(--font-flavor);font-style:italic;font-size:0.85rem;color:var(--color-text-secondary);">
+            Capacité à percevoir les sons discrets, murmures et bruits suspects dans l'obscurité.
+          </p>
+          <div class="card-footer">
+            <div class="base-value">
+              <span class="base-value-label">Base</span>
+              <span class="base-value-number">25</span>
+              <span class="base-value-pct">%</span>
+            </div>
+            <button class="btn btn-secondary">Détails</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ornament">✦ ✦ ✦</div>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

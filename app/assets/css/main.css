@@ -1,18 +1,81 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+/* ============================================================
+   ARKHAM CODEX — DESIGN TOKENS & GLOBAL STYLES
+   Source of truth: assets/styles/color-chart.scss (SCSS vars)
+   CSS custom properties are defined here for runtime usage.
+   ============================================================ */
 
-@theme static {
-  --font-sans: 'Public Sans', sans-serif;
+/* ── DESIGN TOKENS ───────────────────────────────────────── */
+:root {
+  /* Fonds */
+  --color-abyssal:     #080a0c;
+  --color-deep:        #0d1117;
+  --color-surface:     #131820;
+  --color-elevated:    #1a2230;
+  --color-border:      #2a3545;
+  --color-border-glow: #3d5a4a;
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+  /* Textes */
+  --color-text-primary:   #d4c9b0;
+  --color-text-secondary: #8a8070;
+  --color-text-muted:     #4a4540;
+  --color-text-inverse:   #080a0c;
+
+  /* Accents */
+  --color-arcane:      #7fb38a;
+  --color-arcane-dim:  #3d6647;
+  --color-arcane-glow: rgba(127, 179, 138, 0.15);
+  --color-crimson:     #8b3a3a;
+  --color-crimson-dim: #5c2020;
+  --color-gold:        #b8924a;
+  --color-gold-dim:    #7a5e28;
+  --color-fog:         #4a5568;
+
+  /* Typographie */
+  --font-display: 'Cinzel Decorative', serif;
+  --font-heading:  'Cinzel', serif;
+  --font-body:     'Crimson Text', serif;
+  --font-flavor:   'IM Fell English', serif;
+
+  /* Espacements */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+
+  /* Rayons */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* Ombres */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.6), 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(127, 179, 138, 0.12);
+  --shadow-deep: 0 8px 40px rgba(0, 0, 0, 0.8);
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-normal: 280ms ease;
+  --transition-slow:   500ms ease;
 }
+
+/* ── RESET ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background-color: var(--color-deep);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-abyssal); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-glow); }

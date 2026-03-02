@@ -1,6 +1,15 @@
 import { prisma } from '#server/lib/prisma'
 
 export default defineEventHandler(async () => {
-  const competences = await prisma.competence.findMany()
+  const competences = await prisma.competence.findMany({
+    include: {
+      category: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    }
+  })
   return competences
 })
