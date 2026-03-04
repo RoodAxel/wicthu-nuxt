@@ -9,12 +9,23 @@ const { data: competences, status, error } = await useFetch<CompetenceWithCatego
 
 const search = ref('')
 const activeFilter = ref<'all' | 'category' | 'rare' | 'modern'>('all')
+const categoryFilter = ref<{ id: number; name: string } | null>(null)
+
+function selectCategory(competence: CompetenceWithCategory) {
+  if (!competence.isCategory) return
+  categoryFilter.value = { id: competence.id, name: competence.name }
+}
+
+function clearCategoryFilter() {
+  categoryFilter.value = null
+}
 
 const filtered = computed(() => {
   if (!competences.value) return []
   return competences.value.filter((c) => {
     const matchSearch = c.name.toLowerCase().includes(search.value.toLowerCase())
     if (!matchSearch) return false
+    if (categoryFilter.value) return c.category?.id === categoryFilter.value.id
     if (activeFilter.value === 'category') return c.isCategory
     if (activeFilter.value === 'rare') return c.rare
     if (activeFilter.value === 'modern') return c.modern
@@ -75,6 +86,11 @@ const stats = computed(() => ({
       </div>
     </div>
 
+    <div v-if="categoryFilter" class="active-category-filter">
+      <span class="active-category-label">{{ categoryFilter.name }}</span>
+      <button class="active-category-clear" aria-label="Supprimer le filtre" @click="clearCategoryFilter">✕</button>
+    </div>
+
     <div v-if="status === 'pending'" class="state-message">
       <span class="state-sigil">⬡</span>
       <p>Consultation des archives…</p>
@@ -88,37 +104,42 @@ const stats = computed(() => ({
       <p>Aucune compétence ne correspond à votre requête.</p>
     </div>
 
-    <div v-else class="cards-grid">
-      <div
-        v-for="competence in filtered"
-        :key="competence.id"
-        class="card"
-        :class="{ 'is-category': competence.isCategory }"
-      >
-        <div class="card-header">
-          <span class="card-name">{{ competence.name }}</span>
-          <span v-if="competence.isCategory" class="card-badge badge-category">Catégorie</span>
-          <span v-else-if="competence.rare" class="card-badge badge-rare">Rare</span>
-          <span v-else-if="competence.modern" class="card-badge badge-modern">Moderne</span>
-        </div>
-
-        <p v-if="competence.category" class="card-category-label">
-          Catégorie : <span>{{ competence.category.name }}</span>
-        </p>
-
-        <div class="card-footer">
-          <div v-if="!competence.isCategory" class="base-value">
-            <span class="base-value-label">Base</span>
-            <span class="base-value-number">{{ competence.baseValue ?? 0 }}</span>
-            <span class="base-value-pct">%</span>
-          </div>
-          <span v-else class="stat-label">—</span>
+    <div v-else class="list-container">
+      <div class="list-header-row">
+        <span class="col-name">Compétence</span>
+        <span class="col-category">Catégorie</span>
+        <span class="col-badge">Type</span>
+        <span class="col-base">Base</span>
+      </div>
+      <div class="list-body">
+        <div
+          v-for="(competence, index) in filtered"
+          :key="competence.id"
+          class="list-row"
+          :class="{
+            'row-even': index % 2 === 0,
+            'row-odd': index % 2 !== 0,
+            'is-category': competence.isCategory,
+            'is-clickable': competence.isCategory
+          }"
+          @click="selectCategory(competence)"
+        >
+          <span class="col-name row-name">{{ competence.name }}</span>
+          <span class="col-category row-category">{{ competence.category?.name ?? '—' }}</span>
+          <span class="col-badge">
+            <span v-if="competence.isCategory" class="card-badge badge-category">Catégorie</span>
+            <span v-else-if="competence.rare" class="card-badge badge-rare">Rare</span>
+            <span v-else-if="competence.modern" class="card-badge badge-modern">Moderne</span>
+          </span>
+          <span class="col-base row-base">
+            <template v-if="!competence.isCategory">
+              <span class="base-value-number">{{ competence.baseValue ?? 0 }}</span>
+              <span class="base-value-pct">%</span>
+            </template>
+            <span v-else class="row-dash">—</span>
+          </span>
         </div>
       </div>
-    </div>
-
-    <div class="ornament">
-      ✦ ✦ ✦
     </div>
 
   </main>
@@ -173,7 +194,7 @@ const stats = computed(() => ({
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -181,7 +202,7 @@ const stats = computed(() => ({
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -212,6 +233,7 @@ const stats = computed(() => ({
 .stat-label {
   font-family: var(--font-heading);
   font-size: 0.6rem;
+  font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -234,7 +256,7 @@ const stats = computed(() => ({
 /* ── TAGS ────────────────────────────────────────────────── */
 .tag {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-xs) var(--space-md);
@@ -276,7 +298,7 @@ const stats = computed(() => ({
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   width: 240px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
@@ -308,62 +330,71 @@ const stats = computed(() => ({
 }
 .state-error { color: var(--color-crimson); }
 
-/* ── CARDS GRID ──────────────────────────────────────────── */
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-lg);
-}
-
-.card {
-  background: var(--color-surface);
+/* ── COMPETENCE LIST ─────────────────────────────────────── */
+.list-container {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  transition: all var(--transition-normal);
-  cursor: pointer;
-  position: relative;
   overflow: hidden;
-  animation: fadeInUp 0.4s ease both;
-}
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at top left, rgba(127, 179, 138, 0.05), transparent 60%);
-  opacity: 0;
-  transition: opacity var(--transition-normal);
-  pointer-events: none;
-}
-.card:hover {
-  border-color: var(--color-border-glow);
-  box-shadow: var(--shadow-card), var(--shadow-glow);
-  transform: translateY(-2px);
-}
-.card:hover::before { opacity: 1; }
-
-.card.is-category {
-  border-color: var(--color-gold-dim);
-  background: linear-gradient(135deg, var(--color-surface), rgba(184, 146, 74, 0.04));
-}
-.card.is-category:hover {
-  border-color: var(--color-gold);
-  box-shadow: var(--shadow-card), 0 0 20px rgba(184, 146, 74, 0.12);
 }
 
-.card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-md);
+.list-header-row,
+.list-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 120px 80px;
+  align-items: center;
+  padding: var(--space-sm) var(--space-lg);
+  gap: var(--space-md);
 }
-.card-name {
+
+.list-header-row {
+  background: var(--color-elevated);
+  border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: 1rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.list-body {
+  height: 520px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.list-body::-webkit-scrollbar { width: 6px; }
+.list-body::-webkit-scrollbar-track { background: transparent; }
+.list-body::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-arcane-dim); }
+
+.list-row {
+  transition: background var(--transition-fast);
+  cursor: default;
+}
+.list-row.is-clickable { cursor: pointer; }
+.row-even { background: var(--color-surface); }
+.row-odd  { background: var(--color-deep); }
+.list-row:hover { background: var(--color-elevated); }
+
+.list-row.is-category .row-name { color: var(--color-gold); }
+
+.row-name {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--color-text-primary);
-  line-height: 1.3;
+}
+
+.row-category {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--color-text-muted);
 }
 
 .card-badge {
@@ -373,75 +404,71 @@ const stats = computed(() => ({
   text-transform: uppercase;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  flex-shrink: 0;
-  margin-left: var(--space-sm);
+  white-space: nowrap;
 }
-.badge-category { background: rgba(184, 146, 74, 0.15); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
-.badge-rare     { background: rgba(139, 58, 58, 0.15);  color: #c47070;           border: 1px solid var(--color-crimson-dim); }
-.badge-modern   { background: rgba(127, 179, 138, 0.15);color: var(--color-arcane);border: 1px solid var(--color-arcane-dim); }
+.badge-category { background: rgba(184, 146, 74, 0.15); color: var(--color-gold);   border: 1px solid var(--color-gold-dim); }
+.badge-rare     { background: rgba(139, 58, 58, 0.15);  color: #c47070;             border: 1px solid var(--color-crimson-dim); }
+.badge-modern   { background: rgba(127, 179, 138, 0.15);color: var(--color-arcane); border: 1px solid var(--color-arcane-dim); }
 
-.card-category-label {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-sm);
-}
-.card-category-label span { color: var(--color-gold); }
-
-.card-footer {
+.row-base {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--space-md);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--color-border);
-}
-.base-value {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.base-value-label {
-  font-family: var(--font-heading);
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
+  align-items: baseline;
+  gap: 2px;
 }
 .base-value-number {
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-arcane);
 }
 .base-value-pct {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: var(--color-text-muted);
 }
-
-/* ── ORNAMENT ────────────────────────────────────────────── */
-.ornament {
-  text-align: center;
-  margin: var(--space-xl) 0;
+.row-dash {
   color: var(--color-text-muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.3em;
-  display: flex;
+  font-size: 0.85rem;
+}
+
+/* ── ACTIVE CATEGORY FILTER ──────────────────────────────── */
+.active-category-filter {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-md);
-}
-.ornament::before,
-.ornament::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--color-border), transparent);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  background: rgba(184, 146, 74, 0.1);
+  border: 1px solid var(--color-gold-dim);
+  border-radius: var(--radius-sm);
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+.active-category-label {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.active-category-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-gold-dim);
+  color: var(--color-gold);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.active-category-clear:hover {
+  background: var(--color-gold-dim);
 }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
@@ -450,5 +477,8 @@ const stats = computed(() => ({
   .search-bar { margin-left: 0; width: 100%; }
   .search-input { width: 100%; }
   .toolbar { flex-direction: column; align-items: flex-start; }
+  .list-header-row,
+  .list-row { grid-template-columns: 1fr 80px; }
+  .col-category, .col-badge { display: none; }
 }
 </style>
