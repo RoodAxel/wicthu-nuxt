@@ -6,12 +6,25 @@ const route = useRoute()
 
 const resources = [
   { label: 'Compétences', to: '/competence' },
-  { label: 'Ouvrages', to: '/competence' }
+  { label: 'Armurerie', to: '/arme' },
+  { label: 'Équip. classique', to: '/equipement-classique' },
+  { label: 'Équip. moderne', to: '/equipement-moderne' },
+  { label: 'Ouvrages occultes', to: '/ouvrage-occulte' },
+  { label: 'Manies', to: '/manie' },
+  { label: 'Phobies', to: '/phobie' },
 ]
+
+const menuOpen = ref(false)
+
+function toggleMenu() { menuOpen.value = !menuOpen.value }
+function closeMenu() { menuOpen.value = false }
+
+watch(() => route.path, closeMenu)
 
 async function signOut() {
   await supabase.auth.signOut()
   await router.push('/auth/login')
+  closeMenu()
 }
 </script>
 
@@ -19,11 +32,11 @@ async function signOut() {
   <header class="app-header">
     <div class="header-inner">
       <!-- Logo -->
-      <NuxtLink to="/" class="header-logo" aria-label="Accueil">
+      <NuxtLink to="/" class="header-logo" aria-label="Accueil" @click="closeMenu">
         <img src="/logoclair.png" alt="Wicthu" class="logo-img">
       </NuxtLink>
 
-      <!-- Navigation ressources -->
+      <!-- Navigation desktop -->
       <nav class="header-nav" aria-label="Ressources">
         <NuxtLink
           v-for="resource in resources"
@@ -36,7 +49,7 @@ async function signOut() {
         </NuxtLink>
       </nav>
 
-      <!-- Auth -->
+      <!-- Auth desktop -->
       <div class="header-auth">
         <template v-if="user">
           <span class="auth-email">{{ user.email }}</span>
@@ -44,7 +57,41 @@ async function signOut() {
         </template>
         <NuxtLink v-else to="/auth/login" class="auth-btn">Connexion</NuxtLink>
       </div>
+
+      <!-- Hamburger -->
+      <button
+        class="hamburger"
+        :class="{ open: menuOpen }"
+        aria-label="Menu"
+        @click="toggleMenu"
+      >
+        <span /><span /><span />
+      </button>
     </div>
+
+    <!-- Mobile menu -->
+    <Transition name="mobile-menu">
+      <div v-if="menuOpen" class="mobile-nav">
+        <nav class="mobile-nav-links">
+          <NuxtLink
+            v-for="resource in resources"
+            :key="resource.to"
+            :to="resource.to"
+            class="mobile-nav-link"
+            :class="{ active: route.path.startsWith(resource.to) }"
+          >
+            {{ resource.label }}
+          </NuxtLink>
+        </nav>
+        <div class="mobile-auth">
+          <template v-if="user">
+            <span class="mobile-auth-email">{{ user.email }}</span>
+            <button class="auth-btn" @click="signOut">Déconnexion</button>
+          </template>
+          <NuxtLink v-else to="/auth/login" class="auth-btn" @click="closeMenu">Connexion</NuxtLink>
+        </div>
+      </div>
+    </Transition>
   </header>
 </template>
 
@@ -58,13 +105,13 @@ async function signOut() {
 }
 
 .header-inner {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 var(--space-xl);
   height: 56px;
   display: flex;
   align-items: center;
-  gap: var(--space-xl);
+  gap: var(--space-lg);
 }
 
 /* ── LOGO ──────────────────────────────────────────────── */
@@ -72,72 +119,58 @@ async function signOut() {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  color: var(--color-text-primary);
-  transition: color var(--transition-fast);
+  transition: opacity var(--transition-fast);
 }
+.header-logo:hover { opacity: 0.8; }
+.logo-img { height: 32px; width: auto; object-fit: contain; }
 
-.header-logo:hover {
-  color: var(--color-arcane);
-}
-
-.logo-img {
-  height: 32px;
-  width: auto;
-  object-fit: contain;
-}
-
-/* ── NAV ───────────────────────────────────────────────── */
+/* ── NAV DESKTOP ───────────────────────────────────────── */
 .header-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 2px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .nav-link {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: var(--space-xs) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   text-decoration: none;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
-
-.nav-link:hover {
-  color: var(--color-arcane);
-  border-color: var(--color-arcane-dim);
-}
-
+.nav-link:hover { color: var(--color-arcane); border-color: var(--color-arcane-dim); }
 .nav-link.active {
   color: var(--color-arcane);
   background: var(--color-arcane-glow);
   border-color: var(--color-arcane-dim);
 }
 
-/* ── AUTH ──────────────────────────────────────────────── */
+/* ── AUTH DESKTOP ──────────────────────────────────────── */
 .header-auth {
   display: flex;
   align-items: center;
   gap: var(--space-md);
   flex-shrink: 0;
 }
-
 .auth-email {
   font-family: var(--font-heading);
   font-size: 0.7rem;
   font-weight: bold;
   letter-spacing: 0.08em;
   color: var(--color-text-muted);
-  max-width: 180px;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .auth-btn {
   font-family: var(--font-heading);
   font-size: 0.62rem;
@@ -154,21 +187,99 @@ async function signOut() {
   align-items: center;
   transition: all var(--transition-fast);
 }
+.auth-btn:hover { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
 
-.auth-btn:hover {
-  border-color: var(--color-arcane-dim);
+/* ── HAMBURGER ─────────────────────────────────────────── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0 8px;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+.hamburger:hover { border-color: var(--color-arcane-dim); }
+.hamburger span {
+  display: block;
+  height: 1px;
+  background: var(--color-text-secondary);
+  border-radius: 1px;
+  transition: all var(--transition-fast);
+  transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+/* ── MOBILE MENU ───────────────────────────────────────── */
+.mobile-nav {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mobile-nav-link {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
   color: var(--color-arcane);
+  background: var(--color-arcane-glow);
+  border-color: var(--color-arcane-dim);
+}
+.mobile-auth {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+.mobile-auth-email {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
-/* ── RESPONSIVE ────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .header-inner {
-    padding: 0 var(--space-md);
-    gap: var(--space-md);
-  }
+/* ── TRANSITION ────────────────────────────────────────── */
+.mobile-menu-enter-active,
+.mobile-menu-leave-active { transition: all 0.2s ease; overflow: hidden; }
+.mobile-menu-enter-from,
+.mobile-menu-leave-to { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
+.mobile-menu-enter-to,
+.mobile-menu-leave-from { max-height: 400px; }
 
-  .auth-email {
-    display: none;
-  }
+/* ── RESPONSIVE ────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .header-nav  { display: none; }
+  .header-auth { display: none; }
+  .hamburger   { display: flex; }
+  .header-inner { padding: 0 var(--space-md); }
 }
 </style>

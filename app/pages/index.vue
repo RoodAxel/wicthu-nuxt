@@ -1,3 +1,5 @@
+<script setup lang="ts">
+</script>
 <template>
   <main class="home-wrapper">
 
@@ -12,6 +14,22 @@
       </p>
     </section>
 
+    <!-- ── FICHE INVESTIGATEUR ────────────────────────────── -->
+    <section class="section cta-section">
+      <div class="cta-card">
+        <div class="cta-content">
+          <h2 class="cta-title">Fiche d'Investigateur</h2>
+          <p class="cta-text">
+            Créez et gérez la fiche de votre personnage — caractéristiques,
+            compétences, équipement et état mental.
+          </p>
+        </div>
+        <NuxtLink to="/investigateur/creer" class="cta-btn">
+          Créer une fiche
+        </NuxtLink>
+      </div>
+    </section>
+
     <!-- ── RESSOURCES ─────────────────────────────────────── -->
     <section class="section">
       <h2 class="section-title">Archives</h2>
@@ -23,6 +41,60 @@
           <div class="resource-body">
             <span class="resource-name">Compétences</span>
             <span class="resource-desc">Liste complète des savoir-faire, valeurs de base et catégories.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/arme" class="resource-card">
+          <span class="resource-icon">🔫</span>
+          <div class="resource-body">
+            <span class="resource-name">Armurerie</span>
+            <span class="resource-desc">Arsenal complet — armes, dégâts, portées et compétences associées.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/equipement-classique" class="resource-card">
+          <span class="resource-icon">🎒</span>
+          <div class="resource-body">
+            <span class="resource-name">Équipement Classique</span>
+            <span class="resource-desc">Matériel des années 1920 — prix, catégories et disponibilité.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/equipement-moderne" class="resource-card">
+          <span class="resource-icon">🔦</span>
+          <div class="resource-body">
+            <span class="resource-name">Équipement Moderne</span>
+            <span class="resource-desc">Matériel contemporain — prix, catégories et disponibilité.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ouvrage-occulte" class="resource-card">
+          <span class="resource-icon">📖</span>
+          <div class="resource-body">
+            <span class="resource-name">Ouvrages Occultes</span>
+            <span class="resource-desc">Volumes maudits, leur contenu et leurs effets sur la Santé Mentale.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/manie" class="resource-card">
+          <span class="resource-icon">🧠</span>
+          <div class="resource-body">
+            <span class="resource-name">Manies</span>
+            <span class="resource-desc">Troubles obsessionnels issus du contact avec l'indicible.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/phobie" class="resource-card">
+          <span class="resource-icon">😱</span>
+          <div class="resource-body">
+            <span class="resource-name">Phobies</span>
+            <span class="resource-desc">Terreurs irrationnelles ancrées dans la psyché des survivants.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
@@ -44,22 +116,6 @@
           </div>
           <span class="resource-badge">Bientôt</span>
         </div>
-      </div>
-    </section>
-
-    <!-- ── FICHE INVESTIGATEUR ────────────────────────────── -->
-    <section class="section cta-section">
-      <div class="cta-card">
-        <div class="cta-content">
-          <h2 class="cta-title">Fiche d'Investigateur</h2>
-          <p class="cta-text">
-            Créez et gérez la fiche de votre personnage — caractéristiques,
-            compétences, équipement et état mental.
-          </p>
-        </div>
-        <NuxtLink to="/investigateur/creer" class="cta-btn">
-          Créer une fiche
-        </NuxtLink>
       </div>
     </section>
 
@@ -275,7 +331,18 @@
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .hero-logo { height: 56px; }
-  .cta-card { flex-direction: column; align-items: flex-start; }
+  .home-wrapper { padding: var(--space-md); gap: var(--space-xl); }
+  .hero { padding: var(--space-md) 0; }
+  .hero-logo { height: 120px; }
+  .hero-description { font-size: 0.95rem; }
+  .cta-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+  }
+  .cta-btn { width: 100%; text-align: center; box-sizing: border-box; }
+  .resource-card { gap: var(--space-md); padding: var(--space-sm) var(--space-md); }
+  .resource-desc { display: none; }
 }
 </style>

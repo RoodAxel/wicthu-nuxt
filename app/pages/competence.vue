@@ -472,13 +472,22 @@ const stats = computed(() => ({
 }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .stats-panel { grid-template-columns: repeat(2, 1fr); }
-  .search-bar { margin-left: 0; width: 100%; }
-  .search-input { width: 100%; }
-  .toolbar { flex-direction: column; align-items: flex-start; }
+@media (max-width: 1024px) {
   .list-header-row,
-  .list-row { grid-template-columns: 1fr 80px; }
+  .list-row { grid-template-columns: 2fr 1fr 100px 70px; }
+}
+
+@media (max-width: 640px) {
+  .page-wrapper { padding: var(--space-md); }
+  .flavor-quote p { font-size: 1rem; }
+  .stats-panel { grid-template-columns: repeat(2, 1fr); }
+  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
+  .filters { flex-wrap: wrap; }
+  .search-bar { margin-left: 0; width: 100%; }
+  .search-input { width: 100%; box-sizing: border-box; }
+  .list-header-row,
+  .list-row { grid-template-columns: 1fr 70px; }
   .col-category, .col-badge { display: none; }
+  .list-body { max-height: 380px; }
 }
 </style>

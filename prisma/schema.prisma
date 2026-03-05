@@ -8,16 +8,257 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Competence {
-  id         Int      @id @default(autoincrement())
-  name       String
-  categoryId Int?     @map("category_id")
-  baseValue  Int?     @map("base_value") @db.SmallInt
-  isCategory Boolean? @map("is_category")
-  rare       Boolean?
-  modern     Boolean?
+model arme {
+  id                                        Int         @id @default(autoincrement())
+  name                                      String      @db.VarChar(255)
+  category                                  String      @db.VarChar(255)
+  competenceArme                            Int
+  damage                                    String?     @db.VarChar(255)
+  average_dmg                               String?     @db.VarChar(255)
+  range                                     String?     @db.VarChar(255)
+  cadence                                   String?     @db.VarChar(255)
+  capacity                                  String?     @db.VarChar(255)
+  failure                                   Int?
+  classic_price                             Float?      @db.Real
+  modern_price                              Float?      @db.Real
+  epoque                                    String[]    @db.VarChar(255)
+  image_url                                 String?     @db.VarChar(255)
+  competence_id                             Int?
+  competence_arme_competence_idTocompetence Competence? @relation("arme_competence_idTocompetence", fields: [competence_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk3rjdk0p7fs5t2u0mtk27vmcy0")
+  competence                                Competence  @relation("arme_competenceTocompetence", fields: [competenceArme], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_competenceArme_competence")
+}
 
+model artefact {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.VarChar(255)
+  use_by      String? @db.VarChar(255)
+  description String?
+  image_url   String? @db.VarChar(255)
+}
+
+model caracteristique {
+  id                                                Int                     @id @default(autoincrement())
+  entite_id                                         Int?
+  name_caracteristique                              String                  @db.VarChar(255)
+  valeur                                            Int?
+  formule_jet                                       String?                 @db.VarChar(255)
+  entite_caracteristique_entite_idToentite          entite?                 @relation("caracteristique_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_caracteristique_entite")
+  entite_entite_caracteristique_idTocaracteristique entite[]                @relation("entite_caracteristique_idTocaracteristique")
+  entite_caracteristique                            entite_caracteristique?
+}
+
+model Competence {
+  id              Int          @id @default(autoincrement())
+  name            String
+  categoryId      Int?         @map("category_id")
+  baseValue       Int?         @map("base_value") @db.SmallInt
+  isCategory      Boolean?     @map("is_category")
+  rare            Boolean?
+  modern          Boolean?
   // Self-relation
-  category Competence?  @relation("CompetenceCategory", fields: [categoryId], references: [id])
-  children Competence[] @relation("CompetenceCategory")
+  category        Competence?  @relation("CompetenceCategory", fields: [categoryId], references: [id])
+  children        Competence[] @relation("CompetenceCategory")
+  weapons         arme[]       @relation("arme_competenceTocompetence")
+  weaponsOptional arme[]       @relation("arme_competence_idTocompetence")
+}
+
+model competence_entite {
+  id                                                    Int                       @id @default(autoincrement())
+  entite_id                                             Int?
+  name_competence                                       String                    @db.VarChar(255)
+  valeur_competence                                     Int
+  entite_competence_entite_entite_idToentite            entite?                   @relation("competence_entite_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_competenceEntite_entite")
+  entite_entite_competence_entite_idTocompetence_entite entite[]                  @relation("entite_competence_entite_idTocompetence_entite")
+  entite_competence_entite                              entite_competence_entite?
+}
+
+model entite {
+  id                                                                    Int                         @id @default(autoincrement())
+  categorie                                                             String?                     @db.VarChar(255)
+  name                                                                  String                      @db.VarChar(255)
+  titre                                                                 String?                     @db.VarChar(255)
+  citation                                                              String?                     @db.VarChar(255)
+  description                                                           String?                     @db.VarChar(255)
+  point_vie_moyen                                                       Int?
+  impact_moyen                                                          String?                     @db.VarChar(255)
+  carrure_moyen                                                         Int?
+  point_magie_moyen                                                     Int?
+  mouvement                                                             Int?
+  attaque_round                                                         Int?
+  protection                                                            String?                     @db.VarChar(255)
+  perte_sante_mental                                                    String?                     @db.VarChar(255)
+  image_url                                                             String?                     @db.VarChar(255)
+  caracteristique_id                                                    Int?
+  competence_entite_id                                                  Int?
+  option_combat_id                                                      Int?
+  pouvoir_distinctif_id                                                 Int?
+  specialite_divinit_id                                                 Int?
+  caracteristique_caracteristique_entite_idToentite                     caracteristique[]           @relation("caracteristique_entite_idToentite")
+  competence_entite_competence_entite_entite_idToentite                 competence_entite[]         @relation("competence_entite_entite_idToentite")
+  option_combat_entite_option_combat_idTooption_combat                  option_combat?              @relation("entite_option_combat_idTooption_combat", fields: [option_combat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk1y8piphtncq9ra0ntm2n7oa61")
+  pouvoir_distinctif_entite_pouvoir_distinctif_idTopouvoir_distinctif   pouvoir_distinctif?         @relation("entite_pouvoir_distinctif_idTopouvoir_distinctif", fields: [pouvoir_distinctif_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk4um592yl1ggoknmy2npai1iwp")
+  specialite_divinite_entite_specialite_divinit_idTospecialite_divinite specialite_divinite?        @relation("entite_specialite_divinit_idTospecialite_divinite", fields: [specialite_divinit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk8ho6ffnat9ju3vudvm3lxglik")
+  competence_entite_entite_competence_entite_idTocompetence_entite      competence_entite?          @relation("entite_competence_entite_idTocompetence_entite", fields: [competence_entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkhv1qo28ec4ucel6dedkm2bap8")
+  caracteristique_entite_caracteristique_idTocaracteristique            caracteristique?            @relation("entite_caracteristique_idTocaracteristique", fields: [caracteristique_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkkqj06sa5hiibj2i0bm1il7afv")
+  entite_caracteristique                                                entite_caracteristique[]
+  entite_competence_entite                                              entite_competence_entite[]
+  entite_option_combat                                                  entite_option_combat[]
+  entite_pouvoir_distinctif                                             entite_pouvoir_distinctif[]
+  entite_specialite_divinit                                             entite_specialite_divinit[]
+  option_combat_option_combat_entite_idToentite                         option_combat[]             @relation("option_combat_entite_idToentite")
+  pouvoir_distinctif_pouvoir_distinctif_entite_idToentite               pouvoir_distinctif[]        @relation("pouvoir_distinctif_entite_idToentite")
+  specialite_divinite_specialite_divinite_entite_idToentite             specialite_divinite[]       @relation("specialite_divinite_entite_idToentite")
+}
+
+model entite_caracteristique {
+  entite_model_id    Int
+  caracteristique_id Int             @unique(map: "ukciqjegkwib9dvmrs4fxcrj9ww")
+  caracteristique    caracteristique @relation(fields: [caracteristique_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk4o4niilsi663y9o66tc6x2sr2")
+  entite             entite          @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkb2rgectrhokldmsn63dxsbo0t")
+}
+
+model entite_competence_entite {
+  entite_model_id      Int
+  competence_entite_id Int               @unique(map: "uk8mrgti7fddfop1tdohn14o8pa")
+  competence_entite    competence_entite @relation(fields: [competence_entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk6w0fjoemkdkberbe6fky5upem")
+  entite               entite            @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fko60yehnrtw8td996kdo8p8d9k")
+}
+
+model entite_option_combat {
+  entite_model_id  Int
+  option_combat_id Int           @unique(map: "ukc64s196ih7dj16q1q4hmlr3pi")
+  entite           entite        @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk7l61141pjdj160thvao0968qe")
+  option_combat    option_combat @relation(fields: [option_combat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fka8duca3s4mv03aifimx9obvc8")
+}
+
+model entite_pouvoir_distinctif {
+  entite_model_id       Int
+  pouvoir_distinctif_id Int                @unique(map: "ukjkog3cij2v0urfclecx193qan")
+  entite                entite             @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkp8j90dko825hh6g7p73p428o4")
+  pouvoir_distinctif    pouvoir_distinctif @relation(fields: [pouvoir_distinctif_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkt04qit36lsxyl8edswnr3bih7")
+}
+
+model entite_specialite_divinit {
+  entite_model_id       Int
+  specialite_divinit_id Int                 @unique(map: "uke3xd6i7okobrev2g6dq9159ff")
+  entite                entite              @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkalq49dn9p31cg45nn91o9vw1l")
+  specialite_divinite   specialite_divinite @relation(fields: [specialite_divinit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkip01axto1v6ihpr474h056lk4")
+}
+
+model equipement_classique {
+  id         Int     @id @default(autoincrement())
+  name       String  @db.VarChar(255)
+  category   String? @db.VarChar(255)
+  base_price Float   @db.Real
+  max_price  Float?  @db.Real
+  unit       String? @db.VarChar(255)
+  superior   Boolean
+}
+
+model equipement_moderne {
+  id         Int     @id @default(autoincrement())
+  name       String  @db.VarChar(255)
+  category   String? @db.VarChar(255)
+  base_price Float   @db.Real
+  max_price  Float?  @db.Real
+  unit       String? @db.VarChar(255)
+  superior   Boolean
+}
+
+model manie {
+  id          Int    @id @default(autoincrement())
+  name        String @db.VarChar(255)
+  description String @db.VarChar(255)
+}
+
+model occupation {
+  id               Int     @id @default(autoincrement())
+  name             String  @db.VarChar(255)
+  competences      String?
+  credit_min       Int?
+  credit_max       Int?
+  point_competence String? @db.VarChar(255)
+}
+
+model option_combat {
+  id                                            Int                   @id @default(autoincrement())
+  entite_id                                     Int?
+  name_option                                   String                @db.VarChar(255)
+  description                                   String?               @db.VarChar(255)
+  effet                                         String?               @db.VarChar(255)
+  entite_entite_option_combat_idTooption_combat entite[]              @relation("entite_option_combat_idTooption_combat")
+  entite_option_combat                          entite_option_combat?
+  entite_option_combat_entite_idToentite        entite?               @relation("option_combat_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_optionCombat_entite")
+}
+
+model ouvrage_mythe {
+  id                 Int            @id @default(autoincrement())
+  titre              String         @db.VarChar(255)
+  langue             String?        @db.VarChar(255)
+  date               String?        @db.VarChar(255)
+  auteur             String?        @db.VarChar(255)
+  description        String?        @db.VarChar(255)
+  sante_mental       String?        @db.VarChar(255)
+  gain_mythe_initial Int?
+  gain_mythe_complet Int?
+  mythe_cthulhu      Int?
+  semaine            Int?
+  ouvrage_sort       ouvrage_sort[]
+}
+
+model ouvrage_occulte {
+  id          Int     @id @default(autoincrement())
+  title       String? @db.VarChar(255)
+  language    String? @db.VarChar(255)
+  date        String? @db.VarChar(255)
+  author      String? @db.VarChar(255)
+  info        String? @db.VarChar(255)
+  description String?
+  sanity      String? @db.VarChar(255)
+  occult_gain Int?
+}
+
+model ouvrage_sort {
+  id                Int            @id @default(autoincrement())
+  ouvrage_id        Int?
+  sort_id           Int?
+  name_dans_ouvrage String?        @db.VarChar(255)
+  ouvrage_mythe     ouvrage_mythe? @relation(fields: [ouvrage_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ouvrageSort_ouvrageId")
+  sort              sort?          @relation(fields: [sort_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ouvrageSort_sortId")
+}
+
+model phobie {
+  id          Int    @id @default(autoincrement())
+  name        String @db.VarChar(255)
+  description String @db.VarChar(255)
+}
+
+model pouvoir_distinctif {
+  id                                                      Int                        @id @default(autoincrement())
+  entite_id                                               Int?
+  name_pouvoir                                            String                     @db.VarChar(255)
+  description                                             String                     @db.VarChar(255)
+  entite_entite_pouvoir_distinctif_idTopouvoir_distinctif entite[]                   @relation("entite_pouvoir_distinctif_idTopouvoir_distinctif")
+  entite_pouvoir_distinctif                               entite_pouvoir_distinctif?
+  entite_pouvoir_distinctif_entite_idToentite             entite?                    @relation("pouvoir_distinctif_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pouvoirDistinctif_entite")
+}
+
+model sort {
+  id                Int            @id @default(autoincrement())
+  name              String         @db.VarChar(255)
+  cout              String         @db.VarChar(255)
+  temps_incantation String         @db.VarChar(255)
+  description       String         @db.VarChar(255)
+  autre_name        String[]       @db.VarChar(255)
+  ouvrage_sort      ouvrage_sort[]
+}
+
+model specialite_divinite {
+  id                                                       Int                        @id @default(autoincrement())
+  entite_id                                                Int?
+  culte_et_adoration                                       String?                    @db.VarChar(255)
+  autres_particularites                                    String?                    @db.VarChar(255)
+  entite_entite_specialite_divinit_idTospecialite_divinite entite[]                   @relation("entite_specialite_divinit_idTospecialite_divinite")
+  entite_specialite_divinit                                entite_specialite_divinit?
+  entite_specialite_divinite_entite_idToentite             entite?                    @relation("specialite_divinite_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_specialiteDivinite_entiteId")
 }
