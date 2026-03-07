@@ -13,6 +13,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Variables privées (server only)
     databaseUrl: process.env.DATABASE_URL,
+    pdfcoApiKey: process.env.PDFCO_API_KEY,
+    supabaseServiceKey: process.env.SUPABASE_SECRET_KEY,
     // Variables publiques
     public: {
       supabaseUrl: process.env.SUPABASE_URL,

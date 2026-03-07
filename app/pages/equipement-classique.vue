@@ -8,13 +8,13 @@ const categoryFilter = ref<string | null>(null)
 
 const categories = computed(() => {
   if (!items.value) return []
-  return [...new Set(items.value.map(e => e.categorie).filter(Boolean))].sort() as string[]
+  return [...new Set(items.value.map(e => e.category).filter(Boolean))].sort() as string[]
 })
 
 const filtered = computed(() => {
   if (!items.value) return []
   return items.value.filter((e) => {
-    if (categoryFilter.value && e.categorie !== categoryFilter.value) return false
+    if (categoryFilter.value && e.category !== categoryFilter.value) return false
     if (search.value && !e.name.toLowerCase().includes(search.value.toLowerCase())) return false
     return true
   })
@@ -23,12 +23,13 @@ const filtered = computed(() => {
 const stats = computed(() => ({
   total: items.value?.length ?? 0,
   categories: categories.value.length,
-  superior: items.value?.filter(e => e.superieur).length ?? 0,
+  superior: items.value?.filter(e => e.superior).length ?? 0,
 }))
 
-function formatPrice(base: number, max: number | null, unit: string | null) {
-  const suffix = unit ? ` ${unit}` : '$'
-  return max ? `${base} – ${max}${suffix}` : `${base}${suffix}`
+function formatPrice(base: number, max: number | null, unit: string | null, superior: boolean) {
+  const price = max ? `${base} - ${max}$` : `${base}$`
+  const withUnit = unit ? `${price}/${unit.toLowerCase()}` : price
+  return superior ? `${withUnit}+` : withUnit
 }
 </script>
 
@@ -91,7 +92,6 @@ function formatPrice(base: number, max: number | null, unit: string | null) {
         <span class="col-name">Article</span>
         <span class="col-category">Catégorie</span>
         <span class="col-price">Prix</span>
-        <span class="col-superior">Sup.</span>
       </div>
       <div class="list-body">
         <div
@@ -101,12 +101,8 @@ function formatPrice(base: number, max: number | null, unit: string | null) {
           :class="index % 2 === 0 ? 'row-even' : 'row-odd'"
         >
           <span class="col-name row-name">{{ item.name }}</span>
-          <span class="col-category row-category">{{ item.categorie ?? '—' }}</span>
-          <span class="col-price row-price">{{ formatPrice(item.prix_base, item.prix_max, item.unite) }}</span>
-          <span class="col-superior">
-            <span v-if="item.superieur" class="superior-badge">✦</span>
-            <span v-else class="row-dash">—</span>
-          </span>
+          <span class="col-category row-category">{{ item.category ?? '—' }}</span>
+          <span class="col-price row-price">{{ formatPrice(item.base_price, item.max_price, item.unit, item.superior) }}</span>
         </div>
       </div>
     </div>
@@ -279,7 +275,7 @@ function formatPrice(base: number, max: number | null, unit: string | null) {
 .list-header-row,
 .list-row {
   display: grid;
-  grid-template-columns: 1fr 180px 140px 48px;
+  grid-template-columns: 1fr 180px 160px;
   align-items: center;
   padding: var(--space-sm) var(--space-lg);
   gap: var(--space-md);
@@ -312,7 +308,7 @@ function formatPrice(base: number, max: number | null, unit: string | null) {
 .row-id { font-family: var(--font-heading); font-size: 0.75rem; color: var(--color-text-muted); }
 .row-name { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.03em; color: var(--color-text-primary); }
 .row-category { font-family: var(--font-flavor); font-style: italic; font-size: 0.9rem; color: var(--color-text-muted); }
-.row-price { font-family: var(--font-heading); font-size: 0.85rem; color: var(--color-gold); }
+.row-price { font-family: var(--font-body); font-size: 1rem; color: var(--color-gold); }
 .row-dash { color: var(--color-text-muted); font-size: 0.85rem; }
 .superior-badge { font-size: 0.75rem; color: var(--color-gold); }
 
@@ -325,7 +321,7 @@ function formatPrice(base: number, max: number | null, unit: string | null) {
   .category-select { width: 100%; box-sizing: border-box; }
   .search-bar { margin-left: 0; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
-  .list-header-row, .list-row { grid-template-columns: 1fr 100px 40px; }
+  .list-header-row, .list-row { grid-template-columns: 1fr 120px; }
   .col-category { display: none; }
   .list-body { max-height: 380px; }
 }

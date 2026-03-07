@@ -5,12 +5,11 @@
 
     <!-- ── HERO ───────────────────────────────────────────── -->
     <section class="hero">
-      <img src="/logoclair.png" alt="Wicthu" class="hero-logo">
+      <img src="/logoWicthu.png" alt="Wicthu" class="hero-logo">
       <p class="hero-tagline">Compagnon de l'Investigateur</p>
       <p class="hero-description">
-        Un outil de référence pour les joueurs de <em>L'Appel de Cthulhu</em> —
-        consultez les règles, gérez vos fiches et explorez les archives occultes
-        sans jamais quitter la table de jeu.
+        Un outil de référence pour les Guardiens et joueurs de <em>L'Appel de Cthulhu</em> —
+        consultez les archives et gérer vos fiches d'investigateurs.
       </p>
     </section>
 

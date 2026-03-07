@@ -33,7 +33,7 @@ async function signOut() {
     <div class="header-inner">
       <!-- Logo -->
       <NuxtLink to="/" class="header-logo" aria-label="Accueil" @click="closeMenu">
-        <img src="/logoclair.png" alt="Wicthu" class="logo-img">
+        <img src="/logoWicthu.png" alt="Wicthu" class="logo-img">
       </NuxtLink>
 
       <!-- Navigation desktop -->

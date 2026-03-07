@@ -24,3 +24,10 @@ logs
 !.env.example
 
 /app/generated/prisma
+
+# Fichiers générés / artifacts
+fiche_investigateur.pdf
+pdf-fields.json
+
+# IDE
+.claude/

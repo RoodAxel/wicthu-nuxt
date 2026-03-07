@@ -4,7 +4,7 @@ useHead({
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
   ],
   link: [
-    { rel: 'icon', href: '/logoclair.png' }
+    { rel: 'icon', href: '/logoWicthu.png' }
   ],
   htmlAttrs: {
     lang: 'fr'
@@ -12,7 +12,7 @@ useHead({
 })
 
 useSeoMeta({
-  title: "Wicthu — Compagnon de l'Investigateur",
+  title: 'Wicthu — Compagnon de l \'Investigateur',
   description: 'Compagnon de jeu pour L\'Appel de Cthulhu.'
 })
 </script>
