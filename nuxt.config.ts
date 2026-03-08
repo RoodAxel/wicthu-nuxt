@@ -36,6 +36,10 @@ export default defineNuxtConfig({
     '/': { prerender: true }
   },
 
+  nitro: {
+    serverAssets: [{ baseName: 'pdfs', dir: './server/assets/pdfs' }]
+  },
+
   compatibilityDate: '2025-01-15',
 
   eslint: {

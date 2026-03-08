@@ -1,6 +1,4 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { PDFDocument } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
 
@@ -41,7 +39,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<CharacterFormData>(event)
 
   // ── 1. Remplissage du PDF avec pdf-lib ─────────────────────
-  const pdfBytes = readFileSync(resolve('public/fiche_investigateur.pdf'))
+  const pdfBytes = await useStorage('assets:pdfs').getItemRaw('fiche_investigateur.pdf')
   const pdfDoc = await PDFDocument.load(pdfBytes)
   const form = pdfDoc.getForm()
 
