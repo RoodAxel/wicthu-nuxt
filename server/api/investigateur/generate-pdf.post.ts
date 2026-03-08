@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError, getRequestHeader } from 'h3'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
 
 interface CharacterFormData {
@@ -50,12 +50,18 @@ export default defineEventHandler(async (event) => {
   const form = pdfDoc.getForm()
 
   const carac = ['FOR', 'CON', 'TAI', 'DEX', 'APP', 'INT', 'POU', 'EDU'] as const
-  const skills = ['ANT','ARC','ART','BAR','BIB','CHA','DIS','DRO','ECO','ELE',
+  const skills = ['ANT','ARC','ART','BAR','BIB','CHA',
+    'CD1','CD2','CR1','COM','COD','CEL','CRE','CRO',
+    'DIS','DRO','ECO','ELE',
     'EQU','ESQ','EST','GRI','HIS','IPO','ITI','LAN','MEC','MED','MYT','NAG',
     'NAT','OCC','ORI','PER','PIL','PIC','PIS','PLO','PRE','PSA','PSO','SAU',
     'SCI','SUR','TOC'] as const
   const customGroups = [
+    ['AR1', 'AR2', 'AR3'],
+    ['CD3', 'CD4'],
+    ['CR2', 'CR3'],
     ['LG1', 'LG2', 'LG3'],
+    ['PL1'],
     ['SC1', 'SC2', 'SC3'],
     ['CP1', 'CP2', 'CP3', 'CP4', 'CP5']
   ] as const
@@ -110,6 +116,8 @@ export default defineEventHandler(async (event) => {
   setField(form, 'depencesCourantes', body.depencesCourantes ?? '')
   setField(form, 'Espèces', body['Espèces'] ?? '')
 
+  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  pdfDoc.getForm().updateFieldAppearances(helvetica)
   const filledBytes = await pdfDoc.save()
 
   // ── 2. Upload sur Supabase Storage (API externe) ───────────

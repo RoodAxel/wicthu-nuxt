@@ -45,7 +45,7 @@
 
         <NuxtLink to="/arme" class="resource-card">
           <div class="resource-body">
-            <span class="resource-name">Armurerie</span>
+            <span class="resource-name">Armes</span>
             <span class="resource-desc">Arsenal complet — armes, dégâts, portées et compétences associées.</span>
           </div>
           <span class="resource-arrow">→</span>

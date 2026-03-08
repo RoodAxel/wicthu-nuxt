@@ -262,3 +262,12 @@ model specialite_divinite {
   entite_specialite_divinit                                entite_specialite_divinit?
   entite_specialite_divinite_entite_idToentite             entite?                    @relation("specialite_divinite_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_specialiteDivinite_entiteId")
 }
+
+model Investigateur {
+  id        Int      @id @default(autoincrement())
+  userId    String   @db.Uuid
+  nom       String   @default("") @db.VarChar(255)
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

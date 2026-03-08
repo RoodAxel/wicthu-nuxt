@@ -6,7 +6,7 @@ const route = useRoute()
 
 const resources = [
   { label: 'Compétences', to: '/competence' },
-  { label: 'Armurerie', to: '/arme' },
+  { label: 'Armes', to: '/arme' },
   { label: 'Équip. classique', to: '/equipement-classique' },
   { label: 'Équip. moderne', to: '/equipement-moderne' },
   { label: 'Ouvrages occultes', to: '/ouvrage-occulte' },
@@ -52,7 +52,8 @@ async function signOut() {
       <!-- Auth desktop -->
       <div class="header-auth">
         <template v-if="user">
-          <span class="auth-email">{{ user.email }}</span>
+          <NuxtLink to="/investigateur/creer" class="auth-btn auth-btn--accent">+ Nouvelle fiche</NuxtLink>
+          <NuxtLink to="/profil" class="auth-email auth-profile" :class="{ active: route.path === '/profil' }">{{ user.email }}</NuxtLink>
           <button class="auth-btn" @click="signOut">Déconnexion</button>
         </template>
         <NuxtLink v-else to="/auth/login" class="auth-btn">Connexion</NuxtLink>
@@ -85,7 +86,8 @@ async function signOut() {
         </nav>
         <div class="mobile-auth">
           <template v-if="user">
-            <span class="mobile-auth-email">{{ user.email }}</span>
+            <NuxtLink to="/investigateur/creer" class="mobile-nav-link" @click="closeMenu">+ Nouvelle fiche</NuxtLink>
+            <NuxtLink to="/profil" class="mobile-nav-link" :class="{ active: route.path === '/profil' }" @click="closeMenu">Mon profil</NuxtLink>
             <button class="auth-btn" @click="signOut">Déconnexion</button>
           </template>
           <NuxtLink v-else to="/auth/login" class="auth-btn" @click="closeMenu">Connexion</NuxtLink>
@@ -188,6 +190,20 @@ async function signOut() {
   transition: all var(--transition-fast);
 }
 .auth-btn:hover { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
+.auth-btn--accent {
+  background: var(--color-arcane);
+  color: var(--color-deep);
+  border-color: var(--color-arcane);
+}
+.auth-btn--accent:hover { opacity: 0.85; color: var(--color-deep); border-color: var(--color-arcane); }
+.auth-profile {
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-xs);
+  transition: color var(--transition-fast);
+}
+.auth-profile:hover { color: var(--color-arcane); }
+.auth-profile.active { color: var(--color-arcane); }
 
 /* ── HAMBURGER ─────────────────────────────────────────── */
 .hamburger {

@@ -9,6 +9,7 @@ const { data: weapons, status, error } = await useFetch<WeaponWithSkill[]>('/api
 
 const search = ref('')
 const eraFilter = ref<'all' | 'classique' | 'moderne'>('all')
+const expandedId = ref<number | null>(null)
 
 const categories = computed(() => {
   if (!weapons.value) return []
@@ -34,13 +35,17 @@ const stats = computed(() => ({
   classic: weapons.value?.filter(w => w.epoque.includes('classique')).length ?? 0,
   modern: weapons.value?.filter(w => w.epoque.includes('moderne')).length ?? 0,
 }))
+
+function toggleRow(id: number) {
+  expandedId.value = expandedId.value === id ? null : id
+}
 </script>
 
 <template>
   <main class="page-wrapper">
 
     <div class="page-header">
-      <h1 class="page-title">Armurerie</h1>
+      <h1 class="page-title">Armes</h1>
       <p class="page-subtitle">Arsenal des investigateurs et équipements de combat</p>
     </div>
 
@@ -102,35 +107,29 @@ const stats = computed(() => ({
     </div>
 
     <div v-else class="table-outer">
-      <div class="table-scroll">
-        <div class="list-header-row">
-          <span class="col-name">Arme</span>
-          <span class="col-category">Catégorie</span>
-          <span class="col-skill">Compétence</span>
-          <span class="col-damage">Dégâts</span>
-          <span class="col-range">Portée</span>
-          <span class="col-cadence">Cadence</span>
-          <span class="col-capacity">Cap.</span>
-          <span class="col-failure">Panne</span>
-          <span class="col-price">Prix</span>
-          <span class="col-era">Époque</span>
-        </div>
+      <div class="list-header-row">
+        <span class="col-name">Arme</span>
+        <span class="col-category">Catégorie</span>
+        <span class="col-skill">Compétence</span>
+        <span class="col-damage">Dégâts</span>
+        <span class="col-range">Portée</span>
+        <span class="col-price">Prix</span>
+        <span class="col-era">Époque</span>
+        <span class="col-chevron" />
+      </div>
 
-        <div class="list-body">
+      <div class="list-body">
+        <template v-for="(weapon, index) in filtered" :key="weapon.id">
           <div
-            v-for="(weapon, index) in filtered"
-            :key="weapon.id"
             class="list-row"
-            :class="index % 2 === 0 ? 'row-even' : 'row-odd'"
+            :class="[index % 2 === 0 ? 'row-even' : 'row-odd', { 'row-expanded': expandedId === weapon.id }]"
+            @click="toggleRow(weapon.id)"
           >
             <span class="col-name row-name">{{ weapon.name }}</span>
             <span class="col-category row-muted">{{ weapon.category.toLowerCase() }}</span>
             <span class="col-skill row-skill">{{ weapon.competence.name }}</span>
             <span class="col-damage row-value">{{ weapon.damage ?? '—' }}</span>
             <span class="col-range row-muted">{{ weapon.range ?? '—' }}</span>
-            <span class="col-cadence row-muted">{{ weapon.cadence ?? '—' }}</span>
-            <span class="col-capacity row-muted">{{ weapon.capacity ?? '—' }}</span>
-            <span class="col-failure row-failure">{{ weapon.failure ?? '—' }}</span>
             <span class="col-price">
               <span v-if="weapon.classic_price" class="price-classic">{{ weapon.classic_price }}$</span>
               <span v-if="weapon.classic_price && weapon.modern_price" class="price-sep">/</span>
@@ -142,8 +141,81 @@ const stats = computed(() => ({
                 {{ era === 'classique' ? 'C' : era === 'moderne' ? 'M' : era }}
               </span>
             </span>
+            <span class="col-chevron chevron" :class="{ open: expandedId === weapon.id }">›</span>
           </div>
-        </div>
+
+          <Transition name="expand">
+            <div v-if="expandedId === weapon.id" class="detail-panel" :class="index % 2 === 0 ? 'row-even' : 'row-odd'">
+              <div class="detail-grid">
+                <div class="detail-section">
+                  <h3 class="detail-section-title">Combat</h3>
+                  <div class="detail-fields">
+                    <div class="detail-field">
+                      <span class="field-label">Dégâts</span>
+                      <span class="field-value row-value">{{ weapon.damage ?? '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Dégâts moyens</span>
+                      <span class="field-value row-value">{{ weapon.average_dmg ?? '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Portée</span>
+                      <span class="field-value">{{ weapon.range ?? '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Cadence</span>
+                      <span class="field-value">{{ weapon.cadence ?? '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Capacité</span>
+                      <span class="field-value">{{ weapon.capacity ?? '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Panne</span>
+                      <span class="field-value row-failure">{{ weapon.failure ?? '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <h3 class="detail-section-title">Infos</h3>
+                  <div class="detail-fields">
+                    <div class="detail-field">
+                      <span class="field-label">Compétence</span>
+                      <span class="field-value row-skill">{{ weapon.competence.name }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Catégorie</span>
+                      <span class="field-value">{{ weapon.category }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Époque</span>
+                      <span class="field-value era-list">
+                        <span v-for="era in weapon.epoque" :key="era" class="era-badge" :class="`era-${era}`">
+                          {{ era }}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <h3 class="detail-section-title">Prix</h3>
+                  <div class="detail-fields">
+                    <div class="detail-field">
+                      <span class="field-label">Époque classique</span>
+                      <span class="field-value price-classic">{{ weapon.classic_price ? weapon.classic_price + ' $' : '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <span class="field-label">Époque moderne</span>
+                      <span class="field-value price-modern">{{ weapon.modern_price ? weapon.modern_price + ' $' : '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </template>
       </div>
     </div>
 
@@ -153,7 +225,7 @@ const stats = computed(() => ({
 <style scoped>
 .page-wrapper {
   padding: var(--space-xl);
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -358,26 +430,13 @@ const stats = computed(() => ({
   overflow: hidden;
 }
 
-.table-scroll {
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-.table-scroll::-webkit-scrollbar { height: 6px; }
-.table-scroll::-webkit-scrollbar-track { background: transparent; }
-.table-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
-}
-
 .list-header-row,
 .list-row {
   display: grid;
-  grid-template-columns: 200px 140px 140px 80px 70px 90px 80px 60px 60px 100px 70px;
+  grid-template-columns: 1fr 140px 160px 90px 100px 120px 70px 28px;
   align-items: center;
   padding: var(--space-sm) var(--space-lg);
   gap: var(--space-md);
-  min-width: 1200px;
 }
 
 .list-header-row {
@@ -395,7 +454,7 @@ const stats = computed(() => ({
 }
 
 .list-body {
-  max-height: 560px;
+  max-height: 640px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
@@ -410,10 +469,29 @@ const stats = computed(() => ({
 
 .list-row {
   transition: background var(--transition-fast);
+  cursor: pointer;
+  user-select: none;
 }
 .row-even { background: var(--color-surface); }
 .row-odd  { background: var(--color-deep); }
 .list-row:hover { background: var(--color-elevated); }
+.list-row.row-expanded { border-bottom: 1px solid var(--color-border); }
+
+/* ── CHEVRON ─────────────────────────────────────────────── */
+.chevron {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast);
+  transform: rotate(0deg);
+}
+.chevron.open {
+  transform: rotate(90deg);
+  color: var(--color-crimson);
+}
 
 /* ── CELL STYLES ─────────────────────────────────────────── */
 .row-name {
@@ -422,9 +500,6 @@ const stats = computed(() => ({
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .row-muted {
@@ -478,6 +553,11 @@ const stats = computed(() => ({
   gap: 4px;
   flex-wrap: wrap;
 }
+.era-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .era-badge {
   font-family: var(--font-heading);
   font-size: 0.5rem;
@@ -497,7 +577,82 @@ const stats = computed(() => ({
   border: 1px solid var(--color-arcane-dim);
 }
 
+/* ── DETAIL PANEL ────────────────────────────────────────── */
+.detail-panel {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border-glow);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xl);
+}
+
+.detail-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.detail-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.field-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.field-value {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+/* ── EXPAND TRANSITION ───────────────────────────────────── */
+.expand-enter-active,
+.expand-leave-active {
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  max-height: 300px;
+  overflow: hidden;
+}
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .list-header-row,
+  .list-row {
+    grid-template-columns: 1fr 100px 80px 28px;
+  }
+  .col-category, .col-skill, .col-damage, .col-range, .col-price, .col-era { display: none; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .flavor-quote p { font-size: 1rem; }
@@ -508,6 +663,6 @@ const stats = computed(() => ({
   .category-select { width: 100%; box-sizing: border-box; }
   .search-bar { margin-left: 0; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
-  .list-body { max-height: 380px; }
+  .list-body { max-height: 480px; }
 }
 </style>
