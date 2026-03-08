@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, createError, getRequestHeader } from 'h3'
 import { PDFDocument } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
 
@@ -39,10 +39,13 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<CharacterFormData>(event)
 
   // ── 1. Remplissage du PDF avec pdf-lib ─────────────────────
-  const pdfBytes = await useStorage('assets:pdfs').getItemRaw('fiche_investigateur.pdf')
-  if (!pdfBytes) {
-    throw createError({ statusCode: 500, statusMessage: 'PDF template not found in server assets' })
+  const host = getRequestHeader(event, 'host') ?? ''
+  const protocol = host.includes('localhost') ? 'http' : 'https'
+  const pdfResponse = await fetch(`${protocol}://${host}/fiche_investigateur.pdf`)
+  if (!pdfResponse.ok) {
+    throw createError({ statusCode: 500, statusMessage: `PDF template fetch failed: ${pdfResponse.status}` })
   }
+  const pdfBytes = await pdfResponse.arrayBuffer()
   const pdfDoc = await PDFDocument.load(pdfBytes)
   const form = pdfDoc.getForm()
 
