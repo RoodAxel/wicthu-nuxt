@@ -36,7 +36,6 @@
 
       <div class="resources-grid">
         <NuxtLink to="/competence" class="resource-card">
-          <span class="resource-icon">📜</span>
           <div class="resource-body">
             <span class="resource-name">Compétences</span>
             <span class="resource-desc">Liste complète des savoir-faire, valeurs de base et catégories.</span>
@@ -45,7 +44,6 @@
         </NuxtLink>
 
         <NuxtLink to="/arme" class="resource-card">
-          <span class="resource-icon">🔫</span>
           <div class="resource-body">
             <span class="resource-name">Armurerie</span>
             <span class="resource-desc">Arsenal complet — armes, dégâts, portées et compétences associées.</span>
@@ -54,7 +52,6 @@
         </NuxtLink>
 
         <NuxtLink to="/equipement-classique" class="resource-card">
-          <span class="resource-icon">🎒</span>
           <div class="resource-body">
             <span class="resource-name">Équipement Classique</span>
             <span class="resource-desc">Matériel des années 1920 — prix, catégories et disponibilité.</span>
@@ -63,7 +60,6 @@
         </NuxtLink>
 
         <NuxtLink to="/equipement-moderne" class="resource-card">
-          <span class="resource-icon">🔦</span>
           <div class="resource-body">
             <span class="resource-name">Équipement Moderne</span>
             <span class="resource-desc">Matériel contemporain — prix, catégories et disponibilité.</span>
@@ -72,7 +68,6 @@
         </NuxtLink>
 
         <NuxtLink to="/ouvrage-occulte" class="resource-card">
-          <span class="resource-icon">📖</span>
           <div class="resource-body">
             <span class="resource-name">Ouvrages Occultes</span>
             <span class="resource-desc">Volumes maudits, leur contenu et leurs effets sur la Santé Mentale.</span>
@@ -81,7 +76,6 @@
         </NuxtLink>
 
         <NuxtLink to="/manie" class="resource-card">
-          <span class="resource-icon">🧠</span>
           <div class="resource-body">
             <span class="resource-name">Manies</span>
             <span class="resource-desc">Troubles obsessionnels issus du contact avec l'indicible.</span>
@@ -90,31 +84,12 @@
         </NuxtLink>
 
         <NuxtLink to="/phobie" class="resource-card">
-          <span class="resource-icon">😱</span>
           <div class="resource-body">
             <span class="resource-name">Phobies</span>
             <span class="resource-desc">Terreurs irrationnelles ancrées dans la psyché des survivants.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
-
-        <div class="resource-card resource-soon">
-          <span class="resource-icon">🕯️</span>
-          <div class="resource-body">
-            <span class="resource-name">Sorts</span>
-            <span class="resource-desc">Rituels et invocations issus des grimoires interdits.</span>
-          </div>
-          <span class="resource-badge">Bientôt</span>
-        </div>
-
-        <div class="resource-card resource-soon">
-          <span class="resource-icon">📖</span>
-          <div class="resource-body">
-            <span class="resource-name">Ouvrages</span>
-            <span class="resource-desc">Volumes maudits, leur contenu et leurs effets sur la Santé Mentale.</span>
-          </div>
-          <span class="resource-badge">Bientôt</span>
-        </div>
       </div>
     </section>
 
