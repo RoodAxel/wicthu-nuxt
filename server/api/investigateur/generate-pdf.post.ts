@@ -40,6 +40,9 @@ export default defineEventHandler(async (event) => {
 
   // ── 1. Remplissage du PDF avec pdf-lib ─────────────────────
   const pdfBytes = await useStorage('assets:pdfs').getItemRaw('fiche_investigateur.pdf')
+  if (!pdfBytes) {
+    throw createError({ statusCode: 500, statusMessage: 'PDF template not found in server assets' })
+  }
   const pdfDoc = await PDFDocument.load(pdfBytes)
   const form = pdfDoc.getForm()
 
