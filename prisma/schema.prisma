@@ -58,8 +58,10 @@ model Competence {
   // Self-relation
   category        Competence?  @relation("CompetenceCategory", fields: [categoryId], references: [id])
   children        Competence[] @relation("CompetenceCategory")
-  weapons         arme[]       @relation("arme_competenceTocompetence")
-  weaponsOptional arme[]       @relation("arme_competence_idTocompetence")
+  weapons              arme[]                  @relation("arme_competenceTocompetence")
+  weaponsOptional      arme[]                  @relation("arme_competence_idTocompetence")
+  occupationSkills     OccupationSkill[]
+  occupationSkillOpts  OccupationSkillOption[]
 }
 
 model competence_entite {
@@ -171,13 +173,45 @@ model manie {
   description String @db.VarChar(255)
 }
 
+enum OccupationSkillType {
+  FIXED
+  FIXED_SPEC
+  FREE_SPEC
+  CHOICE_FROM_LIST
+  FREE_CHOICE
+}
+
 model occupation {
-  id               Int     @id @default(autoincrement())
-  name             String  @db.VarChar(255)
-  competences      String?
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(255)
   credit_min       Int?
   credit_max       Int?
-  point_competence String? @db.VarChar(255)
+  point_competence String?            @db.VarChar(255)
+  is_lovecraftian  Boolean            @default(false)
+  is_modern        Boolean            @default(false)
+  skills           OccupationSkill[]
+}
+
+model OccupationSkill {
+  id            Int                    @id @default(autoincrement())
+  occupationId  Int
+  occupation    occupation             @relation(fields: [occupationId], references: [id], onDelete: Cascade)
+  type          OccupationSkillType
+  competenceId  Int?
+  competence    Competence?            @relation(fields: [competenceId], references: [id], onDelete: SetNull)
+  specName      String?                @db.VarChar(255)
+  choiceCount   Int?
+  note          String?                @db.VarChar(255)
+  sortOrder     Int                    @default(0)
+  options       OccupationSkillOption[]
+}
+
+model OccupationSkillOption {
+  id                Int             @id @default(autoincrement())
+  occupationSkillId Int
+  occupationSkill   OccupationSkill @relation(fields: [occupationSkillId], references: [id], onDelete: Cascade)
+  competenceId      Int
+  competence        Competence      @relation(fields: [competenceId], references: [id], onDelete: Cascade)
 }
 
 model option_combat {

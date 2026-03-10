@@ -1,6 +1,91 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
+// ── TYPES OCCUPATION ─────────────────────────────────────────────────────────
+
+type OccupationListItem = {
+  id: number; name: string
+  credit_min: number | null; credit_max: number | null
+  point_competence: string | null
+  is_lovecraftian: boolean; is_modern: boolean
+}
+type OccupationSkill = {
+  type: string
+  competence: { name: string } | null
+  options: { competence: { name: string } }[]
+}
+type OccupationDetail = OccupationListItem & { skills: OccupationSkill[] }
+
+// ── ÉTAT OCCUPATION ──────────────────────────────────────────────────────────
+
+const { data: occupationList } = useFetch<OccupationListItem[]>('/api/occupation')
+const selectedOccupationId = ref<number | null>(null)
+const occupationDetail     = ref<OccupationDetail | null>(null)
+
+// ── MAPPING COMPÉTENCES DB → CLÉS FORMULAIRE ─────────────────────────────────
+
+const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
+  'Anthropologie':      ['ANT_0'],
+  'Archéologie':        ['ARC_0'],
+  'Arts et métiers':    ['ART_0', 'AR1_0', 'AR2_0', 'AR3_0'],
+  'Baratin':            ['BAR_0'],
+  'Bibliothèque':       ['BIB_0'],
+  'Charme':             ['CHA_0'],
+  'Combat à distance':  ['CD1_0', 'CD2_0', 'CD3_0', 'CD4_0'],
+  'Combat rapproché':   ['CR1_0', 'CR2_0', 'CR3_0'],
+  'Conduite':           ['COD_0'],
+  'Crochetage':         ['CRE_0'],
+  'Discrétion':         ['DIS_0'],
+  'Droit':              ['DRO_0'],
+  'Écouter':            ['ECO_0'],
+  'Électricité':        ['ELE_0'],
+  'Équitation':         ['EQU_0'],
+  'Esquive':            ['ESQ_0'],
+  'Estimation':         ['EST_0'],
+  'Grimper':            ['GRI_0'],
+  'Histoire':           ['HIS_0'],
+  'Imposture':          ['IPO_0'],
+  'Intimidation':       ['ITI_0'],
+  'Langue maternelle':  ['LAN_0'],
+  'Langues':            ['LG1_0', 'LG2_0', 'LG3_0'],
+  'Mécanique':          ['MEC_0'],
+  'Médecine':           ['MED_0'],
+  'Nager':              ['NAG_0'],
+  'Naturalisme':        ['NAT_0'],
+  'Occultisme':         ['OCC_0'],
+  'Orientation':        ['ORI_0'],
+  'Persuasion':         ['PER_0'],
+  'Pickpocket':         ['PIC_0'],
+  'Pilotage':           ['PIL_0', 'PL1_0'],
+  'Pister':             ['PIS_0'],
+  'Plongée':            ['PLO_0'],
+  'Premiers soins':     ['PRE_0'],
+  'Psychanalyse':       ['PSA_0'],
+  'Psychologie':        ['PSO_0'],
+  'Sauter':             ['SAU_0'],
+  'Sciences':           ['SCI_0', 'SC1_0', 'SC2_0', 'SC3_0'],
+  'Survie':             ['SUR_0'],
+  'Trouver Objet Caché': ['TOC_0'],
+}
+
+const highlightedKeys = computed((): Set<string> => {
+  const keys = new Set<string>()
+  if (!occupationDetail.value) return keys
+  for (const skill of occupationDetail.value.skills) {
+    const names: string[] = []
+    if (['FIXED', 'FIXED_SPEC', 'FREE_SPEC'].includes(skill.type) && skill.competence)
+      names.push(skill.competence.name)
+    else if (skill.type === 'CHOICE_FROM_LIST')
+      skill.options.forEach(o => names.push(o.competence.name))
+    names.forEach(n => (SKILL_TO_FORM_KEYS[n] ?? []).forEach(k => keys.add(k)))
+  }
+  return keys
+})
+
+function isGroupHighlighted(...keys: string[]) {
+  return keys.some(k => highlightedKeys.value.has(k))
+}
+
 const route = useRoute()
 const router = useRouter()
 
@@ -100,6 +185,24 @@ const mvt = computed(() => {
   if (forVal > tai && dex > tai) return '9'
   return '8'
 })
+
+// ── WATCHERS OCCUPATION (après form) ─────────────────────────────────────────
+
+watch(selectedOccupationId, async (id) => {
+  if (!id) { occupationDetail.value = null; return }
+  const occ = occupationList.value?.find(o => o.id === id)
+  if (occ) form['Occupation'] = occ.name
+  occupationDetail.value = await $fetch<OccupationDetail>(`/api/occupation/${id}`)
+})
+
+// En mode édition : retrouver l'occupation depuis le nom sauvegardé
+watch([occupationList, () => form['Occupation']], () => {
+  if (selectedOccupationId.value || !occupationList.value || !form['Occupation']) return
+  const match = occupationList.value.find(
+    o => o.name.toLowerCase() === form['Occupation']!.toLowerCase()
+  )
+  if (match) selectedOccupationId.value = match.id
+}, { immediate: true })
 
 // Synchronise les dérivées calculées dans form pour l'envoi
 watchEffect(() => {
@@ -288,7 +391,22 @@ const backgroundFields = [
           </div>
           <div class="field-group col-2">
             <label class="field-label" for="Occupation">Profession</label>
-            <input id="Occupation" v-model="form['Occupation']" class="field-input" type="text" placeholder="Détective, Médecin…">
+            <select
+              id="Occupation"
+              v-model="selectedOccupationId"
+              class="field-select"
+            >
+              <option :value="null">— Choisir une occupation —</option>
+              <option v-for="occ in occupationList" :key="occ.id" :value="occ.id">{{ occ.name }}</option>
+            </select>
+            <div v-if="occupationDetail" class="occupation-hint">
+              <span v-if="occupationDetail.credit_min !== null || occupationDetail.credit_max !== null">
+                Crédit : {{ occupationDetail.credit_min ?? '?' }}–{{ occupationDetail.credit_max ?? '?' }}%
+              </span>
+              <span v-if="occupationDetail.point_competence">
+                · Points : {{ occupationDetail.point_competence }}
+              </span>
+            </div>
           </div>
           <div class="field-group">
             <label class="field-label" for="age">Âge</label>
@@ -377,8 +495,9 @@ const backgroundFields = [
       <section class="form-section">
         <h2 class="section-title">Compétences</h2>
         <p class="section-hint">Valeur finale après répartition — les ½ et ⅕ sont calculés automatiquement.</p>
+        <p v-if="occupationDetail" class="highlight-hint">Les compétences <span class="highlight-sample">surlignées</span> sont recommandées par votre occupation.</p>
         <div class="comp-grid">
-          <div v-for="c in competences" :key="c.key" class="comp-row">
+          <div v-for="c in competences" :key="c.key" class="comp-row" :class="{ 'comp-highlighted': highlightedKeys.has(c.key) }">
             <span class="comp-name">{{ c.label }}</span>
             <span class="comp-base">{{ c.base }}%</span>
             <input v-model="form[c.key]" class="comp-input" type="number" min="0" max="100" :placeholder="String(c.base)">
@@ -390,42 +509,42 @@ const backgroundFields = [
       <section class="form-section">
         <h2 class="section-title">Combat, Art, Langues, Sciences & Compétences personnelles</h2>
         <div class="variable-grid">
-          <div class="variable-group">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('ART_0','AR1_0','AR2_0','AR3_0') }">
             <h3 class="variable-subtitle">Art et métier</h3>
             <div v-for="i in [1,2,3]" :key="`ar${i}`" class="variable-row">
               <input v-model="form[`AR${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…">
               <input v-model="form[`AR${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CD1_0','CD2_0','CD3_0','CD4_0') }">
             <h3 class="variable-subtitle">Combat à distance (custom)</h3>
             <div v-for="i in [3,4]" :key="`cd${i}`" class="variable-row">
               <input v-model="form[`CD${i}_label`]" class="field-input label-input" type="text" placeholder="Arme…">
               <input v-model="form[`CD${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CR1_0','CR2_0','CR3_0') }">
             <h3 class="variable-subtitle">Combat rapproché (custom)</h3>
             <div v-for="i in [2,3]" :key="`cr${i}`" class="variable-row">
               <input v-model="form[`CR${i}_label`]" class="field-input label-input" type="text" placeholder="Arme…">
               <input v-model="form[`CR${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('LG1_0','LG2_0','LG3_0') }">
             <h3 class="variable-subtitle">Langues étrangères</h3>
             <div v-for="i in [1,2,3]" :key="`lg${i}`" class="variable-row">
               <input v-model="form[`LG${i}_label`]" class="field-input label-input" type="text" placeholder="Langue…">
               <input v-model="form[`LG${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('PIL_0','PL1_0') }">
             <h3 class="variable-subtitle">Pilotage (custom)</h3>
             <div class="variable-row">
               <input v-model="form['PL1_label']" class="field-input label-input" type="text" placeholder="Véhicule…">
               <input v-model="form['PL1_0']" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('SCI_0','SC1_0','SC2_0','SC3_0') }">
             <h3 class="variable-subtitle">Sciences</h3>
             <div v-for="i in [1,2,3]" :key="`sc${i}`" class="variable-row">
               <input v-model="form[`SC${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…">
@@ -624,6 +743,60 @@ const backgroundFields = [
   border-color: var(--color-arcane-dim);
   box-shadow: var(--shadow-glow);
 }
+
+/* ── OCCUPATION SELECT ───────────────────────────────────── */
+.field-select {
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-field-input);
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.field-select:focus {
+  border-color: var(--color-arcane-dim);
+  box-shadow: var(--shadow-glow);
+}
+.field-select option { background: var(--color-elevated); color: var(--color-text-primary); }
+.occupation-hint {
+  margin-top: var(--space-xs);
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-section-hint);
+  color: var(--color-arcane);
+  display: flex; gap: var(--space-sm); flex-wrap: wrap;
+}
+
+/* ── HIGHLIGHT ───────────────────────────────────────────── */
+.highlight-hint {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-section-hint);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+}
+.highlight-sample {
+  color: var(--color-gold);
+  background: rgba(184, 146, 74, 0.08);
+  padding: 0 4px;
+  border-radius: 2px;
+}
+.comp-highlighted {
+  background: rgba(184, 146, 74, 0.07) !important;
+  border-left: 2px solid var(--color-gold);
+}
+.comp-highlighted .comp-name { color: var(--color-gold); }
+.variable-group--highlighted {
+  outline: 1px solid rgba(184, 146, 74, 0.35);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+.variable-group--highlighted .variable-subtitle { color: var(--color-gold); }
 
 /* ── CARACTÉRISTIQUES ────────────────────────────────────── */
 .carac-table { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }

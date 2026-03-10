@@ -6,6 +6,7 @@ const route = useRoute()
 
 const resources = [
   { label: 'Compétences', to: '/ressources/competence' },
+  { label: 'Occupations', to: '/ressources/occupation' },
   { label: 'Armes', to: '/ressources/arme' },
   { label: 'Équip. classique', to: '/ressources/equipement-classique' },
   { label: 'Équip. moderne', to: '/ressources/equipement-moderne' },
