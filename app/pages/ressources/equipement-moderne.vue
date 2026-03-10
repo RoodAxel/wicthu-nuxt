@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { equipement_moderne } from '@prisma/client'
 
-const { data: items, status, error } = await useFetch<equipement_moderne[]>('/api/equipement-moderne')
+const { data: items, status, error } = useFetch<equipement_moderne[]>('/api/equipement-moderne')
 
 const search = ref('')
 const categoryFilter = ref<string | null>(null)

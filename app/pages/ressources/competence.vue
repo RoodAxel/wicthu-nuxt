@@ -5,7 +5,7 @@ type CompetenceWithCategory = Competence & {
   category: { id: number; name: string } | null
 }
 
-const { data: competences, status, error } = await useFetch<CompetenceWithCategory[]>('/api/competence')
+const { data: competences, status, error } = useFetch<CompetenceWithCategory[]>('/api/competence')
 
 const search = ref('')
 const activeFilter = ref<'all' | 'category' | 'rare' | 'modern'>('all')

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ouvrage_occulte } from '@prisma/client'
 
-const { data: ouvrages, status, error } = await useFetch<ouvrage_occulte[]>('/api/ouvrage-occulte')
+const { data: ouvrages, status, error } = useFetch<ouvrage_occulte[]>('/api/ouvrage-occulte')
 
 const search = ref('')
 const expanded = ref<number | null>(null)

@@ -10,6 +10,7 @@ const resources = [
   { label: 'Équip. classique', to: '/ressources/equipement-classique' },
   { label: 'Équip. moderne', to: '/ressources/equipement-moderne' },
   { label: 'Ouvrages occultes', to: '/ressources/ouvrage-occulte' },
+  { label: 'Artefacts', to: '/ressources/artefact' },
   { label: 'Manies', to: '/ressources/manie' },
   { label: 'Phobies', to: '/ressources/phobie' },
 ]

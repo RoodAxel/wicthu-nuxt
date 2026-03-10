@@ -22,7 +22,7 @@ async function handleRegister() {
     email: email.value,
     password: password.value,
     options: {
-      emailRedirectTo: `${config.public.siteUrl}`
+      emailRedirectTo: `${config.public.siteUrl}/auth/login`
     }
   })
   loading.value = false

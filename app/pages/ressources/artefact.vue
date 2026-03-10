@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import type { manie } from '@prisma/client'
+import type { artefact } from '@prisma/client'
 
-const { data: manies, status, error } = useFetch<manie[]>('/api/manie')
+const { data: artefacts, status, error } = useFetch<artefact[]>('/api/artefact')
 
 const search = ref('')
-const random = ref<manie | null>(null)
+const expandedId = ref<number | null>(null)
+
+function toggleExpand(id: number) {
+  expandedId.value = expandedId.value === id ? null : id
+}
 
 const filtered = computed(() => {
-  if (!manies.value) return []
+  if (!artefacts.value) return []
   const q = search.value.toLowerCase()
-  return manies.value.filter(m =>
-    m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+  return artefacts.value.filter(a =>
+    a.name.toLowerCase().includes(q) ||
+    (a.description ?? '').toLowerCase().includes(q) ||
+    (a.use_by ?? '').toLowerCase().includes(q)
   )
 })
-
-function pickRandom() {
-  if (!manies.value?.length) return
-  const pool = manies.value
-  random.value = pool[Math.floor(Math.random() * pool.length)]!
-}
 </script>
 
 <template>
   <main class="page-wrapper">
 
     <div class="page-header">
-      <h1 class="page-title">Manies</h1>
-      <p class="page-subtitle">Troubles obsessionnels issus du contact avec l'indicible</p>
+      <h1 class="page-title">Artefacts</h1>
+      <p class="page-subtitle">Objets anciens et reliques aux pouvoirs insondables</p>
     </div>
 
     <blockquote class="flavor-quote">
-      <p>L'esprit humain, confronté à l'impensable, se brise de mille façons — chacune plus étrange et pathétique que la précédente.</p>
-      <cite>— Dr. Armitage, Miskatonic University, 1921</cite>
+      <p>Certains objets ne devraient jamais être touchés — leur simple existence suffit à corrompre l'âme de celui qui les contemple.</p>
+      <cite>— Catalogue des saisies de la police d'Arkham, 1919</cite>
     </blockquote>
 
     <div class="stats-panel">
       <div class="stat-card">
-        <span class="stat-number">{{ manies?.length ?? 0 }}</span>
-        <span class="stat-label">Manies</span>
+        <span class="stat-number">{{ artefacts?.length ?? 0 }}</span>
+        <span class="stat-label">Artefacts</span>
       </div>
       <div class="stat-card">
         <span class="stat-number">{{ filtered.length }}</span>
@@ -48,26 +48,13 @@ function pickRandom() {
     <div class="toolbar">
       <div class="search-bar">
         <span class="search-icon">🔍</span>
-        <input v-model="search" type="text" class="search-input" placeholder="Rechercher une manie…">
+        <input v-model="search" type="text" class="search-input" placeholder="Rechercher un artefact…">
       </div>
-      <button class="btn-random" :disabled="!manies?.length" @click="pickRandom">
-        <span class="btn-random-icon">⚄</span>
-        Manie aléatoire
-      </button>
     </div>
-
-    <Transition name="random-reveal">
-      <div v-if="random" class="random-result">
-        <button class="random-close" aria-label="Fermer" @click="random = null">✕</button>
-        <p class="random-name">{{ random.name }}</p>
-        <p class="random-number">Numéro {{ random.id }}</p>
-        <p class="random-desc">{{ random.description }}</p>
-      </div>
-    </Transition>
 
     <div v-if="status === 'pending'" class="state-message">
       <span class="state-sigil">⬡</span>
-      <p>Consultation des dossiers psychiatriques…</p>
+      <p>Consultation des archives occultes…</p>
     </div>
 
     <div v-else-if="error" class="state-message state-error">
@@ -75,25 +62,38 @@ function pickRandom() {
     </div>
 
     <div v-else-if="filtered.length === 0" class="state-message">
-      <p>Aucune manie ne correspond à votre requête.</p>
+      <p>Aucun artefact ne correspond à votre requête.</p>
     </div>
 
     <div v-else class="list-container">
       <div class="list-header-row">
-        <span class="col-id">N°</span>
-        <span class="col-name">Manie</span>
-        <span class="col-desc">Description</span>
+        <span class="col-name">Artefact</span>
+        <span class="col-use">Utilisé par</span>
+        <span />
+        <span class="col-chevron" />
       </div>
       <div class="list-body">
         <div
-          v-for="(manie, index) in filtered"
-          :key="manie.id"
-          class="list-row"
-          :class="index % 2 === 0 ? 'row-even' : 'row-odd'"
+          v-for="(artefact, index) in filtered"
+          :key="artefact.id"
+          class="list-item"
+          :class="{ 'is-expanded': expandedId === artefact.id }"
         >
-          <span class="col-id row-id">{{ manie.id }}</span>
-          <span class="col-name row-name">{{ manie.name }}</span>
-          <span class="col-desc row-desc">{{ manie.description }}</span>
+          <div
+            class="list-row"
+            :class="index % 2 === 0 ? 'row-even' : 'row-odd'"
+            @click="toggleExpand(artefact.id)"
+          >
+            <span class="col-name row-name">{{ artefact.name }}</span>
+            <span class="col-use row-use">{{ artefact.use_by ?? '—' }}</span>
+            <span />
+            <span class="col-chevron row-chevron" :class="{ 'is-open': expandedId === artefact.id }">›</span>
+          </div>
+          <Transition name="expand">
+            <div v-if="expandedId === artefact.id" class="row-description">
+              <p>{{ artefact.description ?? 'Aucune description disponible.' }}</p>
+            </div>
+          </Transition>
         </div>
       </div>
     </div>
@@ -104,7 +104,7 @@ function pickRandom() {
 <style scoped>
 .page-wrapper {
   padding: var(--space-xl);
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -122,11 +122,11 @@ function pickRandom() {
   left: 0;
   width: 80px;
   height: 1px;
-  background: var(--color-crimson);
+  background: var(--color-gold);
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xl);
+  font-size: var(--fs-page-title);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -136,13 +136,13 @@ function pickRandom() {
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-page-subtitle);
 }
 
 /* ── FLAVOR QUOTE ────────────────────────────────────────── */
 .flavor-quote {
   background: var(--color-void);
-  border-left: 2px solid var(--color-crimson-dim);
+  border-left: 2px solid var(--color-gold-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
@@ -150,7 +150,7 @@ function pickRandom() {
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: var(--fs-xl);
+  font-size: var(--fs-flavor-quote);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -158,7 +158,7 @@ function pickRandom() {
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-section-title);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -181,15 +181,15 @@ function pickRandom() {
 }
 .stat-number {
   font-family: var(--font-display);
-  font-size: var(--fs-2xl);
-  color: var(--color-crimson);
+  font-size: var(--fs-stat-number);
+  color: var(--color-gold);
   display: block;
   line-height: 1;
   margin-bottom: var(--space-xs);
 }
 .stat-label {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xs);
+  font-size: var(--fs-stat-label);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -214,7 +214,7 @@ function pickRandom() {
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: var(--fs-md);
+  font-size: var(--fs-secondary);
   pointer-events: none;
 }
 .search-input {
@@ -224,15 +224,15 @@ function pickRandom() {
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: var(--fs-lg);
+  font-size: var(--fs-field-input);
   width: 320px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
 }
 .search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
 .search-input:focus {
-  border-color: var(--color-crimson-dim);
-  box-shadow: 0 0 0 2px rgba(139, 58, 58, 0.15);
+  border-color: var(--color-gold-dim);
+  box-shadow: 0 0 0 2px rgba(184, 146, 74, 0.15);
 }
 
 /* ── STATE MESSAGES ──────────────────────────────────────── */
@@ -245,9 +245,9 @@ function pickRandom() {
 }
 .state-sigil {
   display: block;
-  font-size: var(--fs-4xl);
+  font-size: var(--fs-sigil);
   margin-bottom: var(--space-md);
-  color: var(--color-crimson);
+  color: var(--color-gold);
   animation: pulse-sigil 2s ease-in-out infinite;
 }
 @keyframes pulse-sigil {
@@ -258,32 +258,36 @@ function pickRandom() {
 
 /* ── LIST ────────────────────────────────────────────────── */
 .list-container {
+  display: grid;
+  grid-template-columns: auto auto 1fr 68px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.list-header-row,
-.list-row {
-  display: grid;
-  grid-template-columns: 44px 220px 1fr;
-  align-items: baseline;
-  padding: var(--space-sm) var(--space-lg);
-  gap: var(--space-lg);
-}
-
 .list-header-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-table-header);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
+.list-header-row > span {
+  padding: var(--space-sm) var(--space-sm);
+}
+.list-header-row > span:first-child { padding-left: var(--space-lg); }
+.list-header-row > span:last-child  { padding-right: var(--space-lg); }
 
 .list-body {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
   max-height: 600px;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -292,138 +296,93 @@ function pickRandom() {
 .list-body::-webkit-scrollbar { width: 6px; }
 .list-body::-webkit-scrollbar-track { background: transparent; }
 .list-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
-.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-crimson-dim); }
+.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
 
-.list-row { transition: background var(--transition-fast); }
+.list-item {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
+.list-item.is-expanded .list-row { background: var(--color-elevated) !important; }
+
+.list-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.list-row > * {
+  padding: var(--space-sm) var(--space-sm);
+}
+.list-row > *:first-child { padding-left: var(--space-lg); }
+.list-row > *:last-child  { padding-right: var(--space-lg); }
+
 .row-even { background: var(--color-surface); }
 .row-odd  { background: var(--color-deep); }
 .list-row:hover { background: var(--color-elevated); }
 
-.row-id {
-  font-family: var(--font-heading);
-  font-size: var(--fs-sm);
-  color: var(--color-text-muted);
-}
 .row-name {
   font-family: var(--font-heading);
-  font-size: var(--fs-md);
+  font-size: var(--fs-row-name);
   font-weight: 600;
   letter-spacing: 0.03em;
-  color: #c47070;
+  color: var(--color-gold);
 }
-
-.row-desc {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-lg);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  padding: var(--space-xs) 0;
-}
-
-/* ── RANDOM BUTTON ───────────────────────────────────────── */
-.btn-random {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+.row-use {
   font-family: var(--font-heading);
-  font-size: var(--fs-md);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: var(--space-sm) var(--space-xl);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-crimson);
-  color: #c47070;
-  background: var(--color-crimson-dim);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.btn-random:hover:not(:disabled) {
-  background: var(--color-crimson);
-  color: var(--color-void);
-}
-.btn-random:disabled { opacity: 0.4; cursor: default; }
-.btn-random-icon { font-size: var(--fs-xl); }
-
-/* ── RANDOM RESULT ───────────────────────────────────────── */
-.random-result {
-  background: var(--color-surface);
-  border: 1px solid var(--color-crimson);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-  position: relative;
-  box-shadow: 0 0 20px rgba(139, 58, 58, 0.2);
-}
-.random-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-sm);
-}
-.random-label {
-  font-family: var(--font-heading);
-  font-size: var(--fs-2xs);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #c47070;
-}
-.random-close {
-  position: absolute;
-  top: var(--space-md);
-  right: var(--space-md);
-  font-size: var(--fs-2xs);
+  font-size: var(--fs-row-value);
+  letter-spacing: 0.05em;
   color: var(--color-text-muted);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
+}
+.row-chevron {
+  font-size: var(--fs-row-value);
+  color: var(--color-text-muted);
+  transition: transform var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transform: rotate(0deg);
+  line-height: 1;
+  padding: 0 !important;
 }
-.random-close:hover { border-color: var(--color-crimson-dim); color: #c47070; }
-.random-name {
-  font-family: var(--font-heading);
-  font-size: var(--fs-xl);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #c47070;
-  margin-bottom: 2px;
+.row-chevron.is-open { transform: rotate(90deg); color: var(--color-gold); }
+
+.row-description {
+  grid-column: 1 / -1;
+  padding: var(--space-md) var(--space-xl);
+  background: rgba(184, 146, 74, 0.05);
+  border-top: 1px solid var(--color-gold-dim);
 }
-.random-number {
-  font-family: var(--font-heading);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-sm);
-}
-.random-desc {
+.row-description p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-row-desc);
   color: var(--color-text-secondary);
   line-height: 1.7;
 }
 
-/* ── TRANSITION ──────────────────────────────────────────── */
-.random-reveal-enter-active { transition: all 0.25s ease; }
-.random-reveal-leave-active { transition: all 0.2s ease; }
-.random-reveal-enter-from { opacity: 0; transform: translateY(-8px); }
-.random-reveal-leave-to   { opacity: 0; transform: translateY(-4px); }
+.expand-enter-active,
+.expand-leave-active {
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  max-height: 300px;
+  overflow: hidden;
+}
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: var(--fs-lg); }
-  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
+  .flavor-quote p { font-size: var(--fs-page-subtitle); }
+  .toolbar { flex-direction: column; align-items: stretch; }
   .search-bar { display: block; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
-  .btn-random { width: 100%; justify-content: center; }
   .list-body { max-height: 420px; }
   .list-header-row { display: none; }
   .list-row {
@@ -432,7 +391,5 @@ function pickRandom() {
     gap: var(--space-xs);
     padding: var(--space-md) var(--space-lg);
   }
-  .col-id { font-size: var(--fs-2xs); color: var(--color-text-muted); }
-  .col-desc { font-size: var(--fs-md); }
 }
 </style>

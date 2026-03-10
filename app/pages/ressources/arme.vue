@@ -5,7 +5,7 @@ type WeaponWithSkill = arme & {
   competence: Pick<Competence, 'id' | 'name'>
 }
 
-const { data: weapons, status, error } = await useFetch<WeaponWithSkill[]>('/api/arme')
+const { data: weapons, status, error } = useFetch<WeaponWithSkill[]>('/api/arme')
 
 const search = ref('')
 const eraFilter = ref<'all' | 'classique' | 'moderne'>('all')

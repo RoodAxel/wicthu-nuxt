@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { phobie } from '@prisma/client'
 
-const { data: phobies, status, error } = await useFetch<phobie[]>('/api/phobie')
+const { data: phobies, status, error } = useFetch<phobie[]>('/api/phobie')
 
 const search = ref('')
 const random = ref<phobie | null>(null)
