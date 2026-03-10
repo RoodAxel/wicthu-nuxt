@@ -10,6 +10,7 @@ export default withNuxt({
     'space-before-function-paren': 'off',
     'object-curly-spacing': 'off',
     'array-bracket-spacing': 'off',
+    '@stylistic/quote-props': 'off',
     'vue/html-indent': 'off',
     'vue/max-attributes-per-line': 'off',
     'vue/singleline-html-element-content-newline': 'off',

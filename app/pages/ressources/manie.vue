@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import type { phobie } from '@prisma/client'
+import type { manie } from '@prisma/client'
 
-const { data: phobies, status, error } = await useFetch<phobie[]>('/api/phobie')
+const { data: manies, status, error } = await useFetch<manie[]>('/api/manie')
 
 const search = ref('')
-const random = ref<phobie | null>(null)
+const random = ref<manie | null>(null)
 
 const filtered = computed(() => {
-  if (!phobies.value) return []
+  if (!manies.value) return []
   const q = search.value.toLowerCase()
-  return phobies.value.filter(p =>
-    p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+  return manies.value.filter(m =>
+    m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
   )
 })
 
 function pickRandom() {
-  if (!phobies.value?.length) return
-  const pool = phobies.value
+  if (!manies.value?.length) return
+  const pool = manies.value
   random.value = pool[Math.floor(Math.random() * pool.length)]!
 }
 </script>
@@ -25,19 +25,19 @@ function pickRandom() {
   <main class="page-wrapper">
 
     <div class="page-header">
-      <h1 class="page-title">Phobies</h1>
-      <p class="page-subtitle">Terreurs irrationnelles ancrées dans la psyché des survivants</p>
+      <h1 class="page-title">Manies</h1>
+      <p class="page-subtitle">Troubles obsessionnels issus du contact avec l'indicible</p>
     </div>
 
     <blockquote class="flavor-quote">
-      <p>La peur est la plus ancienne et la plus puissante des émotions humaines — et la peur la plus ancienne est celle de l'inconnu.</p>
-      <cite>— H.P. Lovecraft, L'Horreur Surnaturelle en Littérature</cite>
+      <p>L'esprit humain, confronté à l'impensable, se brise de mille façons — chacune plus étrange et pathétique que la précédente.</p>
+      <cite>— Dr. Armitage, Miskatonic University, 1921</cite>
     </blockquote>
 
     <div class="stats-panel">
       <div class="stat-card">
-        <span class="stat-number">{{ phobies?.length ?? 0 }}</span>
-        <span class="stat-label">Phobies</span>
+        <span class="stat-number">{{ manies?.length ?? 0 }}</span>
+        <span class="stat-label">Manies</span>
       </div>
       <div class="stat-card">
         <span class="stat-number">{{ filtered.length }}</span>
@@ -48,20 +48,17 @@ function pickRandom() {
     <div class="toolbar">
       <div class="search-bar">
         <span class="search-icon">🔍</span>
-        <input v-model="search" type="text" class="search-input" placeholder="Rechercher une phobie…">
+        <input v-model="search" type="text" class="search-input" placeholder="Rechercher une manie…">
       </div>
-      <button class="btn-random" :disabled="!phobies?.length" @click="pickRandom">
+      <button class="btn-random" :disabled="!manies?.length" @click="pickRandom">
         <span class="btn-random-icon">⚄</span>
-        Phobie aléatoire
+        Manie aléatoire
       </button>
     </div>
 
     <Transition name="random-reveal">
       <div v-if="random" class="random-result">
-        <div class="random-header">
-          <span class="random-label">Tirage</span>
-          <button class="random-close" aria-label="Fermer" @click="random = null">✕</button>
-        </div>
+        <button class="random-close" aria-label="Fermer" @click="random = null">✕</button>
         <p class="random-name">{{ random.name }}</p>
         <p class="random-number">Numéro {{ random.id }}</p>
         <p class="random-desc">{{ random.description }}</p>
@@ -78,25 +75,25 @@ function pickRandom() {
     </div>
 
     <div v-else-if="filtered.length === 0" class="state-message">
-      <p>Aucune phobie ne correspond à votre requête.</p>
+      <p>Aucune manie ne correspond à votre requête.</p>
     </div>
 
     <div v-else class="list-container">
       <div class="list-header-row">
         <span class="col-id">N°</span>
-        <span class="col-name">Phobie</span>
+        <span class="col-name">Manie</span>
         <span class="col-desc">Description</span>
       </div>
       <div class="list-body">
         <div
-          v-for="(phobie, index) in filtered"
-          :key="phobie.id"
+          v-for="(manie, index) in filtered"
+          :key="manie.id"
           class="list-row"
           :class="index % 2 === 0 ? 'row-even' : 'row-odd'"
         >
-          <span class="col-id row-id">{{ phobie.id }}</span>
-          <span class="col-name row-name">{{ phobie.name }}</span>
-          <span class="col-desc row-desc">{{ phobie.description }}</span>
+          <span class="col-id row-id">{{ manie.id }}</span>
+          <span class="col-name row-name">{{ manie.name }}</span>
+          <span class="col-desc row-desc">{{ manie.description }}</span>
         </div>
       </div>
     </div>
@@ -125,11 +122,11 @@ function pickRandom() {
   left: 0;
   width: 80px;
   height: 1px;
-  background: var(--color-gold);
+  background: var(--color-crimson);
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -139,13 +136,13 @@ function pickRandom() {
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
 }
 
 /* ── FLAVOR QUOTE ────────────────────────────────────────── */
 .flavor-quote {
-  background: var(--color-abyssal);
-  border-left: 2px solid var(--color-gold-dim);
+  background: var(--color-void);
+  border-left: 2px solid var(--color-crimson-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
@@ -153,7 +150,7 @@ function pickRandom() {
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: var(--fs-xl);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -161,7 +158,7 @@ function pickRandom() {
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -184,15 +181,15 @@ function pickRandom() {
 }
 .stat-number {
   font-family: var(--font-display);
-  font-size: 1.6rem;
-  color: var(--color-gold);
+  font-size: var(--fs-2xl);
+  color: var(--color-crimson);
   display: block;
   line-height: 1;
   margin-bottom: var(--space-xs);
 }
 .stat-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -217,7 +214,7 @@ function pickRandom() {
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   pointer-events: none;
 }
 .search-input {
@@ -227,15 +224,15 @@ function pickRandom() {
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   width: 320px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
 }
 .search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
 .search-input:focus {
-  border-color: var(--color-gold-dim);
-  box-shadow: 0 0 0 2px rgba(184, 146, 74, 0.15);
+  border-color: var(--color-crimson-dim);
+  box-shadow: 0 0 0 2px rgba(139, 58, 58, 0.15);
 }
 
 /* ── STATE MESSAGES ──────────────────────────────────────── */
@@ -248,9 +245,9 @@ function pickRandom() {
 }
 .state-sigil {
   display: block;
-  font-size: 2.5rem;
+  font-size: var(--fs-4xl);
   margin-bottom: var(--space-md);
-  color: var(--color-gold);
+  color: var(--color-crimson);
   animation: pulse-sigil 2s ease-in-out infinite;
 }
 @keyframes pulse-sigil {
@@ -279,7 +276,7 @@ function pickRandom() {
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -295,7 +292,7 @@ function pickRandom() {
 .list-body::-webkit-scrollbar { width: 6px; }
 .list-body::-webkit-scrollbar-track { background: transparent; }
 .list-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
-.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
+.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-crimson-dim); }
 
 .list-row { transition: background var(--transition-fast); }
 .row-even { background: var(--color-surface); }
@@ -304,21 +301,21 @@ function pickRandom() {
 
 .row-id {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   color: var(--color-text-muted);
 }
 .row-name {
   font-family: var(--font-heading);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: 0.03em;
-  color: var(--color-gold);
+  color: #c47070;
 }
 
 .row-desc {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
   color: var(--color-text-secondary);
   line-height: 1.5;
   padding: var(--space-xs) 0;
@@ -326,36 +323,37 @@ function pickRandom() {
 
 /* ── RANDOM BUTTON ───────────────────────────────────────── */
 .btn-random {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-sm) var(--space-xl);
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-gold);
-  color: var(--color-gold);
-  background: var(--color-gold-dim);
+  border: 1px solid var(--color-crimson);
+  color: #c47070;
+  background: var(--color-crimson-dim);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 .btn-random:hover:not(:disabled) {
-  background: var(--color-gold);
+  background: var(--color-crimson);
   color: var(--color-void);
 }
 .btn-random:disabled { opacity: 0.4; cursor: default; }
-.btn-random-icon { font-size: 1.3rem; }
+.btn-random-icon { font-size: var(--fs-xl); }
 
 /* ── RANDOM RESULT ───────────────────────────────────────── */
 .random-result {
   background: var(--color-surface);
-  border: 1px solid var(--color-gold);
+  border: 1px solid var(--color-crimson);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
-  box-shadow: 0 0 20px rgba(184, 146, 74, 0.2);
+  position: relative;
+  box-shadow: 0 0 20px rgba(139, 58, 58, 0.2);
 }
 .random-header {
   display: flex;
@@ -365,16 +363,16 @@ function pickRandom() {
 }
 .random-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-gold);
+  color: #c47070;
 }
 .random-close {
   position: absolute;
   top: var(--space-md);
   right: var(--space-md);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   color: var(--color-text-muted);
   background: transparent;
   border: 1px solid var(--color-border);
@@ -387,18 +385,18 @@ function pickRandom() {
   justify-content: center;
   transition: all var(--transition-fast);
 }
-.random-close:hover { border-color: var(--color-gold-dim); color: var(--color-gold); }
+.random-close:hover { border-color: var(--color-crimson-dim); color: #c47070; }
 .random-name {
   font-family: var(--font-heading);
-  font-size: 1.2rem;
+  font-size: var(--fs-xl);
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--color-gold);
+  color: #c47070;
   margin-bottom: 2px;
 }
 .random-number {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -407,7 +405,7 @@ function pickRandom() {
 .random-desc {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1rem;
+  font-size: var(--fs-lg);
   color: var(--color-text-secondary);
   line-height: 1.7;
 }
@@ -421,7 +419,7 @@ function pickRandom() {
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: 1rem; }
+  .flavor-quote p { font-size: var(--fs-lg); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
   .search-bar { display: block; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
@@ -434,7 +432,7 @@ function pickRandom() {
     gap: var(--space-xs);
     padding: var(--space-md) var(--space-lg);
   }
-  .col-id { font-size: 0.6rem; color: var(--color-text-muted); }
-  .col-desc { font-size: 0.88rem; }
+  .col-id { font-size: var(--fs-2xs); color: var(--color-text-muted); }
+  .col-desc { font-size: var(--fs-md); }
 }
 </style>

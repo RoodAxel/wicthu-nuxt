@@ -20,12 +20,14 @@ interface CharacterFormData {
   [key: string]: string
 }
 
-function half(val: string) { return val ? String(Math.floor(Number(val) / 2)) : '' }
-function fifth(val: string) { return val ? String(Math.floor(Number(val) / 5)) : '' }
+function str(val: unknown): string { return val !== undefined && val !== null ? String(val) : '' }
+function half(val: unknown) { const n = Math.floor(Number(val) / 2); return n > 0 ? String(n) : '' }
+function fifth(val: unknown) { const n = Math.floor(Number(val) / 5); return n > 0 ? String(n) : '' }
 
-function setField(form: ReturnType<PDFDocument['getForm']>, name: string, value: string) {
-  if (!value) return
-  try { form.getTextField(name).setText(value) }
+function setField(form: ReturnType<PDFDocument['getForm']>, name: string, value: unknown) {
+  const s = str(value)
+  if (!s) return
+  try { form.getTextField(name).setText(s) }
   catch { /* champ absent — ignoré */ }
 }
 
@@ -36,7 +38,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'SUPABASE_SERVICE_KEY not configured' })
   }
 
-  const body = await readBody<CharacterFormData>(event)
+  const rawBody = await readBody<Record<string, unknown>>(event)
+  // Convertit toutes les valeurs en string (les <input type="number"> envoient des nombres JSON)
+  const body = Object.fromEntries(
+    Object.entries(rawBody).map(([k, v]) => [k, str(v)])
+  ) as CharacterFormData
 
   // ── 1. Remplissage du PDF avec pdf-lib ─────────────────────
   const host = getRequestHeader(event, 'host') ?? ''

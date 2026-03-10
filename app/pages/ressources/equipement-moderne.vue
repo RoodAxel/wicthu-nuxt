@@ -133,7 +133,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -143,12 +143,12 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
 }
 
 /* ── FLAVOR QUOTE ────────────────────────────────────────── */
 .flavor-quote {
-  background: var(--color-abyssal);
+  background: var(--color-void);
   border-left: 2px solid var(--color-arcane-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
@@ -157,7 +157,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: var(--fs-xl);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -165,7 +165,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -187,7 +187,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
 }
 .stat-number {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   color: var(--color-arcane);
   display: block;
   line-height: 1;
@@ -195,7 +195,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
 }
 .stat-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -217,7 +217,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   padding: var(--space-xs) var(--space-md);
   color: var(--color-text-secondary);
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   cursor: pointer;
   outline: none;
   transition: border-color var(--transition-fast);
@@ -230,7 +230,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   pointer-events: none;
 }
 .search-input {
@@ -240,7 +240,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   width: 260px;
   outline: none;
   transition: border-color var(--transition-fast);
@@ -258,7 +258,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
 }
 .state-sigil {
   display: block;
-  font-size: 2.5rem;
+  font-size: var(--fs-4xl);
   margin-bottom: var(--space-md);
   color: var(--color-arcane);
   animation: pulse-sigil 2s ease-in-out infinite;
@@ -284,7 +284,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -305,17 +305,17 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
 .row-odd  { background: var(--color-deep); }
 .list-row:hover { background: var(--color-elevated); }
 
-.row-id { font-family: var(--font-heading); font-size: 0.75rem; color: var(--color-text-muted); }
-.row-name { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.03em; color: var(--color-text-primary); }
-.row-category { font-family: var(--font-flavor); font-style: italic; font-size: 0.9rem; color: var(--color-text-muted); }
-.row-price { font-family: var(--font-body); font-size: 1rem; color: var(--color-arcane); }
-.row-dash { color: var(--color-text-muted); font-size: 0.85rem; }
-.superior-badge { font-size: 0.75rem; color: var(--color-arcane); }
+.row-id { font-family: var(--font-heading); font-size: var(--fs-sm); color: var(--color-text-muted); }
+.row-name { font-family: var(--font-heading); font-size: var(--fs-md); font-weight: 600; letter-spacing: 0.03em; color: var(--color-text-primary); }
+.row-category { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-base); color: var(--color-text-muted); }
+.row-price { font-family: var(--font-body); font-size: var(--fs-base); color: var(--color-arcane); }
+.row-dash { color: var(--color-text-muted); font-size: var(--fs-md); }
+.superior-badge { font-size: var(--fs-sm); color: var(--color-arcane); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: 1rem; }
+  .flavor-quote p { font-size: var(--fs-lg); }
   .stats-panel { grid-template-columns: repeat(2, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
   .category-select { width: 100%; box-sizing: border-box; }

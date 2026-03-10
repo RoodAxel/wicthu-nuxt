@@ -1,13 +1,11 @@
 /* ============================================================
    ARKHAM CODEX — DESIGN TOKENS & GLOBAL STYLES
-   Source of truth: assets/styles/color-chart.scss (SCSS vars)
-   CSS custom properties are defined here for runtime usage.
    ============================================================ */
 
 /* ── DESIGN TOKENS ───────────────────────────────────────── */
 :root {
   /* Fonds */
-  --color-abyssal:     #080a0c;
+  --color-void:     #080a0c;
   --color-deep:        #0d1117;
   --color-surface:     #131820;
   --color-elevated:    #1a2230;
@@ -16,7 +14,7 @@
 
   /* Textes */
   --color-text-primary:   #d4c9b0;
-  --color-text-secondary: #8a8070;
+  --color-text-secondary: #9a886d;
   --color-text-muted:     #937d6a;
   --color-text-inverse:   #080a0c;
 
@@ -58,6 +56,74 @@
   --transition-fast:   150ms ease;
   --transition-normal: 280ms ease;
   --transition-slow:   500ms ease;
+
+  /* Tailles de police — une variable par type de contenu */
+
+  /* Navigation & header */
+  --fs-nav:            0.75rem;   /* liens navigation header */
+  --fs-nav-mobile:     0.875rem;  /* liens navigation mobile (touch) */
+  --fs-dropdown-meta:  0.65rem;   /* email/info secondaire dans dropdown */
+
+  /* Boutons */
+  --fs-btn:            0.75rem;   /* boutons d'action */
+
+  /* Formulaires */
+  --fs-field-label:    0.75rem;   /* labels de champs */
+  --fs-field-input:    1rem;      /* valeur saisie dans les champs */
+  --fs-error:          0.875rem;  /* messages d'erreur */
+
+  /* Titres */
+  --fs-page-title:     1.5rem;    /* titre H1 principal de page */
+  --fs-auth-title:     1.5rem;    /* titre des pages auth */
+  --fs-section-title:  0.85rem;   /* titre de section (small-caps) */
+  --fs-table-header:   0.75rem;   /* en-tête de colonne de tableau */
+  --fs-modal-title:    1rem;      /* titre de modal */
+
+  /* Texte */
+  --fs-body:           1rem;      /* texte courant */
+  --fs-secondary:      0.875rem;  /* texte secondaire */
+
+  /* Listes & tableaux */
+  --fs-row-name:       0.875rem;  /* nom d'un élément dans une liste */
+  --fs-row-value:      0.875rem;  /* valeur dans une ligne de tableau */
+  --fs-row-desc:       1.1rem;    /* description longue dans une ligne */
+  --fs-badge:          0.875rem;  /* tags & badges */
+  --fs-micro:          0.6rem;    /* micro-badges (ère, catégorie) */
+
+  /* Statistiques */
+  --fs-stat-number:    1.5rem;    /* grands chiffres de statistiques */
+  --fs-stat-label:     0.6rem;    /* label sous un chiffre de stat */
+
+  /* Flavor text (IM Fell English) */
+  --fs-page-subtitle:  1.1rem;    /* sous-titre de page */
+  --fs-auth-subtitle:  1.1rem;    /* texte d'intro pages auth */
+  --fs-section-hint:   1rem;      /* conseil/aide sous titre de section */
+  --fs-flavor-quote:   1.3rem;    /* citation thématique */
+  --fs-hero-desc:      1.3rem;    /* description page d'accueil */
+  --fs-cta-text:       1rem;      /* texte des blocs CTA */
+  --fs-auth-link:      1rem;      /* lien "déjà membre ?" */
+  --fs-modal-body:     1rem;      /* corps de modal (flavor) */
+
+  /* Investigateur */
+  --fs-carac-code:     0.875rem;  /* code caractéristique (FOR, CON…) */
+  --fs-carac-desc:     1.1rem;    /* description d'une caractéristique */
+  --fs-derived-value:  1.8rem;    /* valeurs dérivées (PV max, PM…) */
+  --fs-derived-label:  0.65rem;   /* label d'une valeur dérivée */
+
+  /* Décoratif */
+  --fs-sigil:          2.5rem;    /* sigils décoratifs */
+
+  /* Aliases génériques → sémantiques (utilisés dans les composants) */
+  --fs-2xs:  var(--fs-micro);
+  --fs-xs:   var(--fs-section-title);
+  --fs-sm:   var(--fs-nav);
+  --fs-md:   var(--fs-secondary);
+  --fs-base: var(--fs-body);
+  --fs-lg:   var(--fs-row-desc);
+  --fs-xl:   var(--fs-flavor-quote);
+  --fs-2xl:  var(--fs-page-title);
+  --fs-3xl:  var(--fs-derived-value);
+  --fs-4xl:  var(--fs-sigil);
 }
 
 /* ── RESET ────────────────────────────────────────────────── */
@@ -68,7 +134,7 @@ body {
   background-color: var(--color-deep);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.05rem;
+  font-size: var(--fs-body);
   line-height: 1.7;
   min-height: 100vh;
   overflow-x: hidden;
@@ -76,6 +142,6 @@ body {
 
 /* ── SCROLLBAR ───────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--color-abyssal); }
+::-webkit-scrollbar-track { background: var(--color-void); }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-glow); }

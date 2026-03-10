@@ -81,7 +81,7 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-void);
+  background: var(--color-deep);
   padding: var(--space-xl);
 }
 
@@ -96,7 +96,7 @@ async function handleLogin() {
 }
 
 .auth-sigil {
-  font-size: 2rem;
+  font-size: var(--fs-sigil);
   color: var(--color-arcane);
   margin-bottom: var(--space-md);
   opacity: 0.8;
@@ -104,7 +104,7 @@ async function handleLogin() {
 
 .auth-title {
   font-family: var(--font-heading);
-  font-size: 1.4rem;
+  font-size: var(--fs-auth-title);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--color-text-primary);
@@ -114,7 +114,7 @@ async function handleLogin() {
 .auth-subtitle {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--fs-auth-subtitle);
   color: var(--color-text-muted);
   margin-bottom: var(--space-xl);
 }
@@ -134,7 +134,7 @@ async function handleLogin() {
 
 .field-label {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-field-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -147,7 +147,7 @@ async function handleLogin() {
   padding: var(--space-sm) var(--space-md);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--fs-field-input);
   width: 100%;
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -165,7 +165,7 @@ async function handleLogin() {
 
 .auth-error {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: var(--fs-error);
   color: var(--color-crimson);
   text-align: center;
   padding: var(--space-sm);
@@ -176,7 +176,7 @@ async function handleLogin() {
 
 .auth-btn {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-sm) var(--space-xl);
@@ -203,7 +203,7 @@ async function handleLogin() {
   margin-top: var(--space-lg);
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: var(--fs-auth-link);
   color: var(--color-text-muted);
 }
 

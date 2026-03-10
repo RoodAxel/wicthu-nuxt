@@ -247,7 +247,7 @@ function toggleRow(id: number) {
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -257,12 +257,12 @@ function toggleRow(id: number) {
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
 }
 
 /* ── FLAVOR QUOTE ────────────────────────────────────────── */
 .flavor-quote {
-  background: var(--color-abyssal);
+  background: var(--color-void);
   border-left: 2px solid var(--color-crimson-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
@@ -271,7 +271,7 @@ function toggleRow(id: number) {
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: var(--fs-xl);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -279,7 +279,7 @@ function toggleRow(id: number) {
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -301,7 +301,7 @@ function toggleRow(id: number) {
 }
 .stat-number {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   color: var(--color-crimson);
   display: block;
   line-height: 1;
@@ -309,7 +309,7 @@ function toggleRow(id: number) {
 }
 .stat-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -333,7 +333,7 @@ function toggleRow(id: number) {
 /* ── TAGS ────────────────────────────────────────────────── */
 .tag {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-xs) var(--space-md);
@@ -362,7 +362,7 @@ function toggleRow(id: number) {
   padding: var(--space-xs) var(--space-md);
   color: var(--color-text-secondary);
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   letter-spacing: 0.05em;
   cursor: pointer;
   outline: none;
@@ -381,7 +381,7 @@ function toggleRow(id: number) {
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   pointer-events: none;
 }
 .search-input {
@@ -391,7 +391,7 @@ function toggleRow(id: number) {
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   width: 240px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
@@ -412,7 +412,7 @@ function toggleRow(id: number) {
 }
 .state-sigil {
   display: block;
-  font-size: 2.5rem;
+  font-size: var(--fs-4xl);
   margin-bottom: var(--space-md);
   color: var(--color-crimson);
   animation: pulse-sigil 2s ease-in-out infinite;
@@ -443,7 +443,7 @@ function toggleRow(id: number) {
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-sm);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -480,7 +480,7 @@ function toggleRow(id: number) {
 /* ── CHEVRON ─────────────────────────────────────────────── */
 .chevron {
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   color: var(--color-text-muted);
   display: flex;
   align-items: center;
@@ -496,7 +496,7 @@ function toggleRow(id: number) {
 /* ── CELL STYLES ─────────────────────────────────────────── */
 .row-name {
   font-family: var(--font-heading);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-text-primary);
@@ -505,7 +505,7 @@ function toggleRow(id: number) {
 .row-muted {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -514,7 +514,7 @@ function toggleRow(id: number) {
 
 .row-skill {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   letter-spacing: 0.05em;
   color: var(--color-arcane);
   white-space: nowrap;
@@ -524,14 +524,14 @@ function toggleRow(id: number) {
 
 .row-value {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--color-crimson);
 }
 
 .row-failure {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   color: var(--color-gold);
 }
 
@@ -541,7 +541,7 @@ function toggleRow(id: number) {
   align-items: center;
   gap: 3px;
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
 }
 .price-classic { color: var(--color-gold); }
 .price-sep { color: var(--color-text-muted); }
@@ -560,7 +560,7 @@ function toggleRow(id: number) {
 }
 .era-badge {
   font-family: var(--font-heading);
-  font-size: 0.5rem;
+  font-size: var(--fs-2xs);
   font-weight: bold;
   letter-spacing: 0.1em;
   padding: 2px 5px;
@@ -592,7 +592,7 @@ function toggleRow(id: number) {
 
 .detail-section-title {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: bold;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -617,7 +617,7 @@ function toggleRow(id: number) {
 
 .field-label {
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-sm);
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
   white-space: nowrap;
@@ -625,7 +625,7 @@ function toggleRow(id: number) {
 
 .field-value {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   color: var(--color-text-secondary);
   text-align: right;
 }
@@ -655,7 +655,7 @@ function toggleRow(id: number) {
 
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: 1rem; }
+  .flavor-quote p { font-size: var(--fs-base); }
   .stats-panel { grid-template-columns: repeat(2, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
   .filters { flex-wrap: wrap; }

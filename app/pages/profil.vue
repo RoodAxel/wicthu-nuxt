@@ -156,7 +156,7 @@ function formatDate(iso: string) {
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-page-title);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -166,7 +166,7 @@ function formatDate(iso: string) {
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-page-subtitle);
 }
 
 /* ── HISTORY ─────────────────────────────────────────────── */
@@ -184,7 +184,7 @@ function formatDate(iso: string) {
 }
 .section-title {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-section-title);
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -203,7 +203,7 @@ function formatDate(iso: string) {
   align-items: center;
 }
 .state-sigil {
-  font-size: 2rem;
+  font-size: var(--fs-sigil);
   color: var(--color-arcane);
   margin-bottom: var(--space-md);
   animation: pulse 2s ease-in-out infinite;
@@ -231,7 +231,7 @@ function formatDate(iso: string) {
 .fiche-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .fiche-nom {
   font-family: var(--font-heading);
-  font-size: 0.95rem;
+  font-size: var(--fs-row-name);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--color-text-primary);
@@ -242,7 +242,7 @@ function formatDate(iso: string) {
 .fiche-dates {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.78rem;
+  font-size: var(--fs-secondary);
   color: var(--color-text-muted);
 }
 .fiche-actions {
@@ -254,7 +254,7 @@ function formatDate(iso: string) {
 /* ── BUTTONS ─────────────────────────────────────────────── */
 .btn-new {
   font-family: var(--font-heading);
-  font-size: 0.72rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-xs) var(--space-md);
@@ -272,7 +272,7 @@ function formatDate(iso: string) {
 
 .btn-action {
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: var(--space-xs) var(--space-md);
@@ -329,7 +329,7 @@ function formatDate(iso: string) {
 }
 .modal-title {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-modal-title);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -339,7 +339,7 @@ function formatDate(iso: string) {
 .modal-body {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1rem;
+  font-size: var(--fs-modal-body);
   color: var(--color-text-secondary);
   margin-bottom: var(--space-lg);
   line-height: 1.6;
@@ -352,7 +352,7 @@ function formatDate(iso: string) {
   color: #c47070;
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: var(--fs-error);
   margin-bottom: var(--space-md);
 }
 .modal-actions {

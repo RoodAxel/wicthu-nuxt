@@ -35,7 +35,7 @@
       <p class="section-subtitle">Ressources consultables</p>
 
       <div class="resources-grid">
-        <NuxtLink to="/competence" class="resource-card">
+        <NuxtLink to="/ressources/competence" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Compétences</span>
             <span class="resource-desc">Liste complète des savoir-faire, valeurs de base et catégories.</span>
@@ -43,7 +43,7 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/arme" class="resource-card">
+        <NuxtLink to="/ressources/arme" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Armes</span>
             <span class="resource-desc">Arsenal complet — armes, dégâts, portées et compétences associées.</span>
@@ -51,7 +51,7 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/equipement-classique" class="resource-card">
+        <NuxtLink to="/ressources/equipement-classique" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Équipement Classique</span>
             <span class="resource-desc">Matériel des années 1920 — prix, catégories et disponibilité.</span>
@@ -59,7 +59,7 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/equipement-moderne" class="resource-card">
+        <NuxtLink to="/ressources/equipement-moderne" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Équipement Moderne</span>
             <span class="resource-desc">Matériel contemporain — prix, catégories et disponibilité.</span>
@@ -67,7 +67,7 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/ouvrage-occulte" class="resource-card">
+        <NuxtLink to="/ressources/ouvrage-occulte" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Ouvrages Occultes</span>
             <span class="resource-desc">Volumes maudits, leur contenu et leurs effets sur la Santé Mentale.</span>
@@ -75,7 +75,7 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/manie" class="resource-card">
+        <NuxtLink to="/ressources/manie" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Manies</span>
             <span class="resource-desc">Troubles obsessionnels issus du contact avec l'indicible.</span>
@@ -83,7 +83,7 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/phobie" class="resource-card">
+        <NuxtLink to="/ressources/phobie" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Phobies</span>
             <span class="resource-desc">Terreurs irrationnelles ancrées dans la psyché des survivants.</span>
@@ -121,7 +121,7 @@
 
 .hero-tagline {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--color-arcane);
@@ -130,7 +130,7 @@
 
 .hero-description {
   font-family: var(--font-flavor);
-  font-size: 1.1rem;
+  font-size: var(--fs-hero-desc);
   font-style: italic;
   color: var(--color-text-secondary);
   line-height: 1.9;
@@ -146,7 +146,7 @@
 /* ── SECTIONS ────────────────────────────────────────────── */
 .section-title {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-section-title);
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--color-arcane);
@@ -156,7 +156,7 @@
 .section-subtitle {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1rem;
+  font-size: var(--fs-page-subtitle);
   color: var(--color-text-muted);
   margin-bottom: var(--space-lg);
 }
@@ -191,7 +191,7 @@
 }
 
 .resource-icon {
-  font-size: 1.4rem;
+  font-size: var(--fs-2xl);
   flex-shrink: 0;
   width: 2rem;
   text-align: center;
@@ -206,7 +206,7 @@
 
 .resource-name {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-row-name);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -215,12 +215,12 @@
 .resource-desc {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: var(--fs-secondary);
   color: var(--color-text-muted);
 }
 
 .resource-arrow {
-  font-size: 1rem;
+  font-size: var(--fs-base);
   color: var(--color-arcane-dim);
   transition: transform var(--transition-fast), color var(--transition-fast);
   flex-shrink: 0;
@@ -233,7 +233,7 @@
 
 .resource-badge {
   font-family: var(--font-heading);
-  font-size: 0.55rem;
+  font-size: var(--fs-micro);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   padding: 2px 8px;
@@ -267,7 +267,7 @@
 
 .cta-title {
   font-family: var(--font-heading);
-  font-size: 1rem;
+  font-size: var(--fs-modal-title);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -277,14 +277,14 @@
 .cta-text {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--fs-cta-text);
   color: var(--color-text-secondary);
   line-height: 1.7;
 }
 
 .cta-btn {
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-sm) var(--space-lg);
@@ -308,7 +308,7 @@
   .home-wrapper { padding: var(--space-md); gap: var(--space-xl); }
   .hero { padding: var(--space-md) 0; }
   .hero-logo { height: 120px; }
-  .hero-description { font-size: 0.95rem; }
+  .hero-description { font-size: var(--fs-hero-desc); }
   .cta-card {
     flex-direction: column;
     align-items: flex-start;

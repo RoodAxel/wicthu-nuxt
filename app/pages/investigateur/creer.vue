@@ -526,7 +526,7 @@ const backgroundFields = [
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-page-title);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -536,11 +536,11 @@ const backgroundFields = [
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-page-subtitle);
 }
 
 .flavor-quote {
-  background: var(--color-abyssal);
+  background: var(--color-void);
   border-left: 2px solid var(--color-arcane-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
@@ -549,7 +549,7 @@ const backgroundFields = [
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1.1rem;
+  font-size: var(--fs-flavor-quote);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -557,7 +557,7 @@ const backgroundFields = [
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-section-title);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -573,7 +573,7 @@ const backgroundFields = [
 }
 .section-title {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-section-title);
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -585,7 +585,7 @@ const backgroundFields = [
 .section-hint {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--fs-section-hint);
   color: var(--color-text-muted);
   margin-bottom: var(--space-lg);
 }
@@ -600,7 +600,7 @@ const backgroundFields = [
 .field-group { display: flex; flex-direction: column; gap: var(--space-xs); }
 .field-label {
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-field-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -613,7 +613,7 @@ const backgroundFields = [
   padding: var(--space-sm) var(--space-md);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: var(--fs-field-input);
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   width: 100%;
@@ -637,7 +637,7 @@ const backgroundFields = [
 .carac-header {
   background: var(--color-elevated);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-table-header);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -647,8 +647,8 @@ const backgroundFields = [
 .carac-row { border-bottom: 1px solid var(--color-border); }
 .carac-row:last-child { border-bottom: none; }
 .carac-row:nth-child(even) { background: var(--color-deep); }
-.carac-code { font-family: var(--font-heading); font-size: 0.85rem; font-weight: bold; letter-spacing: 0.1em; color: var(--color-gold); }
-.carac-desc { font-family: var(--font-flavor); font-style: italic; font-size: 0.95rem; color: var(--color-text-secondary); }
+.carac-code { font-family: var(--font-heading); font-size: var(--fs-carac-code); font-weight: bold; letter-spacing: 0.1em; color: var(--color-gold); }
+.carac-desc { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-carac-desc); color: var(--color-text-secondary); }
 .carac-input {
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
@@ -656,13 +656,13 @@ const backgroundFields = [
   padding: var(--space-xs) var(--space-sm);
   color: var(--color-arcane);
   font-family: var(--font-heading);
-  font-size: 1rem; font-weight: bold;
+  font-size: var(--fs-carac-code); font-weight: bold;
   text-align: center; width: 100%; outline: none;
   transition: border-color var(--transition-fast);
 }
 .carac-input::-webkit-inner-spin-button { display: none; }
 .carac-input:focus { border-color: var(--color-arcane-dim); }
-.carac-derived { font-family: var(--font-heading); font-size: 0.85rem; color: var(--color-text-muted); text-align: center; }
+.carac-derived { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); text-align: center; }
 
 /* ── STATS DÉRIVÉES ──────────────────────────────────────── */
 .derived-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-md); }
@@ -674,10 +674,10 @@ const backgroundFields = [
   text-align: center;
   display: flex; flex-direction: column; gap: var(--space-xs);
 }
-.derived-label { font-family: var(--font-heading); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); }
-.derived-value { font-family: var(--font-display); font-size: 1.8rem; color: var(--color-arcane); line-height: 1; }
-.derived-value--text { font-size: 1.2rem; }
-.derived-formula { font-family: var(--font-flavor); font-style: italic; font-size: 0.75rem; color: var(--color-text-muted); }
+.derived-label { font-family: var(--font-heading); font-size: var(--fs-derived-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); }
+.derived-value { font-family: var(--font-display); font-size: var(--fs-derived-value); color: var(--color-arcane); line-height: 1; }
+.derived-value--text { font-size: var(--fs-xl); }
+.derived-formula { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-secondary); color: var(--color-text-muted); }
 
 /* ── COMPÉTENCES ─────────────────────────────────────────── */
 .comp-grid {
@@ -692,8 +692,8 @@ const backgroundFields = [
   border-right: 1px solid var(--color-border);
 }
 .comp-row:nth-child(even) { background: var(--color-deep); }
-.comp-name { font-family: var(--font-heading); font-size: 0.8rem; letter-spacing: 0.03em; color: var(--color-text-primary); }
-.comp-base { font-family: var(--font-heading); font-size: 0.7rem; color: var(--color-text-muted); text-align: right; }
+.comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }
+.comp-base { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); text-align: right; }
 .comp-input {
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
@@ -701,7 +701,7 @@ const backgroundFields = [
   padding: 2px var(--space-xs);
   color: var(--color-arcane);
   font-family: var(--font-heading);
-  font-size: 0.9rem; font-weight: bold;
+  font-size: var(--fs-field-input); font-weight: bold;
   text-align: center; width: 100%; outline: none;
   transition: border-color var(--transition-fast);
 }
@@ -713,12 +713,12 @@ const backgroundFields = [
 .variable-group--full { grid-column: span 2; }
 .variable-subtitle {
   font-family: var(--font-heading);
-  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: var(--fs-section-title); letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--color-text-muted);
   margin-bottom: var(--space-md);
 }
 .variable-row { display: grid; grid-template-columns: 1fr 70px; gap: var(--space-sm); margin-bottom: var(--space-sm); }
-.label-input { font-size: 0.9rem; }
+.label-input { font-size: var(--fs-md); }
 .variable-row-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-sm) var(--space-xl); }
 
 /* ── BACKGROUND ──────────────────────────────────────────── */
@@ -748,7 +748,7 @@ const backgroundFields = [
 .form-actions { display: flex; justify-content: center; gap: var(--space-md); flex-wrap: wrap; }
 .btn-save {
   font-family: var(--font-heading);
-  font-size: 0.85rem; font-weight: bold;
+  font-size: var(--fs-btn); font-weight: bold;
   letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--color-arcane);
   background: transparent;
@@ -762,7 +762,7 @@ const backgroundFields = [
 .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-generate {
   font-family: var(--font-heading);
-  font-size: 0.85rem; font-weight: bold;
+  font-size: var(--fs-btn); font-weight: bold;
   letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--color-deep);
   background: var(--color-arcane);
@@ -773,7 +773,7 @@ const backgroundFields = [
 }
 .btn-generate:hover:not(:disabled) { opacity: 0.85; box-shadow: var(--shadow-glow); }
 .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-sigil { display: inline-block; animation: pulse-sigil 1s ease-in-out infinite; font-size: 1.2rem; }
+.btn-sigil { display: inline-block; animation: pulse-sigil 1s ease-in-out infinite; font-size: var(--fs-xl); }
 @keyframes pulse-sigil { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */

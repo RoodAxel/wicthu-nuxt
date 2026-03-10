@@ -170,7 +170,7 @@ const stats = computed(() => ({
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-page-title);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -180,12 +180,12 @@ const stats = computed(() => ({
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-page-subtitle);
 }
 
 /* ── FLAVOR QUOTE ────────────────────────────────────────── */
 .flavor-quote {
-  background: var(--color-abyssal);
+  background: var(--color-void);
   border-left: 2px solid var(--color-arcane-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
@@ -194,7 +194,7 @@ const stats = computed(() => ({
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: var(--fs-flavor-quote);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -202,7 +202,7 @@ const stats = computed(() => ({
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-section-title);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -224,7 +224,7 @@ const stats = computed(() => ({
 }
 .stat-number {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: var(--fs-stat-number);
   color: var(--color-arcane);
   display: block;
   line-height: 1;
@@ -232,7 +232,7 @@ const stats = computed(() => ({
 }
 .stat-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-stat-label);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -256,7 +256,7 @@ const stats = computed(() => ({
 /* ── TAGS ────────────────────────────────────────────────── */
 .tag {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-badge);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-xs) var(--space-md);
@@ -288,7 +288,7 @@ const stats = computed(() => ({
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-secondary);
   pointer-events: none;
 }
 .search-input {
@@ -298,7 +298,7 @@ const stats = computed(() => ({
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: var(--fs-field-input);
   width: 240px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
@@ -319,7 +319,7 @@ const stats = computed(() => ({
 }
 .state-sigil {
   display: block;
-  font-size: 2.5rem;
+  font-size: var(--fs-sigil);
   margin-bottom: var(--space-md);
   color: var(--color-arcane);
   animation: pulse-sigil 2s ease-in-out infinite;
@@ -350,7 +350,7 @@ const stats = computed(() => ({
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--fs-table-header);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -384,7 +384,7 @@ const stats = computed(() => ({
 
 .row-name {
   font-family: var(--font-heading);
-  font-size: 0.9rem;
+  font-size: var(--fs-row-name);
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-text-primary);
@@ -393,13 +393,14 @@ const stats = computed(() => ({
 .row-category {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1rem;
+  font-size: var(--fs-row-desc);
+
   color: var(--color-text-muted);
 }
 
 .card-badge {
   font-family: var(--font-heading);
-  font-size: 0.55rem;
+  font-size: var(--fs-secondary);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   padding: 2px 8px;
@@ -417,17 +418,17 @@ const stats = computed(() => ({
 }
 .base-value-number {
   font-family: var(--font-heading);
-  font-size: 1rem;
+  font-size: var(--fs-row-value);
   font-weight: 700;
   color: var(--color-arcane);
 }
 .base-value-pct {
-  font-size: 0.9rem;
+  font-size: var(--fs-row-value);
   color: var(--color-text-muted);
 }
 .row-dash {
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-body);
 }
 
 /* ── ACTIVE CATEGORY FILTER ──────────────────────────────── */
@@ -444,7 +445,7 @@ const stats = computed(() => ({
 
 .active-category-label {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-secondary);
   font-weight: bold;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -457,7 +458,7 @@ const stats = computed(() => ({
   justify-content: center;
   width: 18px;
   height: 18px;
-  font-size: 0.55rem;
+  font-size: var(--fs-micro);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-gold-dim);
   color: var(--color-gold);
@@ -479,7 +480,7 @@ const stats = computed(() => ({
 
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: 1rem; }
+  .flavor-quote p { font-size: var(--fs-page-subtitle); }
   .stats-panel { grid-template-columns: repeat(2, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
   .filters { flex-wrap: wrap; }

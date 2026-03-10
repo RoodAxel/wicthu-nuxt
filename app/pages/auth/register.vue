@@ -2,6 +2,7 @@
 definePageMeta({ layout: false })
 
 const supabase = useSupabaseClient()
+const config = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -19,7 +20,10 @@ async function handleRegister() {
   loading.value = true
   const { error } = await supabase.auth.signUp({
     email: email.value,
-    password: password.value
+    password: password.value,
+    options: {
+      emailRedirectTo: `${config.public.siteUrl}`
+    }
   })
   loading.value = false
   if (error) {
@@ -105,7 +109,7 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-abyssal);
+  background: var(--color-deep);
   padding: var(--space-xl);
 }
 
@@ -120,7 +124,7 @@ async function handleRegister() {
 }
 
 .auth-sigil {
-  font-size: 2rem;
+  font-size: var(--fs-sigil);
   color: var(--color-arcane);
   margin-bottom: var(--space-md);
   opacity: 0.8;
@@ -128,7 +132,7 @@ async function handleRegister() {
 
 .auth-title {
   font-family: var(--font-heading);
-  font-size: 1.4rem;
+  font-size: var(--fs-auth-title);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--color-text-primary);
@@ -138,7 +142,7 @@ async function handleRegister() {
 .auth-subtitle {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--fs-auth-subtitle);
   color: var(--color-text-muted);
   margin-bottom: var(--space-xl);
 }
@@ -158,7 +162,7 @@ async function handleRegister() {
 
 .field-label {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-field-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -171,7 +175,7 @@ async function handleRegister() {
   padding: var(--space-sm) var(--space-md);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--fs-field-input);
   width: 100%;
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -189,7 +193,7 @@ async function handleRegister() {
 
 .auth-error {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: var(--fs-error);
   color: var(--color-crimson);
   text-align: center;
   padding: var(--space-sm);
@@ -200,7 +204,7 @@ async function handleRegister() {
 
 .auth-success {
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   color: var(--color-arcane);
   padding: var(--space-lg);
   background: rgba(127, 179, 138, 0.08);
@@ -218,7 +222,7 @@ async function handleRegister() {
   display: inline-block;
   margin-top: var(--space-md);
   font-family: var(--font-heading);
-  font-size: 0.7rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-xs) var(--space-lg);
@@ -232,12 +236,12 @@ async function handleRegister() {
 
 .auth-btn-link:hover {
   background: var(--color-arcane);
-  color: var(--color-abyssal);
+  color: var(--color-void);
 }
 
 .auth-btn {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-btn);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-sm) var(--space-xl);
@@ -252,7 +256,7 @@ async function handleRegister() {
 
 .auth-btn:hover:not(:disabled) {
   background: var(--color-arcane);
-  color: var(--color-abyssal);
+  color: var(--color-void);
 }
 
 .auth-btn:disabled {
@@ -264,7 +268,7 @@ async function handleRegister() {
   margin-top: var(--space-lg);
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: var(--fs-auth-link);
   color: var(--color-text-muted);
 }
 

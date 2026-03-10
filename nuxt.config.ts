@@ -18,7 +18,8 @@ export default defineNuxtConfig({
     // Variables publiques
     public: {
       supabaseUrl: process.env.SUPABASE_URL,
-      supabaseKey: process.env.SUPABASE_KEY
+      supabaseKey: process.env.SUPABASE_KEY,
+      siteUrl: process.env.SITE_URL || 'http://localhost:3000'
     }
   },
 

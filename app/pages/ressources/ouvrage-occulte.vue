@@ -133,7 +133,7 @@ function toggle(id: number) {
 }
 .page-title {
   font-family: var(--font-heading);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--color-text-primary);
@@ -143,12 +143,12 @@ function toggle(id: number) {
   font-family: var(--font-flavor);
   font-style: italic;
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--fs-lg);
 }
 
 /* ── FLAVOR QUOTE ────────────────────────────────────────── */
 .flavor-quote {
-  background: var(--color-abyssal);
+  background: var(--color-void);
   border-left: 2px solid var(--color-gold-dim);
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
@@ -157,7 +157,7 @@ function toggle(id: number) {
 .flavor-quote p {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: var(--fs-xl);
   color: var(--color-text-secondary);
   line-height: 1.8;
 }
@@ -165,7 +165,7 @@ function toggle(id: number) {
   display: block;
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -188,7 +188,7 @@ function toggle(id: number) {
 }
 .stat-number {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: var(--fs-2xl);
   color: var(--color-gold);
   display: block;
   line-height: 1;
@@ -196,7 +196,7 @@ function toggle(id: number) {
 }
 .stat-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -212,7 +212,7 @@ function toggle(id: number) {
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   pointer-events: none;
 }
 .search-input {
@@ -222,7 +222,7 @@ function toggle(id: number) {
   padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 1.1rem;
+  font-size: var(--fs-lg);
   width: 320px;
   outline: none;
   transition: border-color var(--transition-fast);
@@ -240,7 +240,7 @@ function toggle(id: number) {
 }
 .state-sigil {
   display: block;
-  font-size: 2.5rem;
+  font-size: var(--fs-4xl);
   margin-bottom: var(--space-md);
   color: var(--color-gold);
   animation: pulse-sigil 2s ease-in-out infinite;
@@ -269,7 +269,7 @@ function toggle(id: number) {
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
   font-family: var(--font-heading);
-  font-size: 0.65rem;
+  font-size: var(--fs-xs);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -300,12 +300,12 @@ function toggle(id: number) {
 /* ── CELLS ───────────────────────────────────────────────── */
 .row-id {
   font-family: var(--font-heading);
-  font-size: 0.75rem;
+  font-size: var(--fs-sm);
   color: var(--color-text-muted);
 }
 .row-title {
   font-family: var(--font-heading);
-  font-size: 0.9rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-gold);
@@ -313,17 +313,17 @@ function toggle(id: number) {
 .row-muted {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
   color: var(--color-text-muted);
 }
 .row-sanity {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: var(--fs-md);
   color: var(--color-crimson);
 }
 .row-gain {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--color-arcane);
 }
@@ -331,7 +331,7 @@ function toggle(id: number) {
 /* ── EXPANDED ROW ────────────────────────────────────────── */
 .row-detail {
   padding: var(--space-md) var(--space-xl) var(--space-lg);
-  background: var(--color-abyssal);
+  background: var(--color-void);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -340,7 +340,7 @@ function toggle(id: number) {
 .detail-block { display: flex; flex-direction: column; gap: var(--space-xs); }
 .detail-label {
   font-family: var(--font-heading);
-  font-size: 0.6rem;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-gold);
@@ -348,7 +348,7 @@ function toggle(id: number) {
 .detail-text {
   font-family: var(--font-flavor);
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: var(--fs-base);
   color: var(--color-text-secondary);
   line-height: 1.7;
 }
@@ -366,7 +366,7 @@ function toggle(id: number) {
 
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: 1rem; }
+  .flavor-quote p { font-size: var(--fs-lg); }
   .toolbar { width: 100%; }
   .search-bar { display: block; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
