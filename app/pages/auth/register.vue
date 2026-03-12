@@ -37,7 +37,7 @@ async function handleRegister() {
 <template>
   <div class="auth-page">
     <div class="auth-card">
-      <div class="auth-sigil">⬡</div>
+      <img src="/logoWicthu.png" alt="Wicthu" class="logo-img">
       <h1 class="auth-title">Rejoindre l'Ordre</h1>
       <p class="auth-subtitle">Créez votre compte d'investigateur</p>
 
@@ -104,6 +104,12 @@ async function handleRegister() {
 </template>
 
 <style scoped>
+.logo-img {
+  height: 100px;
+  width: auto;
+  object-fit: contain;
+}
+
 .auth-page {
   min-height: 100vh;
   display: flex;

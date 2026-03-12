@@ -605,7 +605,7 @@ const backgroundFields = [
           :disabled="isSaving || isLoading"
           @click="saveCharacter"
         >
-          <span v-if="isSaving" class="btn-sigil">⬡</span>
+          <span v-if="isSaving" class="btn-sigil">۞</span>
           <span v-else>Sauvegarder</span>
         </button>
         <button
@@ -613,7 +613,7 @@ const backgroundFields = [
           class="btn-generate"
           :disabled="isLoading || isSaving"
         >
-          <span v-if="isLoading" class="btn-sigil">⬡</span>
+          <span v-if="isLoading" class="btn-sigil">۞</span>
           <span v-else>Générer la fiche PDF</span>
         </button>
       </div>

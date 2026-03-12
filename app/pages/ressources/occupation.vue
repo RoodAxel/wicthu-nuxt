@@ -142,7 +142,7 @@ function isFixedSkill(skill: OccupationSkill) {
     </div>
 
     <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">⬡</span>
+      <span class="state-sigil">۞</span>
       <p>Consultation des archives…</p>
     </div>
 
@@ -187,7 +187,7 @@ function isFixedSkill(skill: OccupationSkill) {
               :class="index % 2 === 0 ? 'row-even' : 'row-odd'"
             >
               <div v-if="loadingId === occ.id" class="detail-loading">
-                <span class="detail-sigil">⬡</span>
+                <span class="detail-sigil">۞</span>
               </div>
 
               <div v-else-if="detailCache[occ.id]" class="detail-content">
@@ -392,7 +392,6 @@ function isFixedSkill(skill: OccupationSkill) {
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-family: var(--font-flavor);
-  font-style: italic;
 }
 .state-sigil {
   display: block;

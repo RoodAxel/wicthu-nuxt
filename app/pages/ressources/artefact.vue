@@ -53,8 +53,8 @@ const filtered = computed(() => {
     </div>
 
     <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">⬡</span>
-      <p>Consultation des archives occultes…</p>
+      <span class="state-sigil">۞</span>
+      <p>Consultation des archives interdites…</p>
     </div>
 
     <div v-else-if="error" class="state-message state-error">
@@ -241,7 +241,6 @@ const filtered = computed(() => {
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-family: var(--font-flavor);
-  font-style: italic;
 }
 .state-sigil {
   display: block;

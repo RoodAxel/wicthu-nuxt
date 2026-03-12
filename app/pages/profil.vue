@@ -2,6 +2,8 @@
 definePageMeta({ middleware: 'auth' })
 
 const user = useSupabaseUser()
+const supabase = useSupabaseClient()
+const router = useRouter()
 
 interface FicheResume {
   id: number
@@ -14,23 +16,38 @@ const { data: fiches, status, refresh } = useFetch<FicheResume[]>('/api/investig
   server: false
 })
 
-// Modal de confirmation PDF
+// ── MODAL state ──────────────────────────────────────────────
+type ModalType = 'pdf' | 'delete-fiche' | 'delete-account' | null
+const activeModal = ref<ModalType>(null)
 const modalFiche = ref<FicheResume | null>(null)
-const isGenerating = ref(false)
-const pdfError = ref<string | null>(null)
+const modalError = ref<string | null>(null)
+const isLoading = ref(false)
 
 function openPdfModal(fiche: FicheResume) {
   modalFiche.value = fiche
-  pdfError.value = null
+  modalError.value = null
+  activeModal.value = 'pdf'
+}
+function openDeleteFicheModal(fiche: FicheResume) {
+  modalFiche.value = fiche
+  modalError.value = null
+  activeModal.value = 'delete-fiche'
+}
+function openDeleteAccountModal() {
+  modalError.value = null
+  activeModal.value = 'delete-account'
 }
 function closeModal() {
+  activeModal.value = null
   modalFiche.value = null
+  modalError.value = null
 }
 
+// ── PDF ───────────────────────────────────────────────────────
 async function confirmGeneratePdf() {
   if (!modalFiche.value) return
-  pdfError.value = null
-  isGenerating.value = true
+  modalError.value = null
+  isLoading.value = true
   try {
     const full = await $fetch<{ data: Record<string, string> }>(`/api/investigateur/${modalFiche.value.id}`)
     const { url } = await $fetch<{ url: string }>('/api/investigateur/generate-pdf', {
@@ -41,11 +58,63 @@ async function confirmGeneratePdf() {
     closeModal()
   }
   catch (e: unknown) {
-    pdfError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
+    modalError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
   }
-  finally { isGenerating.value = false }
+  finally { isLoading.value = false }
 }
 
+// ── SUPPRIMER FICHE ───────────────────────────────────────────
+async function confirmDeleteFiche() {
+  if (!modalFiche.value) return
+  modalError.value = null
+  isLoading.value = true
+  try {
+    await $fetch(`/api/investigateur/${modalFiche.value.id}`, { method: 'DELETE' })
+    closeModal()
+    await refresh()
+  }
+  catch (e: unknown) {
+    modalError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
+  }
+  finally { isLoading.value = false }
+}
+
+// ── CHANGER MOT DE PASSE ──────────────────────────────────────
+const passwordEmailSent = ref(false)
+const passwordError = ref<string | null>(null)
+const isSendingPassword = ref(false)
+
+async function sendPasswordReset() {
+  if (!user.value?.email) return
+  passwordError.value = null
+  isSendingPassword.value = true
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(user.value.email)
+    if (error) throw error
+    passwordEmailSent.value = true
+  }
+  catch (e: unknown) {
+    passwordError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
+  }
+  finally { isSendingPassword.value = false }
+}
+
+// ── SUPPRIMER COMPTE ──────────────────────────────────────────
+async function confirmDeleteAccount() {
+  modalError.value = null
+  isLoading.value = true
+  try {
+    await $fetch('/api/user', { method: 'DELETE' })
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+  catch (e: unknown) {
+    modalError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
+  }
+  finally { isLoading.value = false }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'short', year: 'numeric',
@@ -62,6 +131,7 @@ function formatDate(iso: string) {
       <p class="page-subtitle">{{ user?.email }}</p>
     </div>
 
+    <!-- ── HISTORIQUE ─────────────────────────────────────────── -->
     <section class="history-section">
       <div class="history-header">
         <h2 class="section-title">Historique des fiches</h2>
@@ -69,7 +139,7 @@ function formatDate(iso: string) {
       </div>
 
       <div v-if="status === 'pending'" class="state-message">
-        <span class="state-sigil">⬡</span>
+        <span class="state-sigil">۞</span>
         <p>Chargement des archives…</p>
       </div>
 
@@ -94,36 +164,112 @@ function formatDate(iso: string) {
             </span>
           </div>
           <div class="fiche-actions">
-            <NuxtLink
-              :to="`/investigateur/creer?edit=${fiche.id}`"
-              class="btn-action btn-edit"
-            >
+            <NuxtLink :to="`/investigateur/creer?edit=${fiche.id}`" class="btn-action btn-edit">
               Modifier
             </NuxtLink>
             <button class="btn-action btn-pdf" @click="openPdfModal(fiche)">
               Générer PDF
+            </button>
+            <button class="btn-action btn-delete-fiche" @click="openDeleteFicheModal(fiche)" title="Supprimer">
+              ✕
             </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── MODAL PDF ────────────────────────────────────────── -->
+    <!-- ── SÉCURITÉ ───────────────────────────────────────────── -->
+    <section class="danger-section">
+      <h2 class="section-title">Compte &amp; sécurité</h2>
+
+      <div class="danger-row">
+        <div class="danger-info">
+          <span class="danger-label">Mot de passe</span>
+          <span class="danger-desc">Recevoir un lien de réinitialisation par e-mail.</span>
+        </div>
+        <div class="danger-action">
+          <p v-if="passwordEmailSent" class="success-msg">E-mail envoyé !</p>
+          <p v-if="passwordError" class="error-msg">{{ passwordError }}</p>
+          <button
+            class="btn-action btn-edit"
+            :disabled="isSendingPassword || passwordEmailSent"
+            @click="sendPasswordReset"
+          >
+            <span v-if="isSendingPassword" class="btn-sigil">۞</span>
+            <span v-else>Changer le mot de passe</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="danger-row danger-row--critical">
+        <div class="danger-info">
+          <span class="danger-label danger-label--red">Supprimer le compte</span>
+          <span class="danger-desc">Supprime définitivement votre compte et toutes vos fiches. Action irréversible.</span>
+        </div>
+        <div class="danger-action">
+          <button class="btn-action btn-danger" @click="openDeleteAccountModal">
+            Supprimer mon compte
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MODAL PDF ──────────────────────────────────────────── -->
     <Transition name="modal">
-      <div v-if="modalFiche" class="modal-overlay" @click.self="closeModal">
+      <div v-if="activeModal === 'pdf'" class="modal-overlay" @click.self="closeModal">
         <div class="modal-box">
           <h3 class="modal-title">Générer la fiche PDF</h3>
           <p class="modal-body">
-            Générer la fiche de <strong>{{ modalFiche.nom }}</strong> ?
+            Générer la fiche de <strong>{{ modalFiche?.nom }}</strong> ?
           </p>
-          <div v-if="pdfError" class="modal-error">{{ pdfError }}</div>
+          <div v-if="modalError" class="modal-error">{{ modalError }}</div>
           <div class="modal-actions">
-            <button class="btn-action btn-cancel" :disabled="isGenerating" @click="closeModal">
-              Annuler
-            </button>
-            <button class="btn-action btn-pdf" :disabled="isGenerating" @click="confirmGeneratePdf">
-              <span v-if="isGenerating" class="btn-sigil">⬡</span>
+            <button class="btn-action btn-cancel" :disabled="isLoading" @click="closeModal">Annuler</button>
+            <button class="btn-action btn-pdf" :disabled="isLoading" @click="confirmGeneratePdf">
+              <span v-if="isLoading" class="btn-sigil">۞</span>
               <span v-else>Confirmer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ── MODAL SUPPRIMER FICHE ──────────────────────────────── -->
+    <Transition name="modal">
+      <div v-if="activeModal === 'delete-fiche'" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-box">
+          <h3 class="modal-title modal-title--red">Supprimer la fiche</h3>
+          <p class="modal-body">
+            Supprimer définitivement la fiche de <strong>{{ modalFiche?.nom }}</strong> ?
+            Cette action est irréversible.
+          </p>
+          <div v-if="modalError" class="modal-error">{{ modalError }}</div>
+          <div class="modal-actions">
+            <button class="btn-action btn-cancel" :disabled="isLoading" @click="closeModal">Annuler</button>
+            <button class="btn-action btn-danger" :disabled="isLoading" @click="confirmDeleteFiche">
+              <span v-if="isLoading" class="btn-sigil">۞</span>
+              <span v-else>Supprimer</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ── MODAL SUPPRIMER COMPTE ─────────────────────────────── -->
+    <Transition name="modal">
+      <div v-if="activeModal === 'delete-account'" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-box">
+          <h3 class="modal-title modal-title--red">Supprimer le compte</h3>
+          <p class="modal-body">
+            Votre compte et <strong>toutes vos fiches</strong> seront supprimés définitivement.
+            Cette action est irréversible.
+          </p>
+          <div v-if="modalError" class="modal-error">{{ modalError }}</div>
+          <div class="modal-actions">
+            <button class="btn-action btn-cancel" :disabled="isLoading" @click="closeModal">Annuler</button>
+            <button class="btn-action btn-danger" :disabled="isLoading" @click="confirmDeleteAccount">
+              <span v-if="isLoading" class="btn-sigil">۞</span>
+              <span v-else>Supprimer définitivement</span>
             </button>
           </div>
         </div>
@@ -138,11 +284,13 @@ function formatDate(iso: string) {
   padding: var(--space-xl);
   max-width: 860px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
 }
 
 /* ── PAGE HEADER ─────────────────────────────────────────── */
 .page-header {
-  margin-bottom: var(--space-xl);
   padding-bottom: var(--space-lg);
   border-bottom: 1px solid var(--color-border);
   position: relative;
@@ -169,8 +317,9 @@ function formatDate(iso: string) {
   font-size: var(--fs-page-subtitle);
 }
 
-/* ── HISTORY ─────────────────────────────────────────────── */
-.history-section {
+/* ── SECTIONS ────────────────────────────────────────────── */
+.history-section,
+.danger-section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -189,7 +338,9 @@ function formatDate(iso: string) {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-gold);
+  margin-bottom: var(--space-lg);
 }
+.history-header .section-title { margin-bottom: 0; }
 
 /* ── STATE ───────────────────────────────────────────────── */
 .state-message {
@@ -228,7 +379,7 @@ function formatDate(iso: string) {
   transition: border-color var(--transition-fast);
 }
 .fiche-card:hover { border-color: var(--color-arcane-dim); }
-.fiche-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fiche-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .fiche-nom {
   font-family: var(--font-heading);
   font-size: var(--fs-row-name);
@@ -249,6 +400,48 @@ function formatDate(iso: string) {
   display: flex;
   gap: var(--space-sm);
   flex-shrink: 0;
+  align-items: center;
+}
+
+/* ── DANGER SECTION ──────────────────────────────────────── */
+.danger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.danger-row:last-child { border-bottom: none; padding-bottom: 0; }
+.danger-row:first-of-type { padding-top: 0; }
+.danger-row--critical { margin-top: var(--space-sm); }
+.danger-info { display: flex; flex-direction: column; gap: var(--space-xs); }
+.danger-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-row-name);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-primary);
+}
+.danger-label--red { color: #c47070; }
+.danger-desc {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-text-muted);
+}
+.danger-action { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); }
+.success-msg {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-arcane);
+}
+.error-msg {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: #c47070;
 }
 
 /* ── BUTTONS ─────────────────────────────────────────────── */
@@ -292,7 +485,7 @@ function formatDate(iso: string) {
   border-color: var(--color-border);
   color: var(--color-text-secondary);
 }
-.btn-edit:hover { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
+.btn-edit:hover:not(:disabled) { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
 
 .btn-pdf {
   background: var(--color-arcane);
@@ -301,12 +494,28 @@ function formatDate(iso: string) {
 }
 .btn-pdf:hover:not(:disabled) { opacity: 0.85; }
 
+.btn-delete-fiche {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+  padding: var(--space-xs);
+  font-size: 0.75rem;
+}
+.btn-delete-fiche:hover { color: #c47070; border-color: #8b3a3a44; }
+
 .btn-cancel {
   background: transparent;
   border-color: var(--color-border);
   color: var(--color-text-secondary);
 }
 .btn-cancel:hover:not(:disabled) { border-color: var(--color-crimson-dim); color: #c47070; }
+
+.btn-danger {
+  background: #8b3a3a;
+  color: #f0d8d8;
+  border-color: #8b3a3a;
+}
+.btn-danger:hover:not(:disabled) { background: #a04444; border-color: #a04444; }
 
 /* ── MODAL ───────────────────────────────────────────────── */
 .modal-overlay {
@@ -336,6 +545,7 @@ function formatDate(iso: string) {
   color: var(--color-gold);
   margin-bottom: var(--space-md);
 }
+.modal-title--red { color: #c47070; }
 .modal-body {
   font-family: var(--font-flavor);
   font-style: italic;
@@ -377,5 +587,7 @@ function formatDate(iso: string) {
   .fiche-actions { width: 100%; }
   .btn-action { flex: 1; }
   .history-header { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+  .danger-row { flex-direction: column; align-items: flex-start; }
+  .danger-action { width: 100%; align-items: flex-start; }
 }
 </style>

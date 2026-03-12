@@ -66,7 +66,7 @@ function pickRandom() {
     </Transition>
 
     <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">⬡</span>
+      <span class="state-sigil">۞</span>
       <p>Consultation des dossiers psychiatriques…</p>
     </div>
 
@@ -241,7 +241,6 @@ function pickRandom() {
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-family: var(--font-flavor);
-  font-style: italic;
 }
 .state-sigil {
   display: block;

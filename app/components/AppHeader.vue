@@ -85,11 +85,11 @@ async function confirmSignOut() {
                   <span class="dropdown-item-icon">◈</span> Mon profil
                 </NuxtLink>
                 <NuxtLink to="/investigateur/creer" class="dropdown-item" @click="closeUserMenu">
-                  <span class="dropdown-item-icon">✦</span> Nouvelle fiche
+                  <span class="dropdown-item-icon">✚</span> Nouvelle fiche
                 </NuxtLink>
                 <div class="dropdown-divider" />
                 <button class="dropdown-item dropdown-item--danger" @click="showSignOutModal = true; closeUserMenu()">
-                  <span class="dropdown-item-icon">⊗</span> Déconnexion
+                  <span class="dropdown-item-icon">✖</span> Déconnexion
                 </button>
               </div>
             </Transition>

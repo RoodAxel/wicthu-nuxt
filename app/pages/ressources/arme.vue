@@ -94,8 +94,8 @@ function toggleRow(id: number) {
     </div>
 
     <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">⬡</span>
-      <p>Consultation des registres…</p>
+      <span class="state-sigil">۞</span>
+      <p>Consultation du catalogue…</p>
     </div>
 
     <div v-else-if="error" class="state-message state-error">
@@ -408,7 +408,6 @@ function toggleRow(id: number) {
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-family: var(--font-flavor);
-  font-style: italic;
 }
 .state-sigil {
   display: block;

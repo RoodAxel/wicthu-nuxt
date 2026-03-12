@@ -77,7 +77,7 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
     </div>
 
     <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">⬡</span>
+      <span class="state-sigil">۞</span>
       <p>Consultation du catalogue…</p>
     </div>
     <div v-else-if="error" class="state-message state-error">
@@ -254,7 +254,6 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-family: var(--font-flavor);
-  font-style: italic;
 }
 .state-sigil {
   display: block;
