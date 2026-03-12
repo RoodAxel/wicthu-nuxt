@@ -3,17 +3,144 @@ import type { ouvrage_occulte } from '@prisma/client'
 
 const { data: ouvrages, status, error } = useFetch<ouvrage_occulte[]>('/api/ouvrage-occulte')
 
-const search = ref('')
+const search   = ref('')
 const expanded = ref<number | null>(null)
 
+// ── TRIS ──────────────────────────────────────────────────────────────────────
+const sortTitle  = ref<'asc' | 'desc'>('asc')
+const sortAuthor = ref<'asc' | 'desc' | null>(null)
+const sortGain   = ref<'desc' | 'asc' | null>(null)
+const sortSanity = ref<'desc' | 'asc' | null>(null)
+const sortDate   = ref<'asc' | 'desc' | null>(null)
+
+const titleIsActive = computed(() =>
+  sortAuthor.value === null && sortGain.value === null && sortSanity.value === null && sortDate.value === null
+)
+
+const sortTitleIcon  = computed(() => sortTitle.value === 'asc' ? '↑' : '↓')
+const sortAuthorIcon = computed(() => sortAuthor.value === 'asc' ? '↑' : sortAuthor.value === 'desc' ? '↓' : '↕')
+const sortGainIcon   = computed(() => sortGain.value === 'desc' ? '↓' : sortGain.value === 'asc' ? '↑' : '↕')
+const sortSanityIcon = computed(() => sortSanity.value === 'desc' ? '↓' : sortSanity.value === 'asc' ? '↑' : '↕')
+const sortDateIcon   = computed(() => sortDate.value === 'asc' ? '↑' : sortDate.value === 'desc' ? '↓' : '↕')
+
+function cycleSortTitle() {
+  sortAuthor.value = null; sortGain.value = null; sortSanity.value = null; sortDate.value = null
+  sortTitle.value = sortTitle.value === 'asc' ? 'desc' : 'asc'
+}
+function cycleSortAuthor() {
+  sortGain.value = null; sortSanity.value = null; sortDate.value = null
+  sortAuthor.value = sortAuthor.value === null ? 'asc' : sortAuthor.value === 'asc' ? 'desc' : null
+}
+function cycleSortGain() {
+  sortAuthor.value = null; sortSanity.value = null; sortDate.value = null
+  sortGain.value = sortGain.value === null ? 'desc' : sortGain.value === 'desc' ? 'asc' : null
+}
+function cycleSortSanity() {
+  sortAuthor.value = null; sortGain.value = null; sortDate.value = null
+  sortSanity.value = sortSanity.value === null ? 'desc' : sortSanity.value === 'desc' ? 'asc' : null
+}
+function cycleSortDate() {
+  sortAuthor.value = null; sortGain.value = null; sortSanity.value = null
+  sortDate.value = sortDate.value === null ? 'asc' : sortDate.value === 'asc' ? 'desc' : null
+}
+
+// ── PARSEURS ──────────────────────────────────────────────────────────────────
+const ROMAN: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 }
+
+function fromRoman(s: string): number {
+  let total = 0
+  for (let i = 0; i < s.length; i++) {
+    const cur  = ROMAN[s[i]]  ?? 0
+    const next = ROMAN[s[i + 1]] ?? 0
+    total += cur < next ? -cur : cur
+  }
+  return total
+}
+
+function parseDateValue(date: string | null): number | null {
+  if (!date) return null
+  const d = date.trim()
+  // Après J.-C. : "300 ap. J.-C. environ"
+  const apMatch = d.match(/^(\d+)\s+ap\.\s+J\.-C\./)
+  if (apMatch) return parseInt(apMatch[1])
+  // Avant J.-C. : "2000 av. J.-C. environ"
+  const avMatch = d.match(/^(\d+)\s+av\.\s+J\.-C\./)
+  if (avMatch) return -parseInt(avMatch[1])
+  // Siècle : "XIVe siècle" → milieu du siècle (siècle×100 - 50)
+  const siecleMatch = d.match(/^([IVXLCDM]+)[a-zèéê]*\s+si[eè]cle/i)
+  if (siecleMatch) return fromRoman(siecleMatch[1].toUpperCase()) * 100 - 50
+  // Intervalle : "1555-1557" → moyenne
+  const rangeMatch = d.match(/^(\d{3,4})-(\d{3,4})/)
+  if (rangeMatch) return Math.round((parseInt(rangeMatch[1]) + parseInt(rangeMatch[2])) / 2)
+  // Année simple : "1921"
+  if (/^\d+/.test(d)) return parseInt(d)
+  return null
+}
+
+function parseSanityValue(sanity: string | null): number | null {
+  if (!sanity) return null
+  let s = sanity.trim()
+  // Ignorer la perte minimale "X/" avant la formule principale
+  const slashIdx = s.indexOf('/')
+  if (slashIdx !== -1) s = s.slice(slashIdx + 1)
+  // Parser NdM ou NdM+K
+  const m = s.match(/^(\d+)[dD](\d+)(?:\+(\d+))?/)
+  if (!m) return null
+  return parseInt(m[1]) * parseInt(m[2]) + (m[3] ? parseInt(m[3]) : 0)
+}
+
+// ── FILTERED + SORTED ─────────────────────────────────────────────────────────
 const filtered = computed(() => {
   if (!ouvrages.value) return []
-  const q = search.value.toLowerCase()
-  return ouvrages.value.filter(o =>
-    o.title.toLowerCase().includes(q) ||
-    (o.author?.toLowerCase().includes(q) ?? false) ||
-    (o.language?.toLowerCase().includes(q) ?? false)
-  )
+
+  const q = normalizeStr(search.value.trim())
+  let result = ouvrages.value.filter((o) => {
+    if (q) {
+      const matchTitle  = normalizeStr(o.title).includes(q)
+      const matchAuthor = o.author   ? normalizeStr(o.author).includes(q)   : false
+      const matchLang   = o.language ? normalizeStr(o.language).includes(q) : false
+      if (!matchTitle && !matchAuthor && !matchLang) return false
+    }
+    return true
+  })
+
+  if (sortDate.value) {
+    result = [...result].sort((a, b) => {
+      const av = parseDateValue(a.date), bv = parseDateValue(b.date)
+      if (av === null && bv === null) return 0
+      if (av === null) return 1
+      if (bv === null) return -1
+      return sortDate.value === 'asc' ? av - bv : bv - av
+    })
+  } else if (sortGain.value) {
+    result = [...result].sort((a, b) => {
+      const av = a.occult_gain, bv = b.occult_gain
+      if (av === null && bv === null) return 0
+      if (av === null) return 1
+      if (bv === null) return -1
+      return sortGain.value === 'desc' ? bv - av : av - bv
+    })
+  } else if (sortSanity.value) {
+    result = [...result].sort((a, b) => {
+      const av = parseSanityValue(a.sanity), bv = parseSanityValue(b.sanity)
+      if (av === null && bv === null) return 0
+      if (av === null) return 1
+      if (bv === null) return -1
+      return sortSanity.value === 'desc' ? bv - av : av - bv
+    })
+  } else if (sortAuthor.value) {
+    result = [...result].sort((a, b) => {
+      const cmp = (a.author ?? '').localeCompare(b.author ?? '', 'fr')
+      return sortAuthor.value === 'asc' ? cmp : -cmp
+    })
+  } else {
+    result = [...result].sort((a, b) => {
+      const cmp = a.title.localeCompare(b.title, 'fr')
+      return sortTitle.value === 'asc' ? cmp : -cmp
+    })
+  }
+
+  return result
 })
 
 function toggle(id: number) {
@@ -67,12 +194,22 @@ function toggle(id: number) {
 
     <div v-else class="list-container">
       <div class="list-header-row">
-        <span class="col-title">Titre</span>
-        <span class="col-author">Auteur</span>
+        <button class="col-sortable" :class="{ 'sort-active': titleIsActive }" @click="cycleSortTitle">
+          Titre <span class="sort-icon">{{ sortTitleIcon }}</span>
+        </button>
+        <button class="col-sortable" :class="{ 'sort-active': sortAuthor !== null }" @click="cycleSortAuthor">
+          Auteur <span class="sort-icon">{{ sortAuthorIcon }}</span>
+        </button>
         <span class="col-lang">Langue</span>
-        <span class="col-date">Date</span>
-        <span class="col-sanity">Santé ment.</span>
-        <span class="col-gain">Gain Occ.</span>
+        <button class="col-sortable" :class="{ 'sort-active': sortDate !== null }" @click="cycleSortDate">
+          Date <span class="sort-icon">{{ sortDateIcon }}</span>
+        </button>
+        <button class="col-sortable" :class="{ 'sort-active': sortSanity !== null }" @click="cycleSortSanity">
+          Santé ment. <span class="sort-icon">{{ sortSanityIcon }}</span>
+        </button>
+        <button class="col-sortable" :class="{ 'sort-active': sortGain !== null }" @click="cycleSortGain">
+          Gain Occ. <span class="sort-icon">{{ sortGainIcon }}</span>
+        </button>
       </div>
       <div class="list-body">
         <template v-for="ouvrage in filtered" :key="ouvrage.id">
@@ -274,6 +411,27 @@ function toggle(id: number) {
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
+
+.col-sortable {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-xs);
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+.col-sortable:hover { color: var(--color-gold); }
+.col-sortable.sort-active { color: var(--color-gold); }
+.sort-icon { font-size: 0.7rem; opacity: 0.7; }
+
 .list-body {
   max-height: 580px;
   overflow-y: auto;
@@ -297,11 +455,6 @@ function toggle(id: number) {
 }
 
 /* ── CELLS ───────────────────────────────────────────────── */
-.row-id {
-  font-family: var(--font-heading);
-  font-size: var(--fs-sm);
-  color: var(--color-text-muted);
-}
 .row-title {
   font-family: var(--font-heading);
   font-size: var(--fs-md);

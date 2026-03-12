@@ -179,38 +179,22 @@ function formatDate(iso: string) {
     </section>
 
     <!-- ── SÉCURITÉ ───────────────────────────────────────────── -->
-    <section class="danger-section">
-      <h2 class="section-title">Compte &amp; sécurité</h2>
-
-      <div class="danger-row">
-        <div class="danger-info">
-          <span class="danger-label">Mot de passe</span>
-          <span class="danger-desc">Recevoir un lien de réinitialisation par e-mail.</span>
-        </div>
-        <div class="danger-action">
-          <p v-if="passwordEmailSent" class="success-msg">E-mail envoyé !</p>
-          <p v-if="passwordError" class="error-msg">{{ passwordError }}</p>
-          <button
-            class="btn-action btn-edit"
-            :disabled="isSendingPassword || passwordEmailSent"
-            @click="sendPasswordReset"
-          >
-            <span v-if="isSendingPassword" class="btn-sigil">۞</span>
-            <span v-else>Changer le mot de passe</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="danger-row danger-row--critical">
-        <div class="danger-info">
-          <span class="danger-label danger-label--red">Supprimer le compte</span>
-          <span class="danger-desc">Supprime définitivement votre compte et toutes vos fiches. Action irréversible.</span>
-        </div>
-        <div class="danger-action">
-          <button class="btn-action btn-danger" @click="openDeleteAccountModal">
-            Supprimer mon compte
-          </button>
-        </div>
+    <section class="account-section">
+      <div class="account-row">
+        <span v-if="passwordEmailSent" class="success-msg">E-mail envoyé !</span>
+        <span v-else-if="passwordError" class="error-msg">{{ passwordError }}</span>
+        <button
+          class="btn-subtle"
+          :disabled="isSendingPassword || passwordEmailSent"
+          @click="sendPasswordReset"
+        >
+          <span v-if="isSendingPassword" class="btn-sigil">۞</span>
+          <span v-else>Changer le mot de passe</span>
+        </button>
+        <span class="account-sep">·</span>
+        <button class="btn-subtle btn-subtle--danger" @click="openDeleteAccountModal">
+          Supprimer mon compte
+        </button>
       </div>
     </section>
 
@@ -318,8 +302,7 @@ function formatDate(iso: string) {
 }
 
 /* ── SECTIONS ────────────────────────────────────────────── */
-.history-section,
-.danger-section {
+.history-section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -403,34 +386,37 @@ function formatDate(iso: string) {
   align-items: center;
 }
 
-/* ── DANGER SECTION ──────────────────────────────────────── */
-.danger-row {
+/* ── ACCOUNT SECTION ─────────────────────────────────────── */
+.account-section {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-md);
+}
+.account-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-md);
+  flex-wrap: wrap;
 }
-.danger-row:last-child { border-bottom: none; padding-bottom: 0; }
-.danger-row:first-of-type { padding-top: 0; }
-.danger-row--critical { margin-top: var(--space-sm); }
-.danger-info { display: flex; flex-direction: column; gap: var(--space-xs); }
-.danger-label {
-  font-family: var(--font-heading);
-  font-size: var(--fs-row-name);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-primary);
-}
-.danger-label--red { color: #c47070; }
-.danger-desc {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-secondary);
+.account-sep {
   color: var(--color-text-muted);
+  opacity: 0.4;
+  font-size: var(--fs-sm);
 }
-.danger-action { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); }
+.btn-subtle {
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+.btn-subtle:hover:not(:disabled) { color: var(--color-text-secondary); }
+.btn-subtle:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-subtle--danger:hover:not(:disabled) { color: #c47070; }
 .success-msg {
   font-family: var(--font-flavor);
   font-style: italic;
@@ -587,7 +573,7 @@ function formatDate(iso: string) {
   .fiche-actions { width: 100%; }
   .btn-action { flex: 1; }
   .history-header { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
-  .danger-row { flex-direction: column; align-items: flex-start; }
-  .danger-action { width: 100%; align-items: flex-start; }
+  .account-row { flex-direction: column; align-items: flex-start; }
+  .account-sep { display: none; }
 }
 </style>

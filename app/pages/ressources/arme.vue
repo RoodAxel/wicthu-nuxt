@@ -7,26 +7,130 @@ type WeaponWithSkill = arme & {
 
 const { data: weapons, status, error } = useFetch<WeaponWithSkill[]>('/api/arme')
 
-const search = ref('')
-const eraFilter = ref<'all' | 'classique' | 'moderne'>('all')
+// ── FILTRES ───────────────────────────────────────────────────────────────────
+const searchName  = ref('')
+const searchSkill = ref('')
+const searchPrice = ref('')
+const eraFilter   = ref<'all' | 'classique' | 'moderne'>('all')
+
+const selectedCategories   = ref<Set<string>>(new Set())
+const categoryDropdownOpen = ref(false)
+const categoryDropdownRef  = ref<HTMLElement | null>(null)
+
 const expandedId = ref<number | null>(null)
 
+// ── TRIS ──────────────────────────────────────────────────────────────────────
+// Tri dégâts : désactivé tant que average_dmg n'est pas rempli
+const sortDamage       = ref<'desc' | 'asc' | null>(null)
+const sortClassicPrice = ref<'desc' | 'asc' | null>(null)
+const sortModernPrice  = ref<'desc' | 'asc' | null>(null)
+
+const sortDamageIcon       = computed(() => sortDamage.value === 'desc' ? '↓' : sortDamage.value === 'asc' ? '↑' : '↕')
+const sortClassicPriceIcon = computed(() => sortClassicPrice.value === 'desc' ? '↓' : sortClassicPrice.value === 'asc' ? '↑' : '↕')
+const sortModernPriceIcon  = computed(() => sortModernPrice.value === 'desc' ? '↓' : sortModernPrice.value === 'asc' ? '↑' : '↕')
+
+function cycleSortDamage() {
+  sortClassicPrice.value = null
+  sortModernPrice.value = null
+  sortDamage.value = sortDamage.value === null ? 'desc' : sortDamage.value === 'desc' ? 'asc' : null
+}
+
+function cycleSortClassicPrice() {
+  sortDamage.value = null
+  sortModernPrice.value = null
+  sortClassicPrice.value = sortClassicPrice.value === null ? 'desc' : sortClassicPrice.value === 'desc' ? 'asc' : null
+}
+
+function cycleSortModernPrice() {
+  sortDamage.value = null
+  sortClassicPrice.value = null
+  sortModernPrice.value = sortModernPrice.value === null ? 'desc' : sortModernPrice.value === 'desc' ? 'asc' : null
+}
+
+// ── DONNÉES ───────────────────────────────────────────────────────────────────
 const categories = computed(() => {
   if (!weapons.value) return []
   return [...new Set(weapons.value.map(w => w.category))].sort()
 })
 
-const categoryFilter = ref<string | null>(null)
+const selectedCategoryNames = computed(() =>
+  categories.value.filter(c => selectedCategories.value.has(c))
+)
 
+function toggleCategory(cat: string) {
+  const next = new Set(selectedCategories.value)
+  if (next.has(cat)) next.delete(cat)
+  else next.add(cat)
+  selectedCategories.value = next
+}
+
+function removeCategory(cat: string) {
+  const next = new Set(selectedCategories.value)
+  next.delete(cat)
+  selectedCategories.value = next
+}
+
+// ── FILTERED + SORTED ─────────────────────────────────────────────────────────
 const filtered = computed(() => {
   if (!weapons.value) return []
-  return weapons.value.filter((w) => {
-    const matchSearch = w.name.toLowerCase().includes(search.value.toLowerCase())
-    if (!matchSearch) return false
-    if (categoryFilter.value && w.category !== categoryFilter.value) return false
+
+  let result = weapons.value.filter((w) => {
+    if (searchName.value.trim() && !normalizeStr(w.name).includes(normalizeStr(searchName.value.trim()))) return false
+    if (searchSkill.value.trim() && !normalizeStr(w.competence.name).includes(normalizeStr(searchSkill.value.trim()))) return false
+    if (searchPrice.value.trim()) {
+      const q = searchPrice.value.trim()
+      const matchClassic = w.classic_price !== null && String(w.classic_price).includes(q)
+      const matchModern  = w.modern_price  !== null && String(w.modern_price).includes(q)
+      if (!matchClassic && !matchModern) return false
+    }
+    if (selectedCategories.value.size > 0 && !selectedCategories.value.has(w.category)) return false
     if (eraFilter.value !== 'all' && !w.epoque.includes(eraFilter.value)) return false
     return true
   })
+
+  if (sortDamage.value) {
+    result = [...result].sort((a, b) => {
+      const av = parseFloat(a.average_dmg ?? '')
+      const bv = parseFloat(b.average_dmg ?? '')
+      const aNull = isNaN(av)
+      const bNull = isNaN(bv)
+      if (aNull && bNull) return 0
+      if (aNull) return 1
+      if (bNull) return -1
+      return sortDamage.value === 'desc' ? bv - av : av - bv
+    })
+  } else if (sortClassicPrice.value) {
+    result = [...result].sort((a, b) => {
+      const aNull = a.classic_price === null
+      const bNull = b.classic_price === null
+      if (aNull && bNull) return 0
+      if (aNull) return 1
+      if (bNull) return -1
+      return sortClassicPrice.value === 'desc'
+        ? (b.classic_price! - a.classic_price!)
+        : (a.classic_price! - b.classic_price!)
+    })
+  } else if (sortModernPrice.value) {
+    result = [...result].sort((a, b) => {
+      const aNull = a.modern_price === null
+      const bNull = b.modern_price === null
+      if (aNull && bNull) return 0
+      if (aNull) return 1
+      if (bNull) return -1
+      return sortModernPrice.value === 'desc'
+        ? (b.modern_price! - a.modern_price!)
+        : (a.modern_price! - b.modern_price!)
+    })
+  } else {
+    // Tri par défaut : catégorie A→Z, puis nom A→Z
+    result = [...result].sort((a, b) => {
+      const catCmp = a.category.localeCompare(b.category, 'fr')
+      if (catCmp !== 0) return catCmp
+      return a.name.localeCompare(b.name, 'fr')
+    })
+  }
+
+  return result
 })
 
 const stats = computed(() => ({
@@ -39,6 +143,15 @@ const stats = computed(() => ({
 function toggleRow(id: number) {
   expandedId.value = expandedId.value === id ? null : id
 }
+
+function handleClickOutside(e: MouseEvent) {
+  if (categoryDropdownRef.value && !categoryDropdownRef.value.contains(e.target as Node)) {
+    categoryDropdownOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('mousedown', handleClickOutside))
+onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 </script>
 
 <template>
@@ -74,22 +187,83 @@ function toggleRow(id: number) {
     </div>
 
     <div class="toolbar">
+      <!-- Filtres époque -->
       <div class="filters">
-        <button class="tag" :class="{ active: eraFilter === 'all' }" @click="eraFilter = 'all'">Toutes</button>
+        <button class="tag" :class="{ active: eraFilter === 'all' }"       @click="eraFilter = 'all'">Toutes</button>
         <button class="tag" :class="{ active: eraFilter === 'classique' }" @click="eraFilter = 'classique'">Classique</button>
         <button class="tag modern-tag" :class="{ active: eraFilter === 'moderne' }" @click="eraFilter = 'moderne'">Moderne</button>
       </div>
 
-      <div class="category-select-wrapper">
-        <select v-model="categoryFilter" class="category-select">
-          <option :value="null">Toutes les catégories</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
+      <!-- Dropdown catégories multi-sélection -->
+      <div ref="categoryDropdownRef" class="dropdown-wrapper">
+        <button
+          class="tag"
+          :class="{ active: selectedCategories.size > 0 }"
+          @click="categoryDropdownOpen = !categoryDropdownOpen"
+        >
+          Catégories <span class="dropdown-caret">{{ categoryDropdownOpen ? '▲' : '▼' }}</span>
+        </button>
+        <div v-if="categoryDropdownOpen" class="dropdown-menu">
+          <button
+            v-for="cat in categories"
+            :key="cat"
+            class="dropdown-item"
+            :class="{ selected: selectedCategories.has(cat) }"
+            @click="toggleCategory(cat)"
+          >
+            <span class="dropdown-check">{{ selectedCategories.has(cat) ? '✓' : '' }}</span>
+            {{ cat }}
+          </button>
+        </div>
       </div>
 
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input v-model="search" type="text" class="search-input" placeholder="Rechercher une arme…">
+      <!-- Tri dégâts — masqué jusqu'à ce que average_dmg soit rempli -->
+      <button v-if="false" class="tag sort-tag" :class="{ active: sortDamage !== null }" @click="cycleSortDamage">
+        Dégâts {{ sortDamageIcon }}
+      </button>
+
+      <!-- Tris prix -->
+      <div class="sort-group">
+        <span class="sort-group-label">Trier par prix</span>
+        <button class="tag sort-tag" :class="{ active: sortClassicPrice !== null }" @click="cycleSortClassicPrice">
+          Classique <span class="sort-icon">{{ sortClassicPriceIcon }}</span>
+        </button>
+        <button class="tag sort-tag modern-sort-tag" :class="{ active: sortModernPrice !== null }" @click="cycleSortModernPrice">
+          Moderne <span class="sort-icon">{{ sortModernPriceIcon }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Catégories actives -->
+    <div v-if="selectedCategoryNames.length > 0" class="active-filters">
+      <span v-for="cat in selectedCategoryNames" :key="cat" class="active-category-filter">
+        <span class="active-category-label">{{ cat }}</span>
+        <button class="active-category-clear" :aria-label="`Retirer ${cat}`" @click="removeCategory(cat)">✕</button>
+      </span>
+    </div>
+
+    <!-- Ligne de recherche -->
+    <div class="search-row">
+      <div class="search-field">
+        <label class="search-label">Arme</label>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchName" type="text" class="search-input" placeholder="Nom…">
+        </div>
+      </div>
+      <div class="search-field">
+        <label class="search-label">Compétence</label>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchSkill" type="text" class="search-input" placeholder="ex : Corps à corps…">
+        </div>
+      </div>
+      <div class="search-field">
+        <label class="search-label">Prix</label>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchPrice" type="text" class="search-input search-input--sm" placeholder="ex : 25…">
+        </div>
       </div>
     </div>
 
@@ -239,10 +413,8 @@ function toggleRow(id: number) {
 .page-header::after {
   content: '';
   position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 80px;
-  height: 1px;
+  bottom: -1px; left: 0;
+  width: 80px; height: 1px;
   background: var(--color-crimson);
 }
 .page-title {
@@ -321,7 +493,7 @@ function toggleRow(id: number) {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
   flex-wrap: wrap;
 }
 .filters {
@@ -343,38 +515,137 @@ function toggleRow(id: number) {
   cursor: pointer;
   transition: all var(--transition-fast);
   background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 .tag:hover { border-color: var(--color-crimson-dim); color: #c47070; }
-.tag.active {
-  background: var(--color-crimson-dim);
-  border-color: var(--color-crimson);
-  color: #c47070;
-}
+.tag.active { background: var(--color-crimson-dim); border-color: var(--color-crimson); color: #c47070; }
 .tag.modern-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
 .tag.modern-tag:hover { border-color: var(--color-arcane); }
 .tag.modern-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
 
-/* ── CATEGORY SELECT ─────────────────────────────────────── */
-.category-select {
-  background: var(--color-surface);
+.sort-tag { border-color: var(--color-gold-dim); color: var(--color-gold); }
+.sort-tag:hover { border-color: var(--color-gold); }
+.sort-tag.active { background: var(--color-gold-dim); border-color: var(--color-gold); color: var(--color-gold); }
+.sort-tag.modern-sort-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
+.sort-tag.modern-sort-tag:hover { border-color: var(--color-arcane); }
+.sort-tag.modern-sort-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
+
+.sort-icon { font-size: 0.7rem; opacity: 0.8; }
+
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding-left: var(--space-lg);
+  border-left: 1px solid var(--color-border);
+}
+.sort-group-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ── DROPDOWN ────────────────────────────────────────────── */
+.dropdown-caret { font-size: 0.5rem; opacity: 0.6; }
+.dropdown-wrapper { position: relative; }
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  background: var(--color-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-xs) var(--space-md);
+  min-width: 200px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-deep);
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
   color: var(--color-text-secondary);
   font-family: var(--font-heading);
   font-size: var(--fs-md);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  text-align: left;
   cursor: pointer;
-  outline: none;
-  transition: border-color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
-.category-select:focus { border-color: var(--color-crimson-dim); }
+.dropdown-item:hover { background: var(--color-surface); color: var(--color-text-primary); }
+.dropdown-item.selected { color: #c47070; }
+.dropdown-check { width: 14px; font-size: 0.7rem; color: #c47070; flex-shrink: 0; }
 
-/* ── SEARCH ──────────────────────────────────────────────── */
-.search-bar {
-  position: relative;
-  margin-left: auto;
+/* ── ACTIVE FILTERS ──────────────────────────────────────── */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
+.active-category-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  background: rgba(139, 58, 58, 0.1);
+  border: 1px solid var(--color-crimson-dim);
+  border-radius: var(--radius-sm);
+}
+.active-category-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c47070;
+}
+.active-category-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  font-size: var(--fs-2xs);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-crimson-dim);
+  color: #c47070;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+.active-category-clear:hover { background: var(--color-crimson-dim); }
+
+/* ── SEARCH ROW ──────────────────────────────────────────── */
+.search-row {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+}
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.search-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.search-bar { position: relative; }
 .search-icon {
   position: absolute;
   left: var(--space-sm);
@@ -392,10 +663,11 @@ function toggleRow(id: number) {
   color: var(--color-text-primary);
   font-family: var(--font-body);
   font-size: var(--fs-lg);
-  width: 240px;
+  width: 220px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
 }
+.search-input--sm { width: 140px; }
 .search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
 .search-input:focus {
   border-color: var(--color-crimson-dim);
@@ -416,10 +688,7 @@ function toggleRow(id: number) {
   color: var(--color-crimson);
   animation: pulse-sigil 2s ease-in-out infinite;
 }
-@keyframes pulse-sigil {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
+@keyframes pulse-sigil { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 .state-error { color: var(--color-crimson); }
 
 /* ── TABLE ───────────────────────────────────────────────── */
@@ -428,7 +697,6 @@ function toggleRow(id: number) {
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-
 .list-header-row,
 .list-row {
   display: grid;
@@ -437,7 +705,6 @@ function toggleRow(id: number) {
   padding: var(--space-sm) var(--space-lg);
   gap: var(--space-md);
 }
-
 .list-header-row {
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
@@ -451,7 +718,6 @@ function toggleRow(id: number) {
   top: 0;
   z-index: 1;
 }
-
 .list-body {
   max-height: 640px;
   overflow-y: auto;
@@ -460,12 +726,8 @@ function toggleRow(id: number) {
 }
 .list-body::-webkit-scrollbar { width: 6px; }
 .list-body::-webkit-scrollbar-track { background: transparent; }
-.list-body::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
-}
+.list-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 .list-body::-webkit-scrollbar-thumb:hover { background: var(--color-crimson-dim); }
-
 .list-row {
   transition: background var(--transition-fast);
   cursor: pointer;
@@ -487,10 +749,7 @@ function toggleRow(id: number) {
   transition: transform var(--transition-fast);
   transform: rotate(0deg);
 }
-.chevron.open {
-  transform: rotate(90deg);
-  color: var(--color-crimson);
-}
+.chevron.open { transform: rotate(90deg); color: var(--color-crimson); }
 
 /* ── CELL STYLES ─────────────────────────────────────────── */
 .row-name {
@@ -500,7 +759,6 @@ function toggleRow(id: number) {
   letter-spacing: 0.03em;
   color: var(--color-text-primary);
 }
-
 .row-muted {
   font-family: var(--font-flavor);
   font-style: italic;
@@ -510,7 +768,6 @@ function toggleRow(id: number) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .row-skill {
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
@@ -520,14 +777,12 @@ function toggleRow(id: number) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .row-value {
   font-family: var(--font-heading);
   font-size: var(--fs-md);
   font-weight: 600;
   color: var(--color-crimson);
 }
-
 .row-failure {
   font-family: var(--font-heading);
   font-size: var(--fs-md);
@@ -547,16 +802,8 @@ function toggleRow(id: number) {
 .price-modern { color: var(--color-arcane); }
 
 /* ── ERA BADGES ──────────────────────────────────────────── */
-.col-era {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-.era-list {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.col-era { display: flex; gap: 4px; flex-wrap: wrap; }
+.era-list { display: flex; gap: 6px; flex-wrap: wrap; }
 .era-badge {
   font-family: var(--font-heading);
   font-size: var(--fs-2xs);
@@ -565,16 +812,8 @@ function toggleRow(id: number) {
   padding: 2px 5px;
   border-radius: var(--radius-sm);
 }
-.era-classique {
-  background: rgba(184, 146, 74, 0.12);
-  color: var(--color-gold);
-  border: 1px solid var(--color-gold-dim);
-}
-.era-moderne {
-  background: rgba(127, 179, 138, 0.12);
-  color: var(--color-arcane);
-  border: 1px solid var(--color-arcane-dim);
-}
+.era-classique { background: rgba(184,146,74,0.12); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
+.era-moderne   { background: rgba(127,179,138,0.12); color: var(--color-arcane); border: 1px solid var(--color-arcane-dim); }
 
 /* ── DETAIL PANEL ────────────────────────────────────────── */
 .detail-panel {
@@ -582,13 +821,11 @@ function toggleRow(id: number) {
   padding: var(--space-lg) var(--space-xl);
   border-top: 1px solid var(--color-border-glow);
 }
-
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-xl);
 }
-
 .detail-section-title {
   font-family: var(--font-heading);
   font-size: var(--fs-2xs);
@@ -600,20 +837,13 @@ function toggleRow(id: number) {
   padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--color-border);
 }
-
-.detail-fields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
+.detail-fields { display: flex; flex-direction: column; gap: var(--space-sm); }
 .detail-field {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-sm);
 }
-
 .field-label {
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
@@ -621,7 +851,6 @@ function toggleRow(id: number) {
   color: var(--color-text-muted);
   white-space: nowrap;
 }
-
 .field-value {
   font-family: var(--font-body);
   font-size: var(--fs-md);
@@ -637,31 +866,25 @@ function toggleRow(id: number) {
   overflow: hidden;
 }
 .expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
+.expand-leave-to { opacity: 0; max-height: 0; }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 768px) {
   .list-header-row,
-  .list-row {
-    grid-template-columns: 1fr 100px 80px 28px;
-  }
+  .list-row { grid-template-columns: 1fr 100px 80px 28px; }
   .col-category, .col-skill, .col-damage, .col-range, .col-price, .col-era { display: none; }
   .detail-grid { grid-template-columns: 1fr; }
 }
-
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .flavor-quote p { font-size: var(--fs-base); }
   .stats-panel { grid-template-columns: repeat(2, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
+  .sort-group { padding-left: 0; border-left: none; }
   .filters { flex-wrap: wrap; }
-  .category-select-wrapper { width: 100%; }
-  .category-select { width: 100%; box-sizing: border-box; }
-  .search-bar { margin-left: 0; width: 100%; }
-  .search-input { width: 100%; box-sizing: border-box; }
+  .search-row { flex-direction: column; }
+  .search-field, .search-bar { width: 100%; }
+  .search-input, .search-input--sm { width: 100%; box-sizing: border-box; }
   .list-body { max-height: 480px; }
 }
 </style>

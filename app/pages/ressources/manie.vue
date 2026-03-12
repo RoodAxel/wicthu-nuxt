@@ -3,15 +3,26 @@ import type { manie } from '@prisma/client'
 
 const { data: manies, status, error } = useFetch<manie[]>('/api/manie')
 
-const search = ref('')
-const random = ref<manie | null>(null)
+const search   = ref('')
+const random   = ref<manie | null>(null)
+const sortName = ref<'asc' | 'desc'>('asc')
+
+const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+
+function cycleSortName() {
+  sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
+}
 
 const filtered = computed(() => {
   if (!manies.value) return []
-  const q = search.value.toLowerCase()
-  return manies.value.filter(m =>
-    m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+  const q = normalizeStr(search.value.trim())
+  const result = manies.value.filter(m =>
+    !q || normalizeStr(m.name).includes(q) || normalizeStr(m.description).includes(q)
   )
+  return [...result].sort((a, b) => {
+    const cmp = a.name.localeCompare(b.name, 'fr')
+    return sortName.value === 'asc' ? cmp : -cmp
+  })
 })
 
 function pickRandom() {
@@ -81,7 +92,9 @@ function pickRandom() {
     <div v-else class="list-container">
       <div class="list-header-row">
         <span class="col-id">N°</span>
-        <span class="col-name">Manie</span>
+        <button class="col-sortable sort-active" @click="cycleSortName">
+          Manie <span class="sort-icon">{{ sortNameIcon }}</span>
+        </button>
         <span class="col-desc">Description</span>
       </div>
       <div class="list-body">
@@ -280,7 +293,27 @@ function pickRandom() {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  align-items: center;
 }
+.col-sortable {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-xs);
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+.col-sortable:hover { color: var(--color-crimson); }
+.col-sortable.sort-active { color: #c47070; }
+.sort-icon { font-size: 0.7rem; opacity: 0.7; }
 
 .list-body {
   max-height: 600px;

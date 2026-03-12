@@ -34,24 +34,72 @@ type OccupationDetail = OccupationListItem & { skills: OccupationSkill[] }
 
 const { data: occupations, status, error } = useFetch<OccupationListItem[]>('/api/occupation')
 
-const search      = ref('')
-const activeFilter = ref<'all' | 'lovecraftian' | 'modern'>('all')
-const expandedId  = ref<number | null>(null)
-const detailCache = ref<Record<number, OccupationDetail>>({})
-const loadingId   = ref<number | null>(null)
+const searchName    = ref('')
+const searchFormula = ref('')
+const searchCredit  = ref('')
+const activeFilter  = ref<'all' | 'lovecraftian' | 'modern'>('all')
+const expandedId    = ref<number | null>(null)
+const detailCache   = ref<Record<number, OccupationDetail>>({})
+const loadingId     = ref<number | null>(null)
+const sortName      = ref<'asc' | 'desc'>('asc')
+const sortCredit    = ref<'desc' | 'asc' | null>(null)
 
 // ── COMPUTED ─────────────────────────────────────────────────────────────────
 
 const filtered = computed(() => {
   if (!occupations.value) return []
-  const q = search.value.toLowerCase()
-  return occupations.value.filter((o) => {
-    if (!o.name.toLowerCase().includes(q)) return false
-    if (activeFilter.value === 'lovecraftian') return o.is_lovecraftian
-    if (activeFilter.value === 'modern')       return o.is_modern
+
+  let result = occupations.value.filter((o) => {
+    if (searchName.value.trim()) {
+      if (!normalizeStr(o.name).includes(normalizeStr(searchName.value.trim()))) return false
+    }
+
+    if (searchFormula.value.trim()) {
+      if (!normalizeStr(o.point_competence ?? '').includes(normalizeStr(searchFormula.value.trim()))) return false
+    }
+
+    if (searchCredit.value.trim()) {
+      const num = Number(searchCredit.value.trim())
+      if (!isNaN(num) && Number.isInteger(num)) {
+        if (o.credit_min === null || o.credit_max === null) return false
+        if (num < o.credit_min || num > o.credit_max) return false
+      }
+    }
+
+    if (activeFilter.value === 'lovecraftian' && !o.is_lovecraftian) return false
+    if (activeFilter.value === 'modern' && !o.is_modern) return false
+
     return true
   })
+
+  if (sortName.value) {
+    result = [...result].sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name, 'fr')
+      return sortName.value === 'asc' ? cmp : -cmp
+    })
+  } else if (sortCredit.value) {
+    result = [...result].sort((a, b) => {
+      const av = (a.credit_min ?? 0) + (a.credit_max ?? 0)
+      const bv = (b.credit_min ?? 0) + (b.credit_max ?? 0)
+      return sortCredit.value === 'desc' ? bv - av : av - bv
+    })
+  }
+
+  return result
 })
+
+const sortNameIcon   = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortCreditIcon = computed(() => sortCredit.value === 'desc' ? '↓' : sortCredit.value === 'asc' ? '↑' : '↕')
+
+function cycleSortName() {
+  sortCredit.value = null
+  sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
+}
+
+function cycleSortCredit() {
+  sortName.value = 'asc'
+  sortCredit.value = sortCredit.value === null ? 'desc' : sortCredit.value === 'desc' ? 'asc' : null
+}
 
 const stats = computed(() => ({
   total:        occupations.value?.length ?? 0,
@@ -135,9 +183,29 @@ function isFixedSkill(skill: OccupationSkill) {
         <button class="tag" :class="{ active: activeFilter === 'lovecraftian' }" @click="activeFilter = 'lovecraftian'">Lovecraftiennes</button>
         <button class="tag" :class="{ active: activeFilter === 'modern' }"       @click="activeFilter = 'modern'">Modernes</button>
       </div>
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input v-model="search" type="text" class="search-input" placeholder="Rechercher une occupation…">
+    </div>
+
+    <div class="search-row">
+      <div class="search-field">
+        <label class="search-label">Occupation</label>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchName" type="text" class="search-input" placeholder="Nom…">
+        </div>
+      </div>
+      <div class="search-field">
+        <label class="search-label">Formule de points</label>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchFormula" type="text" class="search-input" placeholder="ex : DEX, INT…">
+        </div>
+      </div>
+      <div class="search-field">
+        <label class="search-label">Crédit</label>
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input v-model="searchCredit" type="text" inputmode="numeric" pattern="[0-9]*" class="search-input search-input--credit" placeholder="ex : 30">
+        </div>
       </div>
     </div>
 
@@ -156,9 +224,13 @@ function isFixedSkill(skill: OccupationSkill) {
 
     <div v-else class="list-container">
       <div class="list-header-row">
-        <span>Occupation</span>
+        <button class="col-sortable sort-active" @click="cycleSortName">
+          Occupation <span class="sort-icon">{{ sortNameIcon }}</span>
+        </button>
         <span>Formule de points</span>
-        <span>Crédit</span>
+        <button class="col-sortable" :class="{ 'sort-active': sortCredit !== null }" @click="cycleSortCredit">
+          Crédit <span class="sort-icon">{{ sortCreditIcon }}</span>
+        </button>
         <span>Type</span>
         <span />
       </div>
@@ -342,7 +414,7 @@ function isFixedSkill(skill: OccupationSkill) {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
   flex-wrap: wrap;
 }
 .filters { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
@@ -362,7 +434,26 @@ function isFixedSkill(skill: OccupationSkill) {
 .tag:hover { border-color: var(--color-gold-dim); color: var(--color-gold); }
 .tag.active { background: var(--color-gold-dim); border-color: var(--color-gold); color: var(--color-gold); }
 
-.search-bar { position: relative; margin-left: auto; }
+/* ── SEARCH ROW ──────────────────────────────────────────── */
+.search-row {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+}
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.search-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-table-header);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.search-bar { position: relative; }
 .search-icon {
   position: absolute;
   left: var(--space-sm); top: 50%;
@@ -379,12 +470,37 @@ function isFixedSkill(skill: OccupationSkill) {
   color: var(--color-text-primary);
   font-family: var(--font-body);
   font-size: var(--fs-field-input);
-  width: 260px;
+  width: 240px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
 }
+.search-input--credit { width: 120px; }
+.search-input::-webkit-inner-spin-button,
+.search-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.search-input[type=number] { -moz-appearance: textfield; }
 .search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
 .search-input:focus { border-color: var(--color-gold-dim); box-shadow: 0 0 0 2px rgba(184,146,74,0.15); }
+
+/* ── SORT ────────────────────────────────────────────────── */
+.col-sortable {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-table-header);
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+.col-sortable:hover { color: var(--color-gold); }
+.col-sortable.sort-active { color: var(--color-gold); }
+.sort-icon { font-size: 0.7rem; opacity: 0.7; }
 
 /* ── STATE ───────────────────────────────────────────────── */
 .state-message {
@@ -637,8 +753,10 @@ function isFixedSkill(skill: OccupationSkill) {
   .page-wrapper { padding: var(--space-md); }
   .stats-panel { max-width: 100%; }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
-  .search-bar { margin-left: 0; width: 100%; }
-  .search-input { width: 100%; box-sizing: border-box; }
+  .search-row { flex-direction: column; }
+  .search-field { width: 100%; }
+  .search-bar { width: 100%; }
+  .search-input, .search-input--credit { width: 100%; box-sizing: border-box; }
   .list-header-row { display: none; }
   .list-row { grid-template-columns: 1fr auto 28px; }
   .row-formula, .row-credit { display: none; }

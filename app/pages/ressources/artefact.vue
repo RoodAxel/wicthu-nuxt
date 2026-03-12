@@ -3,22 +3,101 @@ import type { artefact } from '@prisma/client'
 
 const { data: artefacts, status, error } = useFetch<artefact[]>('/api/artefact')
 
-const search = ref('')
+const search   = ref('')
 const expandedId = ref<number | null>(null)
+
+const selectedUseBy        = ref<Set<string>>(new Set())
+const useByDropdownOpen    = ref(false)
+const useByDropdownRef     = ref<HTMLElement | null>(null)
+
+// ── TRIS ──────────────────────────────────────────────────────────────────────
+const sortName  = ref<'asc' | 'desc'>('asc')
+const sortUseBy = ref<'asc' | 'desc' | null>(null)
+
+const nameIsActive  = computed(() => sortUseBy.value === null)
+const sortNameIcon  = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortUseByIcon = computed(() => sortUseBy.value === 'asc' ? '↑' : sortUseBy.value === 'desc' ? '↓' : '↕')
+
+function cycleSortName() {
+  sortUseBy.value = null
+  sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
+}
+function cycleSortUseBy() {
+  sortUseBy.value = sortUseBy.value === null ? 'asc' : sortUseBy.value === 'asc' ? 'desc' : null
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+// Retire "le " / "les " en début de chaîne (pour affichage et tri)
+function stripArticle(s: string): string {
+  return s.replace(/^les?\s+/i, '').trim()
+}
+
+// ── DONNÉES ───────────────────────────────────────────────────────────────────
+const useByOptions = computed(() => {
+  if (!artefacts.value) return []
+  const raw = [...new Set(artefacts.value.map(a => a.use_by).filter(Boolean))] as string[]
+  return raw.sort((a, b) => stripArticle(a).localeCompare(stripArticle(b), 'fr'))
+})
+
+const selectedUseByNames = computed(() =>
+  useByOptions.value.filter(v => selectedUseBy.value.has(v))
+)
+
+function toggleUseBy(val: string) {
+  const next = new Set(selectedUseBy.value)
+  if (next.has(val)) next.delete(val)
+  else next.add(val)
+  selectedUseBy.value = next
+}
+
+function removeUseBy(val: string) {
+  const next = new Set(selectedUseBy.value)
+  next.delete(val)
+  selectedUseBy.value = next
+}
+
+// ── FILTERED + SORTED ─────────────────────────────────────────────────────────
+const filtered = computed(() => {
+  if (!artefacts.value) return []
+
+  const q = normalizeStr(search.value.trim())
+  let result = artefacts.value.filter((a) => {
+    if (q) {
+      const matchName = normalizeStr(a.name).includes(q)
+      const matchUse  = a.use_by ? normalizeStr(a.use_by).includes(q) : false
+      if (!matchName && !matchUse) return false
+    }
+    if (selectedUseBy.value.size > 0 && !selectedUseBy.value.has(a.use_by ?? '')) return false
+    return true
+  })
+
+  if (sortUseBy.value) {
+    result = [...result].sort((a, b) => {
+      const cmp = stripArticle(a.use_by ?? '').localeCompare(stripArticle(b.use_by ?? ''), 'fr')
+      return sortUseBy.value === 'asc' ? cmp : -cmp
+    })
+  } else {
+    result = [...result].sort((a, b) => {
+      const cmp = stripArticle(a.name).localeCompare(stripArticle(b.name), 'fr')
+      return sortName.value === 'asc' ? cmp : -cmp
+    })
+  }
+
+  return result
+})
 
 function toggleExpand(id: number) {
   expandedId.value = expandedId.value === id ? null : id
 }
 
-const filtered = computed(() => {
-  if (!artefacts.value) return []
-  const q = search.value.toLowerCase()
-  return artefacts.value.filter(a =>
-    a.name.toLowerCase().includes(q) ||
-    (a.description ?? '').toLowerCase().includes(q) ||
-    (a.use_by ?? '').toLowerCase().includes(q)
-  )
-})
+function handleClickOutside(e: MouseEvent) {
+  if (useByDropdownRef.value && !useByDropdownRef.value.contains(e.target as Node)) {
+    useByDropdownOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('mousedown', handleClickOutside))
+onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 </script>
 
 <template>
@@ -46,10 +125,42 @@ const filtered = computed(() => {
     </div>
 
     <div class="toolbar">
+      <!-- Dropdown "Utilisé par" -->
+      <div ref="useByDropdownRef" class="dropdown-wrapper">
+        <button
+          class="tag"
+          :class="{ active: selectedUseBy.size > 0 }"
+          @click="useByDropdownOpen = !useByDropdownOpen"
+        >
+          Utilisé par <span class="dropdown-caret">{{ useByDropdownOpen ? '▲' : '▼' }}</span>
+        </button>
+        <div v-if="useByDropdownOpen" class="dropdown-menu">
+          <button
+            v-for="val in useByOptions"
+            :key="val"
+            class="dropdown-item"
+            :class="{ selected: selectedUseBy.has(val) }"
+            @click="toggleUseBy(val)"
+          >
+            <span class="dropdown-check">{{ selectedUseBy.has(val) ? '✓' : '' }}</span>
+            {{ stripArticle(val) }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Recherche -->
       <div class="search-bar">
         <span class="search-icon">🔍</span>
-        <input v-model="search" type="text" class="search-input" placeholder="Rechercher un artefact…">
+        <input v-model="search" type="text" class="search-input" placeholder="Artefact, utilisé par…">
       </div>
+    </div>
+
+    <!-- Filtres actifs -->
+    <div v-if="selectedUseByNames.length > 0" class="active-filters">
+      <span v-for="val in selectedUseByNames" :key="val" class="active-filter">
+        <span class="active-filter-label">{{ stripArticle(val) }}</span>
+        <button class="active-filter-clear" :aria-label="`Retirer ${val}`" @click="removeUseBy(val)">✕</button>
+      </span>
     </div>
 
     <div v-if="status === 'pending'" class="state-message">
@@ -67,8 +178,12 @@ const filtered = computed(() => {
 
     <div v-else class="list-container">
       <div class="list-header-row">
-        <span class="col-name">Artefact</span>
-        <span class="col-use">Utilisé par</span>
+        <button class="col-sortable" :class="{ 'sort-active': nameIsActive }" @click="cycleSortName">
+          Artefact <span class="sort-icon">{{ sortNameIcon }}</span>
+        </button>
+        <button class="col-sortable" :class="{ 'sort-active': sortUseBy !== null }" @click="cycleSortUseBy">
+          Utilisé par <span class="sort-icon">{{ sortUseByIcon }}</span>
+        </button>
         <span />
         <span class="col-chevron" />
       </div>
@@ -91,6 +206,7 @@ const filtered = computed(() => {
           </div>
           <Transition name="expand">
             <div v-if="expandedId === artefact.id" class="row-description">
+              <span class="detail-label">Description</span>
               <p>{{ artefact.description ?? 'Aucune description disponible.' }}</p>
             </div>
           </Transition>
@@ -200,10 +316,108 @@ const filtered = computed(() => {
 .toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
   flex-wrap: wrap;
 }
+
+/* ── TAG ─────────────────────────────────────────────────── */
+.tag {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.tag:hover { border-color: var(--color-gold-dim); color: var(--color-gold); }
+.tag.active { background: var(--color-gold-dim); border-color: var(--color-gold); color: var(--color-gold); }
+
+/* ── DROPDOWN ────────────────────────────────────────────── */
+.dropdown-caret { font-size: 0.5rem; opacity: 0.6; }
+.dropdown-wrapper { position: relative; }
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-width: 200px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-deep);
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  letter-spacing: 0.08em;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.dropdown-item:hover { background: var(--color-surface); color: var(--color-text-primary); }
+.dropdown-item.selected { color: var(--color-gold); }
+.dropdown-check { width: 14px; font-size: 0.7rem; color: var(--color-gold); flex-shrink: 0; }
+
+/* ── ACTIVE FILTERS ──────────────────────────────────────── */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  background: rgba(184, 146, 74, 0.1);
+  border: 1px solid var(--color-gold-dim);
+  border-radius: var(--radius-sm);
+}
+.active-filter-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+.active-filter-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  font-size: var(--fs-2xs);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-gold-dim);
+  color: var(--color-gold);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+.active-filter-clear:hover { background: var(--color-gold-dim); }
+
+/* ── SEARCH ──────────────────────────────────────────────── */
 .search-bar {
   position: relative;
   display: inline-block;
@@ -270,18 +484,32 @@ const filtered = computed(() => {
   grid-template-columns: subgrid;
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
+}
+.list-header-row > * {
+  padding: var(--space-sm);
+}
+.list-header-row > *:first-child { padding-left: var(--space-lg); }
+.list-header-row > *:last-child  { padding-right: var(--space-lg); }
+
+.col-sortable {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
   font-family: var(--font-heading);
   font-size: var(--fs-table-header);
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  cursor: pointer;
+  padding: var(--space-sm);
+  transition: color var(--transition-fast);
 }
-.list-header-row > span {
-  padding: var(--space-sm) var(--space-sm);
-}
-.list-header-row > span:first-child { padding-left: var(--space-lg); }
-.list-header-row > span:last-child  { padding-right: var(--space-lg); }
+.col-sortable:hover { color: var(--color-gold); }
+.col-sortable.sort-active { color: var(--color-gold); }
+.sort-icon { font-size: 0.7rem; opacity: 0.7; }
 
 .list-body {
   grid-column: 1 / -1;
@@ -354,6 +582,16 @@ const filtered = computed(() => {
   padding: var(--space-md) var(--space-xl);
   background: rgba(184, 146, 74, 0.05);
   border-top: 1px solid var(--color-gold-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.detail-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-gold);
 }
 .row-description p {
   font-family: var(--font-flavor);
