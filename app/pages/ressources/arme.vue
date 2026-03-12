@@ -11,7 +11,8 @@ const { data: weapons, status, error } = useFetch<WeaponWithSkill[]>('/api/arme'
 const searchName  = ref('')
 const searchSkill = ref('')
 const searchPrice = ref('')
-const eraFilter   = ref<'all' | 'classique' | 'moderne'>('all')
+const eraFilter       = ref<'all' | 'classique' | 'moderne'>('all')
+const filterExplosive = ref(false)
 
 const selectedCategories   = ref<Set<string>>(new Set())
 const categoryDropdownOpen = ref(false)
@@ -19,11 +20,52 @@ const categoryDropdownRef  = ref<HTMLElement | null>(null)
 
 const expandedId = ref<number | null>(null)
 
+// ── PARSEUR DÉGÂTS ────────────────────────────────────────────────────────────
+// Règles :
+//   - Tout ce qui suit le 1er '/'  est ignoré (2d10/3m → 2d10, 1d6+Imp/2 → 1d6+Imp)
+//   - Chaque terme NdM contribue N×M au total (2d6+1d8 → 12+8)
+//   - Un bonus '+K' numérique en fin d'expression est ajouté (1d8+3 → 11)
+//   - Un '+string' non numérique est ignoré (1d8+Imp → 8)
+function parseDamageValue(dmg: string | null): number | null {
+  if (!dmg) return null
+  const s = dmg.split('/')[0].trim()
+  const diceRe = /(\d+)[dD](\d+)/g
+  let total = 0
+  let hasDice = false
+  let lastEnd = 0
+  let m: RegExpExecArray | null
+  while ((m = diceRe.exec(s)) !== null) {
+    total += parseInt(m[1]) * parseInt(m[2])
+    hasDice = true
+    lastEnd = m.index + m[0].length
+  }
+  if (!hasDice) return null
+  const bonus = s.slice(lastEnd).match(/^\+(\d+)$/)
+  if (bonus) total += parseInt(bonus[1])
+  return total
+}
+
 // ── TRIS ──────────────────────────────────────────────────────────────────────
-// Tri dégâts : désactivé tant que average_dmg n'est pas rempli
+const sortCategory     = ref<'asc' | 'desc'>('asc')
+const sortName         = ref<'asc' | 'desc'>('asc')
 const sortDamage       = ref<'desc' | 'asc' | null>(null)
 const sortClassicPrice = ref<'desc' | 'asc' | null>(null)
 const sortModernPrice  = ref<'desc' | 'asc' | null>(null)
+
+const alphaIsActive = computed(() =>
+  sortDamage.value === null && sortClassicPrice.value === null && sortModernPrice.value === null
+)
+const sortCategoryIcon = computed(() => sortCategory.value === 'asc' ? '↑' : '↓')
+const sortNameIcon     = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+
+function cycleSortCategory() {
+  sortDamage.value = null; sortClassicPrice.value = null; sortModernPrice.value = null
+  sortCategory.value = sortCategory.value === 'asc' ? 'desc' : 'asc'
+}
+function cycleSortName() {
+  sortDamage.value = null; sortClassicPrice.value = null; sortModernPrice.value = null
+  sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
+}
 
 const sortDamageIcon       = computed(() => sortDamage.value === 'desc' ? '↓' : sortDamage.value === 'asc' ? '↑' : '↕')
 const sortClassicPriceIcon = computed(() => sortClassicPrice.value === 'desc' ? '↓' : sortClassicPrice.value === 'asc' ? '↑' : '↕')
@@ -85,18 +127,17 @@ const filtered = computed(() => {
     }
     if (selectedCategories.value.size > 0 && !selectedCategories.value.has(w.category)) return false
     if (eraFilter.value !== 'all' && !w.epoque.includes(eraFilter.value)) return false
+    if (filterExplosive.value && !w.damage?.includes('(E)')) return false
     return true
   })
 
   if (sortDamage.value) {
     result = [...result].sort((a, b) => {
-      const av = parseFloat(a.average_dmg ?? '')
-      const bv = parseFloat(b.average_dmg ?? '')
-      const aNull = isNaN(av)
-      const bNull = isNaN(bv)
-      if (aNull && bNull) return 0
-      if (aNull) return 1
-      if (bNull) return -1
+      const av = parseDamageValue(a.damage)
+      const bv = parseDamageValue(b.damage)
+      if (av === null && bv === null) return 0
+      if (av === null) return 1
+      if (bv === null) return -1
       return sortDamage.value === 'desc' ? bv - av : av - bv
     })
   } else if (sortClassicPrice.value) {
@@ -122,11 +163,11 @@ const filtered = computed(() => {
         : (a.modern_price! - b.modern_price!)
     })
   } else {
-    // Tri par défaut : catégorie A→Z, puis nom A→Z
     result = [...result].sort((a, b) => {
       const catCmp = a.category.localeCompare(b.category, 'fr')
-      if (catCmp !== 0) return catCmp
-      return a.name.localeCompare(b.name, 'fr')
+      if (catCmp !== 0) return sortCategory.value === 'asc' ? catCmp : -catCmp
+      const nameCmp = a.name.localeCompare(b.name, 'fr')
+      return sortName.value === 'asc' ? nameCmp : -nameCmp
     })
   }
 
@@ -187,50 +228,72 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
     </div>
 
     <div class="toolbar">
-      <!-- Filtres époque -->
-      <div class="filters">
-        <button class="tag" :class="{ active: eraFilter === 'all' }"       @click="eraFilter = 'all'">Toutes</button>
-        <button class="tag" :class="{ active: eraFilter === 'classique' }" @click="eraFilter = 'classique'">Classique</button>
-        <button class="tag modern-tag" :class="{ active: eraFilter === 'moderne' }" @click="eraFilter = 'moderne'">Moderne</button>
-      </div>
-
-      <!-- Dropdown catégories multi-sélection -->
-      <div ref="categoryDropdownRef" class="dropdown-wrapper">
-        <button
-          class="tag"
-          :class="{ active: selectedCategories.size > 0 }"
-          @click="categoryDropdownOpen = !categoryDropdownOpen"
-        >
-          Catégories <span class="dropdown-caret">{{ categoryDropdownOpen ? '▲' : '▼' }}</span>
-        </button>
-        <div v-if="categoryDropdownOpen" class="dropdown-menu">
-          <button
-            v-for="cat in categories"
-            :key="cat"
-            class="dropdown-item"
-            :class="{ selected: selectedCategories.has(cat) }"
-            @click="toggleCategory(cat)"
-          >
-            <span class="dropdown-check">{{ selectedCategories.has(cat) ? '✓' : '' }}</span>
-            {{ cat }}
-          </button>
+      <!-- Époque -->
+      <div class="filter-block">
+        <span class="filter-block-label">Époque</span>
+        <div class="filter-block-controls">
+          <button class="tag" :class="{ active: eraFilter === 'all' }"       @click="eraFilter = 'all'">Toutes</button>
+          <button class="tag" :class="{ active: eraFilter === 'classique' }" @click="eraFilter = 'classique'">Classique</button>
+          <button class="tag modern-tag" :class="{ active: eraFilter === 'moderne' }" @click="eraFilter = 'moderne'">Moderne</button>
         </div>
       </div>
 
-      <!-- Tri dégâts — masqué jusqu'à ce que average_dmg soit rempli -->
-      <button v-if="false" class="tag sort-tag" :class="{ active: sortDamage !== null }" @click="cycleSortDamage">
-        Dégâts {{ sortDamageIcon }}
-      </button>
+      <div class="toolbar-sep" />
+
+      <!-- Catégories -->
+      <div class="filter-block">
+        <span class="filter-block-label">Catégories</span>
+        <div class="filter-block-controls">
+          <div ref="categoryDropdownRef" class="dropdown-wrapper">
+            <button
+              class="tag"
+              :class="{ active: selectedCategories.size > 0 }"
+              @click="categoryDropdownOpen = !categoryDropdownOpen"
+            >
+              Filtrer <span class="dropdown-caret">{{ categoryDropdownOpen ? '▲' : '▼' }}</span>
+            </button>
+            <div v-if="categoryDropdownOpen" class="dropdown-menu">
+              <button
+                v-for="cat in categories"
+                :key="cat"
+                class="dropdown-item"
+                :class="{ selected: selectedCategories.has(cat) }"
+                @click="toggleCategory(cat)"
+              >
+                <span class="dropdown-check">{{ selectedCategories.has(cat) ? '✓' : '' }}</span>
+                {{ cat }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar-sep" />
+
+      <!-- Spécial -->
+      <div class="filter-block">
+        <span class="filter-block-label">Spécial</span>
+        <div class="filter-block-controls">
+          <label class="checkbox-filter">
+            <input v-model="filterExplosive" type="checkbox" class="checkbox-input">
+            <span class="checkbox-label">(E) Empalement</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="toolbar-sep toolbar-sep--push" />
 
       <!-- Tris prix -->
-      <div class="sort-group">
-        <span class="sort-group-label">Trier par prix</span>
-        <button class="tag sort-tag" :class="{ active: sortClassicPrice !== null }" @click="cycleSortClassicPrice">
-          Classique <span class="sort-icon">{{ sortClassicPriceIcon }}</span>
-        </button>
-        <button class="tag sort-tag modern-sort-tag" :class="{ active: sortModernPrice !== null }" @click="cycleSortModernPrice">
-          Moderne <span class="sort-icon">{{ sortModernPriceIcon }}</span>
-        </button>
+      <div class="filter-block">
+        <span class="filter-block-label">Prix</span>
+        <div class="filter-block-controls">
+          <button class="tag sort-tag" :class="{ active: sortClassicPrice !== null }" @click="cycleSortClassicPrice">
+            Classique <span class="sort-icon">{{ sortClassicPriceIcon }}</span>
+          </button>
+          <button class="tag sort-tag modern-sort-tag" :class="{ active: sortModernPrice !== null }" @click="cycleSortModernPrice">
+            Moderne <span class="sort-icon">{{ sortModernPriceIcon }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -282,10 +345,16 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 
     <div v-else class="table-outer">
       <div class="list-header-row">
-        <span class="col-name">Arme</span>
-        <span class="col-category">Catégorie</span>
+        <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortName">
+          Arme <span class="sort-icon">{{ sortNameIcon }}</span>
+        </button>
+        <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortCategory">
+          Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
+        </button>
         <span class="col-skill">Compétence</span>
-        <span class="col-damage">Dégâts</span>
+        <button class="col-header-btn" :class="{ 'sort-active': sortDamage !== null }" @click="cycleSortDamage">
+          Dégâts <span class="sort-icon">{{ sortDamageIcon }}</span>
+        </button>
         <span class="col-range">Portée</span>
         <span class="col-price">Prix</span>
         <span class="col-era">Époque</span>
@@ -491,16 +560,41 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 /* ── TOOLBAR ─────────────────────────────────────────────── */
 .toolbar {
   display: flex;
-  align-items: center;
-  gap: var(--space-lg);
+  align-items: flex-end;
+  gap: var(--space-md);
   margin-bottom: var(--space-md);
   flex-wrap: wrap;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
 }
-.filters {
+.filter-block {
   display: flex;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
+.filter-block-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.filter-block-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.toolbar-sep {
+  width: 1px;
+  height: 36px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+.toolbar-sep--push { margin-left: auto; visibility: hidden; }
 
 /* ── TAGS ────────────────────────────────────────────────── */
 .tag {
@@ -523,6 +617,28 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .tag.active { background: var(--color-crimson-dim); border-color: var(--color-crimson); color: #c47070; }
 .tag.modern-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
 .tag.modern-tag:hover { border-color: var(--color-arcane); }
+
+.checkbox-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+}
+.checkbox-input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-crimson);
+  cursor: pointer;
+}
+.checkbox-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+}
+.checkbox-filter:has(.checkbox-input:checked) .checkbox-label { color: #c47070; }
 .tag.modern-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
 
 .sort-tag { border-color: var(--color-gold-dim); color: var(--color-gold); }
@@ -534,21 +650,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 
 .sort-icon { font-size: 0.7rem; opacity: 0.8; }
 
-.sort-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding-left: var(--space-lg);
-  border-left: 1px solid var(--color-border);
-}
-.sort-group-label {
-  font-family: var(--font-heading);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
 
 /* ── DROPDOWN ────────────────────────────────────────────── */
 .dropdown-caret { font-size: 0.5rem; opacity: 0.6; }
@@ -718,6 +819,26 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   top: 0;
   z-index: 1;
 }
+.col-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+.col-header-btn:hover { color: var(--color-gold); }
+.col-header-btn.sort-active { color: var(--color-gold); }
+.sort-icon { font-size: 0.7rem; opacity: 0.7; }
+
 .list-body {
   max-height: 640px;
   overflow-y: auto;
@@ -879,9 +1000,9 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   .page-wrapper { padding: var(--space-md); }
   .flavor-quote p { font-size: var(--fs-base); }
   .stats-panel { grid-template-columns: repeat(2, 1fr); }
-  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
-  .sort-group { padding-left: 0; border-left: none; }
-  .filters { flex-wrap: wrap; }
+  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-md); }
+  .toolbar-sep { display: none; }
+  .toolbar-sep--push { display: none; }
   .search-row { flex-direction: column; }
   .search-field, .search-bar { width: 100%; }
   .search-input, .search-input--sm { width: 100%; box-sizing: border-box; }

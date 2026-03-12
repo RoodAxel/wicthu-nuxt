@@ -72,16 +72,16 @@ const filtered = computed(() => {
     return true
   })
 
-  if (sortName.value) {
+  if (sortCredit.value) {
+    result = [...result].sort((a, b) => {
+      const av = sortCredit.value === 'asc' ? (a.credit_min ?? 0) : (a.credit_max ?? 0)
+      const bv = sortCredit.value === 'asc' ? (b.credit_min ?? 0) : (b.credit_max ?? 0)
+      return sortCredit.value === 'desc' ? bv - av : av - bv
+    })
+  } else {
     result = [...result].sort((a, b) => {
       const cmp = a.name.localeCompare(b.name, 'fr')
       return sortName.value === 'asc' ? cmp : -cmp
-    })
-  } else if (sortCredit.value) {
-    result = [...result].sort((a, b) => {
-      const av = (a.credit_min ?? 0) + (a.credit_max ?? 0)
-      const bv = (b.credit_min ?? 0) + (b.credit_max ?? 0)
-      return sortCredit.value === 'desc' ? bv - av : av - bv
     })
   }
 
