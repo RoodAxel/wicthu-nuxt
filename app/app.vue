@@ -18,11 +18,19 @@ useSeoMeta({
 </script>
 
 <template>
-  <UApp>
+  <UApp class="app-layout">
     <AppHeader />
 
-    <UMain>
+    <UMain class="app-main">
       <NuxtPage />
     </UMain>
+
+    <AppFooter />
   </UApp>
 </template>
+
+<style>
+.app-main {
+  flex: 1;
+}
+</style>
