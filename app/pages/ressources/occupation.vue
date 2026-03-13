@@ -175,6 +175,10 @@ function isFixedSkill(skill: OccupationSkill) {
         <span class="stat-number">{{ stats.modern }}</span>
         <span class="stat-label">Modernes</span>
       </div>
+      <div class="stat-card stat-card-results">
+        <span class="stat-number stat-number-results">{{ filtered.length }}</span>
+        <span class="stat-label">Résultats</span>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -313,6 +317,19 @@ function isFixedSkill(skill: OccupationSkill) {
       </div>
     </div>
 
+    <!-- Légende des badges -->
+    <div class="legend">
+      <span class="legend-title">Légende</span>
+      <div class="legend-item">
+        <span class="badge badge-lore">Lovecraft</span>
+        <span class="legend-desc">occupation importante dans les récits du maître de Providence.</span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-modern">Moderne</span>
+        <span class="legend-desc">Disponible uniquement à l'époque moderne</span>
+      </div>
+    </div>
+
   </main>
 </template>
 
@@ -380,10 +397,17 @@ function isFixedSkill(skill: OccupationSkill) {
 /* ── STATS ───────────────────────────────────────────────── */
 .stats-panel {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
-  max-width: 480px;
+  max-width: 640px;
+}
+
+.stat-card-results {
+  border-color: var(--color-arcane-dim);
+}
+.stat-number-results {
+  color: var(--color-text-primary);
 }
 .stat-card {
   background: var(--color-surface);
@@ -727,6 +751,37 @@ function isFixedSkill(skill: OccupationSkill) {
   background: rgba(184,146,74,0.1);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
+}
+
+/* ── LEGEND ──────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.legend-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-badge);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.legend-desc {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-text-muted);
 }
 
 /* ── TRANSITION ──────────────────────────────────────────── */

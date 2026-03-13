@@ -141,6 +141,10 @@ const selectedCategoryNames = computed(() =>
         <span class="stat-number">{{ stats.modern }}</span>
         <span class="stat-label">Modernes</span>
       </div>
+      <div class="stat-card stat-card-results">
+        <span class="stat-number stat-number-results">{{ filtered.length }}</span>
+        <span class="stat-label">Résultats</span>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -224,7 +228,7 @@ const selectedCategoryNames = computed(() =>
           :class="{
             'row-even': index % 2 === 0,
             'row-odd': index % 2 !== 0,
-            'is-category': competence.isCategory,
+            'is-category': competence.isCategory
           }"
         >
           <span class="col-name row-name">{{ competence.name }}</span>
@@ -242,6 +246,19 @@ const selectedCategoryNames = computed(() =>
             <span v-else class="row-dash">—</span>
           </span>
         </div>
+      </div>
+    </div>
+
+    <!-- Légende des badges -->
+    <div class="legend">
+      <span class="legend-title">Légende</span>
+      <div class="legend-item">
+        <span class="card-badge badge-rare">Rare</span>
+        <span class="legend-desc">Absente de la fiche investigateur de base — à inscrire manuellement dans un champ vide en fin de fiche</span>
+      </div>
+      <div class="legend-item">
+        <span class="card-badge badge-modern">Moderne</span>
+        <span class="legend-desc">Disponible uniquement à l'époque moderne</span>
       </div>
     </div>
 
@@ -314,9 +331,16 @@ const selectedCategoryNames = computed(() =>
 /* ── STATS PANEL ─────────────────────────────────────────── */
 .stats-panel {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
+}
+
+.stat-card-results {
+  border-color: var(--color-arcane-dim);
+}
+.stat-number-results {
+  color: var(--color-text-primary);
 }
 .stat-card {
   background: var(--color-surface);
@@ -339,6 +363,41 @@ const selectedCategoryNames = computed(() =>
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ── LEGEND ──────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.legend-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-badge);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.legend-desc {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
   color: var(--color-text-muted);
 }
 
@@ -669,7 +728,7 @@ const selectedCategoryNames = computed(() =>
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .flavor-quote p { font-size: var(--fs-page-subtitle); }
-  .stats-panel { grid-template-columns: repeat(2, 1fr); }
+  .stats-panel { grid-template-columns: repeat(3, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
   .filters { flex-wrap: wrap; }
   .search-bar { margin-left: 0; width: 100%; }

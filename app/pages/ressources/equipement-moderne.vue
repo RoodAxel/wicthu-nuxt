@@ -225,6 +225,19 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
       </div>
     </div>
 
+    <!-- Légende -->
+    <div class="legend">
+      <span class="legend-title">Légende</span>
+      <div class="legend-item">
+        <span class="legend-token">x$ – x$</span>
+        <span class="legend-desc">Fourchette de prix — varie selon la qualité de l'article</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token">x$<span style="font-size: 1.1rem; font-weight: bold">+</span></span>
+        <span class="legend-desc">Prix de départ — peut grimper bien plus haut selon le modèle ou la marque</span>
+      </div>
+    </div>
+
   </main>
 </template>
 
@@ -532,6 +545,50 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .row-name { font-family: var(--font-heading); font-size: var(--fs-md); font-weight: 600; letter-spacing: 0.03em; color: var(--color-text-primary); }
 .row-category { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-base); color: var(--color-text-muted); }
 .row-price { font-family: var(--font-body); font-size: var(--fs-base); color: var(--color-arcane); }
+
+/* ── LEGEND ──────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.legend-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xs);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.legend-token {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2xs);
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(127,179,138,0.1);
+  color: var(--color-arcane);
+  border: 1px solid var(--color-arcane-dim);
+}
+.legend-desc {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 640px) {

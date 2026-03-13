@@ -225,6 +225,10 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
         <span class="stat-number">{{ stats.modern }}</span>
         <span class="stat-label">Modernes</span>
       </div>
+      <div class="stat-card stat-card-results">
+        <span class="stat-number stat-number-results">{{ filtered.length }}</span>
+        <span class="stat-label">Résultats</span>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -462,6 +466,43 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
       </div>
     </div>
 
+    <!-- Légende -->
+    <div class="legend">
+      <span class="legend-title">Légende</span>
+      <div class="legend-item">
+        <span class="era-badge era-classique">C</span>
+        <span class="legend-desc">Classique — arme disponible à l'époque classique (années 1920)</span>
+      </div>
+      <div class="legend-item">
+        <span class="era-badge era-moderne">M</span>
+        <span class="legend-desc">Moderne — arme disponible à l'époque moderne</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-rare">Rare</span>
+        <span class="legend-desc">Arme obsolète, illégale ou recherchée par les collectionneurs — difficile à trouver</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-damage">(E)</span>
+        <span class="legend-desc">Empalement — en cas de coup critique, en plus des dégâts maximum, rajoute un lancer des dés de dégâts</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-damage">Etourd.</span>
+        <span class="legend-desc">Étourdissement — la cible ne peut plus agir pendant 1d6 tours (ou à la discrétion du gardien)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-damage">Feu</span>
+        <span class="legend-desc">La cible doit réussir un test de Chance ou prendre feu</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-neutral">Cadence 1(3)</span>
+        <span class="legend-desc">La valeur entre parenthèses représente le nombre maximum de tirs possibles en un seul round</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-failure">Panne</span>
+        <span class="legend-desc">Si le jet d'attaque est supérieur ou égal à ce seuil, le tir ne part pas et l'arme risque l'enrayement</span>
+      </div>
+    </div>
+
   </main>
 </template>
 
@@ -529,9 +570,16 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 /* ── STATS PANEL ─────────────────────────────────────────── */
 .stats-panel {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
+}
+
+.stat-card-results {
+  border-color: var(--color-arcane-dim);
+}
+.stat-number-results {
+  color: var(--color-text-primary);
 }
 .stat-card {
   background: var(--color-surface);
@@ -621,14 +669,48 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .checkbox-filter {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   cursor: pointer;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+.checkbox-filter:hover {
+  border-color: var(--color-crimson-dim);
+}
+.checkbox-filter:has(.checkbox-input:checked) {
+  background: var(--color-crimson-dim);
+  border-color: var(--color-crimson);
 }
 .checkbox-input {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--color-crimson);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  background: transparent;
   cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+.checkbox-input:checked {
+  background: var(--color-crimson);
+  border-color: var(--color-crimson);
+}
+.checkbox-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 1px;
+  width: 5px; height: 8px;
+  border: 1.5px solid #f0d8d8;
+  border-top: none;
+  border-left: none;
+  transform: rotate(40deg);
 }
 .checkbox-label {
   font-family: var(--font-heading);
@@ -979,6 +1061,51 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   text-align: right;
 }
 
+/* ── LEGEND ──────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.legend-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.legend-desc {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+.legend-token {
+  font-family: var(--font-heading);
+  font-size: var(--fs-2xs);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.token-rare    { background: rgba(139,58,58,0.15); color: #c47070; border: 1px solid var(--color-crimson-dim); }
+.token-damage  { background: rgba(139,58,58,0.1);  color: var(--color-crimson); border: 1px solid var(--color-crimson-dim); }
+.token-failure { background: rgba(184,146,74,0.12); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
+.token-neutral { background: var(--color-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+
 /* ── EXPAND TRANSITION ───────────────────────────────────── */
 .expand-enter-active,
 .expand-leave-active {
@@ -999,7 +1126,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .flavor-quote p { font-size: var(--fs-base); }
-  .stats-panel { grid-template-columns: repeat(2, 1fr); }
+  .stats-panel { grid-template-columns: repeat(3, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-md); }
   .toolbar-sep { display: none; }
   .toolbar-sep--push { display: none; }

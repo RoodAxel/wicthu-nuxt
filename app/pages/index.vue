@@ -8,7 +8,7 @@
       <img src="/logoWicthu.png" alt="Wicthu" class="hero-logo">
       <p class="hero-tagline">Compagnon de l'Investigateur</p>
       <p class="hero-description">
-        Un outil de référence pour les Guardiens et joueurs de <em>L'Appel de Cthulhu</em> —
+        Un outil pour les Guardiens et joueurs de <em>L'Appel de Cthulhu</em> —
         consultez les archives et gérer vos fiches d'investigateurs.
       </p>
     </section>
@@ -35,6 +35,22 @@
       <p class="section-subtitle">Ressources consultables</p>
 
       <div class="resources-grid">
+        <NuxtLink to="/ressources/arme" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Armes</span>
+            <span class="resource-desc">Arsenal complet — dégâts, portées, cadences et compétences associées.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/artefact" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Artefacts</span>
+            <span class="resource-desc">Objets d'origine inconnu aux propriétés surnaturelles.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
         <NuxtLink to="/ressources/competence" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Compétences</span>
@@ -43,18 +59,10 @@
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
-        <NuxtLink to="/ressources/arme" class="resource-card">
-          <div class="resource-body">
-            <span class="resource-name">Armes</span>
-            <span class="resource-desc">Arsenal complet — armes, dégâts, portées et compétences associées.</span>
-          </div>
-          <span class="resource-arrow">→</span>
-        </NuxtLink>
-
         <NuxtLink to="/ressources/equipement-classique" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Équipement Classique</span>
-            <span class="resource-desc">Matériel des années 1920 — prix, catégories et disponibilité.</span>
+            <span class="resource-desc">Matériel des années 1920 — prix et catégories.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
@@ -62,15 +70,7 @@
         <NuxtLink to="/ressources/equipement-moderne" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Équipement Moderne</span>
-            <span class="resource-desc">Matériel contemporain — prix, catégories et disponibilité.</span>
-          </div>
-          <span class="resource-arrow">→</span>
-        </NuxtLink>
-
-        <NuxtLink to="/ressources/ouvrage-occulte" class="resource-card">
-          <div class="resource-body">
-            <span class="resource-name">Ouvrages Occultes</span>
-            <span class="resource-desc">Volumes maudits, leur contenu et leurs effets sur la Santé Mentale.</span>
+            <span class="resource-desc">Matériel contemporain — prix et catégories.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
@@ -79,6 +79,22 @@
           <div class="resource-body">
             <span class="resource-name">Manies</span>
             <span class="resource-desc">Troubles obsessionnels issus du contact avec l'indicible.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/occupation" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Occupations</span>
+            <span class="resource-desc">Métiers des investigateurs — compétences associées et formules de points.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/ouvrage-occulte" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Ouvrages Occultes</span>
+            <span class="resource-desc">Volumes maudits — description et informations.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
