@@ -37,7 +37,7 @@
       <div class="resources-grid">
         <NuxtLink to="/ressources/arme" class="resource-card">
           <div class="resource-body">
-            <span class="resource-name">Armes</span>
+            <span class="resource-name">Arme</span>
             <span class="resource-desc">Arsenal complet — dégâts, portées, cadences et compétences associées.</span>
           </div>
           <span class="resource-arrow">→</span>
@@ -45,7 +45,7 @@
 
         <NuxtLink to="/ressources/artefact" class="resource-card">
           <div class="resource-body">
-            <span class="resource-name">Artefacts</span>
+            <span class="resource-name">Artefact</span>
             <span class="resource-desc">Objets d'origine inconnu aux propriétés surnaturelles.</span>
           </div>
           <span class="resource-arrow">→</span>
@@ -53,8 +53,16 @@
 
         <NuxtLink to="/ressources/competence" class="resource-card">
           <div class="resource-body">
-            <span class="resource-name">Compétences</span>
+            <span class="resource-name">Compétence</span>
             <span class="resource-desc">Liste complète des savoir-faire, valeurs de base et catégories.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/entite" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Entité</span>
+            <span class="resource-desc">Créatures et divinités du Mythe de Cthulhu.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
@@ -77,32 +85,48 @@
 
         <NuxtLink to="/ressources/manie" class="resource-card">
           <div class="resource-body">
-            <span class="resource-name">Manies</span>
+            <span class="resource-name">Manie</span>
             <span class="resource-desc">Troubles obsessionnels issus du contact avec l'indicible.</span>
-          </div>
-          <span class="resource-arrow">→</span>
-        </NuxtLink>
-
-        <NuxtLink to="/ressources/occupation" class="resource-card">
-          <div class="resource-body">
-            <span class="resource-name">Occupations</span>
-            <span class="resource-desc">Métiers des investigateurs — compétences associées et formules de points.</span>
-          </div>
-          <span class="resource-arrow">→</span>
-        </NuxtLink>
-
-        <NuxtLink to="/ressources/ouvrage-occulte" class="resource-card">
-          <div class="resource-body">
-            <span class="resource-name">Ouvrages Occultes</span>
-            <span class="resource-desc">Volumes maudits — description et informations.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
 
         <NuxtLink to="/ressources/phobie" class="resource-card">
           <div class="resource-body">
-            <span class="resource-name">Phobies</span>
+            <span class="resource-name">Phobie</span>
             <span class="resource-desc">Terreurs irrationnelles ancrées dans la psyché des survivants.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/occupation" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Occupation</span>
+            <span class="resource-desc">Métiers des investigateurs — compétences associées et formules de points.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/ouvrage-mythe" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Ouvrage du Mythe</span>
+            <span class="resource-desc">Tomes sacrés et maudits — gains de Mythe et sorts contenus.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/ouvrage-occulte" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Ouvrage Occulte</span>
+            <span class="resource-desc">Volumes maudits — description et informations.</span>
+          </div>
+          <span class="resource-arrow">→</span>
+        </NuxtLink>
+
+        <NuxtLink to="/ressources/sort" class="resource-card">
+          <div class="resource-body">
+            <span class="resource-name">Sort</span>
+            <span class="resource-desc">Rituels et formules ésotériques — coûts, temps d'incantation et variantes.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>

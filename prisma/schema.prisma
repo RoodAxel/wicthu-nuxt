@@ -231,7 +231,7 @@ model ouvrage_mythe {
   langue             String?        @db.VarChar(255)
   date               String?        @db.VarChar(255)
   auteur             String?        @db.VarChar(255)
-  description        String?        @db.VarChar(255)
+  description        String?
   sante_mental       String?        @db.VarChar(255)
   gain_mythe_initial Int?
   gain_mythe_complet Int?
@@ -253,12 +253,13 @@ model ouvrage_occulte {
 }
 
 model ouvrage_sort {
-  id                Int            @id @default(autoincrement())
-  ouvrage_id        Int?
-  sort_id           Int?
-  name_dans_ouvrage String?        @db.VarChar(255)
-  ouvrage_mythe     ouvrage_mythe? @relation(fields: [ouvrage_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ouvrageSort_ouvrageId")
-  sort              sort?          @relation(fields: [sort_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ouvrageSort_sortId")
+  id               Int            @id @default(autoincrement())
+  ouvrage_id       Int
+  sort_id          Int?
+  nom_dans_ouvrage String         @db.VarChar(255)
+  note             String?        @db.VarChar(512)
+  ouvrage_mythe    ouvrage_mythe  @relation(fields: [ouvrage_id], references: [id], onDelete: Cascade,  onUpdate: NoAction, map: "fk_ouvrageSort_ouvrageId")
+  sort             sort?          @relation(fields: [sort_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_ouvrageSort_sortId")
 }
 
 model phobie {
@@ -278,13 +279,17 @@ model pouvoir_distinctif {
 }
 
 model sort {
-  id                Int            @id @default(autoincrement())
-  name              String         @db.VarChar(255)
-  cout              String         @db.VarChar(255)
-  temps_incantation String         @db.VarChar(255)
-  description       String         @db.VarChar(255)
-  autre_name        String[]       @db.VarChar(255)
-  ouvrage_sort      ouvrage_sort[]
+  id                  Int            @id @default(autoincrement())
+  name                String         @db.VarChar(255)
+  cout                String?        @db.VarChar(512)
+  temps_incantation   String?        @db.VarChar(255)
+  description         String?
+  version_approfondie String?
+  autre_name          String[]       @db.VarChar(255)
+  parentId            Int?
+  parent              sort?          @relation("SortParent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children            sort[]         @relation("SortParent")
+  ouvrage_sort        ouvrage_sort[]
 }
 
 model specialite_divinite {
