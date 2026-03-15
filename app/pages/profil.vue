@@ -331,7 +331,6 @@ function formatDate(iso: string) {
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-family: var(--font-flavor);
-  font-style: italic;
   display: flex;
   flex-direction: column;
   align-items: center;

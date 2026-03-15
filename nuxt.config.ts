@@ -7,7 +7,12 @@ export default defineNuxtConfig({
   ],
 
   supabase: {
-    redirect: false
+    redirect: false,
+    redirectOptions: {
+      login: '/auth/login',
+      callback: '/auth/confirm',
+      passwordReset: '/auth/reset-password'
+    }
   },
 
   runtimeConfig: {

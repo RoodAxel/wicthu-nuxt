@@ -12,7 +12,7 @@ const activeFilter = ref<'all' | 'rare' | 'modern'>('all')
 const selectedCategories = ref<Set<number>>(new Set())
 const categoryDropdownOpen = ref(false)
 const categoryDropdownRef = ref<HTMLElement | null>(null)
-const sortName = ref<'asc' | 'desc'>('asc')
+const sortName = ref<'asc' | 'desc' | null>('asc')
 const sortBase = ref<'asc' | 'desc' | null>(null)
 
 const categories = computed(() =>
@@ -38,7 +38,7 @@ function cycleSortName() {
 }
 
 function cycleSortBase() {
-  sortName.value = 'asc'
+  sortName.value = null
   if (sortBase.value === null) sortBase.value = 'desc'
   else if (sortBase.value === 'desc') sortBase.value = 'asc'
   else sortBase.value = null
@@ -98,7 +98,11 @@ const stats = computed(() => ({
   modern: competences.value?.filter(c => c.modern).length ?? 0
 }))
 
-const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortNameIcon = computed(() => {
+  if (sortName.value === 'asc') return '↑'
+  if (sortName.value === 'desc') return '↓'
+  return '↕'
+})
 
 const sortBaseIcon = computed(() => {
   if (sortBase.value === 'desc') return '↓'
@@ -211,7 +215,7 @@ const selectedCategoryNames = computed(() =>
 
     <div v-else class="list-container">
       <div class="list-header-row">
-        <button class="col-name col-sortable sort-active" @click="cycleSortName">
+        <button class="col-name col-sortable" :class="{ 'sort-active': sortName !== null }" @click="cycleSortName">
           Compétence <span class="sort-icon">{{ sortNameIcon }}</span>
         </button>
         <span class="col-category">Catégorie</span>

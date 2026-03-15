@@ -36,16 +36,6 @@ model artefact {
   image_url   String? @db.VarChar(255)
 }
 
-model caracteristique {
-  id                                                Int                     @id @default(autoincrement())
-  entite_id                                         Int?
-  name_caracteristique                              String                  @db.VarChar(255)
-  valeur                                            Int?
-  formule_jet                                       String?                 @db.VarChar(255)
-  entite_caracteristique_entite_idToentite          entite?                 @relation("caracteristique_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_caracteristique_entite")
-  entite_entite_caracteristique_idTocaracteristique entite[]                @relation("entite_caracteristique_idTocaracteristique")
-  entite_caracteristique                            entite_caracteristique?
-}
 
 model Competence {
   id              Int          @id @default(autoincrement())
@@ -64,87 +54,129 @@ model Competence {
   occupationSkillOpts  OccupationSkillOption[]
 }
 
-model competence_entite {
-  id                                                    Int                       @id @default(autoincrement())
-  entite_id                                             Int?
-  name_competence                                       String                    @db.VarChar(255)
-  valeur_competence                                     Int
-  entite_competence_entite_entite_idToentite            entite?                   @relation("competence_entite_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_competenceEntite_entite")
-  entite_entite_competence_entite_idTocompetence_entite entite[]                  @relation("entite_competence_entite_idTocompetence_entite")
-  entite_competence_entite                              entite_competence_entite?
+
+enum EntiteCategorie {
+  CREATURE_MYTHE
+  DIVINITE_MYTHE
+  HORREUR_TRADITIONNEL
+  FAUNE
 }
 
-model entite {
-  id                                                                    Int                         @id @default(autoincrement())
-  categorie                                                             String?                     @db.VarChar(255)
-  name                                                                  String                      @db.VarChar(255)
-  titre                                                                 String?                     @db.VarChar(255)
-  citation                                                              String?                     @db.VarChar(255)
-  description                                                           String?                     @db.VarChar(255)
-  point_vie_moyen                                                       Int?
-  impact_moyen                                                          String?                     @db.VarChar(255)
-  carrure_moyen                                                         Int?
-  point_magie_moyen                                                     Int?
-  mouvement                                                             Int?
-  attaque_round                                                         Int?
-  protection                                                            String?                     @db.VarChar(255)
-  perte_sante_mental                                                    String?                     @db.VarChar(255)
-  image_url                                                             String?                     @db.VarChar(255)
-  caracteristique_id                                                    Int?
-  competence_entite_id                                                  Int?
-  option_combat_id                                                      Int?
-  pouvoir_distinctif_id                                                 Int?
-  specialite_divinit_id                                                 Int?
-  caracteristique_caracteristique_entite_idToentite                     caracteristique[]           @relation("caracteristique_entite_idToentite")
-  competence_entite_competence_entite_entite_idToentite                 competence_entite[]         @relation("competence_entite_entite_idToentite")
-  option_combat_entite_option_combat_idTooption_combat                  option_combat?              @relation("entite_option_combat_idTooption_combat", fields: [option_combat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk1y8piphtncq9ra0ntm2n7oa61")
-  pouvoir_distinctif_entite_pouvoir_distinctif_idTopouvoir_distinctif   pouvoir_distinctif?         @relation("entite_pouvoir_distinctif_idTopouvoir_distinctif", fields: [pouvoir_distinctif_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk4um592yl1ggoknmy2npai1iwp")
-  specialite_divinite_entite_specialite_divinit_idTospecialite_divinite specialite_divinite?        @relation("entite_specialite_divinit_idTospecialite_divinite", fields: [specialite_divinit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk8ho6ffnat9ju3vudvm3lxglik")
-  competence_entite_entite_competence_entite_idTocompetence_entite      competence_entite?          @relation("entite_competence_entite_idTocompetence_entite", fields: [competence_entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkhv1qo28ec4ucel6dedkm2bap8")
-  caracteristique_entite_caracteristique_idTocaracteristique            caracteristique?            @relation("entite_caracteristique_idTocaracteristique", fields: [caracteristique_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkkqj06sa5hiibj2i0bm1il7afv")
-  entite_caracteristique                                                entite_caracteristique[]
-  entite_competence_entite                                              entite_competence_entite[]
-  entite_option_combat                                                  entite_option_combat[]
-  entite_pouvoir_distinctif                                             entite_pouvoir_distinctif[]
-  entite_specialite_divinit                                             entite_specialite_divinit[]
-  option_combat_option_combat_entite_idToentite                         option_combat[]             @relation("option_combat_entite_idToentite")
-  pouvoir_distinctif_pouvoir_distinctif_entite_idToentite               pouvoir_distinctif[]        @relation("pouvoir_distinctif_entite_idToentite")
-  specialite_divinite_specialite_divinite_entite_idToentite             specialite_divinite[]       @relation("specialite_divinite_entite_idToentite")
+// Entité principale — toutes catégories confondues
+model Entite {
+  id                   Int              @id @default(autoincrement())
+  categorie            EntiteCategorie
+  name                 String           @db.VarChar(255)
+  // Sous-titre (ex : "Montures stellaires", "Source d'Impureté")
+  titre                String?          @db.VarChar(255)
+  // Citation littéraire séparée en texte + source
+  citationTexte        String?
+  citationSource       String?          @db.VarChar(512)
+  // Lore / description générale
+  description          String?
+
+  // ── Combat ────────────────────────────────────────────────
+  // Peut être "2" ou "1 (2 sous forme reptilienne)"
+  attaquesParRound     String?          @db.VarChar(100)   @map("attaques_par_round")
+  // Description textuelle des options de corps-à-corps
+  optionsCombatDesc    String?          @map("options_combat_desc")
+  protection           String?
+  perteSanteMentale    String?          @db.VarChar(512)   @map("perte_sante_mentale")
+
+  // ── Divinités uniquement ───────────────────────────────────
+  culteAdoration       String?          @map("culte_adoration")
+  autresParticularites String?          @map("autres_particularites")
+
+  imageUrl             String?          @db.VarChar(512)   @map("image_url")
+
+  statBlocks           EntiteStatBlock[]
+  pouvoirs             EntitePouvoir[]
+  attaques             EntiteAttaque[]
+  competences          EntiteCompetence[]
 }
 
-model entite_caracteristique {
-  entite_model_id    Int
-  caracteristique_id Int             @unique(map: "ukciqjegkwib9dvmrs4fxcrj9ww")
-  caracteristique    caracteristique @relation(fields: [caracteristique_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk4o4niilsi663y9o66tc6x2sr2")
-  entite             entite          @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkb2rgectrhokldmsn63dxsbo0t")
+// Bloc de caractéristiques — supporte les entités multi-formes
+// Ex : Seigneurs shoggoths → 2 enregistrements (formeName = "Sous forme humaine" / "Sous forme de shoggoth")
+// Ex : Lloigors → 1 enregistrement + formeNote expliquant les stats conditionnelles
+// Ex : Abeilles → aucun enregistrement
+model EntiteStatBlock {
+  id         Int     @id @default(autoincrement())
+  entiteId   Int     @map("entite_id")
+  entite     Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+
+  // Nom de la forme (null = forme unique / seule)
+  formeName  String? @db.VarChar(100)  @map("forme_name")
+  // Note globale sur le bloc (ex : "* Sous forme reptilienne uniquement")
+  formeNote  String? @db.VarChar(512)  @map("forme_note")
+  sortOrder  Int     @default(0)       @map("sort_order")
+
+  // Caractéristiques — String? pour gérer "—", "variable", chiffres
+  // Chaque stat : valeur moyenne + formule de jet (null pour les divinités)
+  forVal     String? @db.VarChar(50)  @map("for_val")
+  forJet     String? @db.VarChar(50)  @map("for_jet")
+  conVal     String? @db.VarChar(50)  @map("con_val")
+  conJet     String? @db.VarChar(50)  @map("con_jet")
+  taiVal     String? @db.VarChar(50)  @map("tai_val")
+  taiJet     String? @db.VarChar(50)  @map("tai_jet")
+  dexVal     String? @db.VarChar(50)  @map("dex_val")
+  dexJet     String? @db.VarChar(50)  @map("dex_jet")
+  intVal     String? @db.VarChar(50)  @map("int_val")
+  intJet     String? @db.VarChar(50)  @map("int_jet")
+  pouVal     String? @db.VarChar(50)  @map("pou_val")
+  pouJet     String? @db.VarChar(50)  @map("pou_jet")
+  // Uniquement humanoïdes (Seigneurs shoggoths forme humaine, PNJ...)
+  appVal     String? @db.VarChar(50)  @map("app_val")
+  appJet     String? @db.VarChar(50)  @map("app_jet")
+  eduVal     String? @db.VarChar(50)  @map("edu_val")
+  eduJet     String? @db.VarChar(50)  @map("edu_jet")
+
+  // Stats dérivées (par forme pour les multi-formes)
+  pvMoyen    String? @db.VarChar(50)  @map("pv_moyen")
+  impactMoy  String? @db.VarChar(100) @map("impact_moy")
+  carrureMoy String? @db.VarChar(50)  @map("carrure_moy")
+  pmMoyen    String? @db.VarChar(50)  @map("pm_moyen")
+  mouvement  String? @db.VarChar(255)
 }
 
-model entite_competence_entite {
-  entite_model_id      Int
-  competence_entite_id Int               @unique(map: "uk8mrgti7fddfop1tdohn14o8pa")
-  competence_entite    competence_entite @relation(fields: [competence_entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk6w0fjoemkdkberbe6fky5upem")
-  entite               entite            @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fko60yehnrtw8td996kdo8p8d9k")
+// POUVOIRS DISTINCTIFS (0..n par entité)
+model EntitePouvoir {
+  id          Int     @id @default(autoincrement())
+  entiteId    Int     @map("entite_id")
+  entite      Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+  name        String  @db.VarChar(255)
+  description String
+  sortOrder   Int     @default(0) @map("sort_order")
 }
 
-model entite_option_combat {
-  entite_model_id  Int
-  option_combat_id Int           @unique(map: "ukc64s196ih7dj16q1q4hmlr3pi")
-  entite           entite        @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk7l61141pjdj160thvao0968qe")
-  option_combat    option_combat @relation(fields: [option_combat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fka8duca3s4mv03aifimx9obvc8")
+// Lignes de combat individuelles
+// Couvre : "Combat rapproché 55 % (27/11), dégâts 1D6 + impact"
+//          "Mordre et serrer (manœuvre) : dégâts 1D6 + 3D10 FOR"
+//          "Esquive 35 % (17/7)"
+//          "Absorber la force vitale : POU vs POU, ..."
+model EntiteAttaque {
+  id          Int     @id @default(autoincrement())
+  entiteId    Int     @map("entite_id")
+  entite      Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+  // Ex : "Combat rapproché", "Mordre et serrer", "Esquive", "Absorber la force vitale"
+  name        String  @db.VarChar(255)
+  // Ex : "55 % (27/11)" — null pour les attaques spéciales sans jet fixe
+  valeur      String? @db.VarChar(100)
+  // Ex : "1D6 + impact", "1D6 + 3D10 points de FOR"
+  degats      String? @db.VarChar(255)
+  isManoeuvre Boolean @default(false) @map("is_manoeuvre")
+  // Effets/conditions supplémentaires (description longue)
+  description String?
+  sortOrder   Int     @default(0) @map("sort_order")
 }
 
-model entite_pouvoir_distinctif {
-  entite_model_id       Int
-  pouvoir_distinctif_id Int                @unique(map: "ukjkog3cij2v0urfclecx193qan")
-  entite                entite             @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkp8j90dko825hh6g7p73p428o4")
-  pouvoir_distinctif    pouvoir_distinctif @relation(fields: [pouvoir_distinctif_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkt04qit36lsxyl8edswnr3bih7")
-}
-
-model entite_specialite_divinit {
-  entite_model_id       Int
-  specialite_divinit_id Int                 @unique(map: "uke3xd6i7okobrev2g6dq9159ff")
-  entite                entite              @relation(fields: [entite_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkalq49dn9p31cg45nn91o9vw1l")
-  specialite_divinite   specialite_divinite @relation(fields: [specialite_divinit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fkip01axto1v6ihpr474h056lk4")
+// Compétences listées en bas de fiche (ex : "Écouter 50 %", "Trouver Objet Caché 50 %")
+model EntiteCompetence {
+  id        Int     @id @default(autoincrement())
+  entiteId  Int     @map("entite_id")
+  entite    Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+  name      String  @db.VarChar(255)
+  valeur    String  @db.VarChar(50)
+  sortOrder Int     @default(0) @map("sort_order")
 }
 
 model equipement_classique {
@@ -214,16 +246,6 @@ model OccupationSkillOption {
   competence        Competence      @relation(fields: [competenceId], references: [id], onDelete: Cascade)
 }
 
-model option_combat {
-  id                                            Int                   @id @default(autoincrement())
-  entite_id                                     Int?
-  name_option                                   String                @db.VarChar(255)
-  description                                   String?               @db.VarChar(255)
-  effet                                         String?               @db.VarChar(255)
-  entite_entite_option_combat_idTooption_combat entite[]              @relation("entite_option_combat_idTooption_combat")
-  entite_option_combat                          entite_option_combat?
-  entite_option_combat_entite_idToentite        entite?               @relation("option_combat_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_optionCombat_entite")
-}
 
 model ouvrage_mythe {
   id                 Int            @id @default(autoincrement())
@@ -268,15 +290,6 @@ model phobie {
   description String @db.VarChar(255)
 }
 
-model pouvoir_distinctif {
-  id                                                      Int                        @id @default(autoincrement())
-  entite_id                                               Int?
-  name_pouvoir                                            String                     @db.VarChar(255)
-  description                                             String                     @db.VarChar(255)
-  entite_entite_pouvoir_distinctif_idTopouvoir_distinctif entite[]                   @relation("entite_pouvoir_distinctif_idTopouvoir_distinctif")
-  entite_pouvoir_distinctif                               entite_pouvoir_distinctif?
-  entite_pouvoir_distinctif_entite_idToentite             entite?                    @relation("pouvoir_distinctif_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pouvoirDistinctif_entite")
-}
 
 model sort {
   id                  Int            @id @default(autoincrement())
@@ -292,15 +305,6 @@ model sort {
   ouvrage_sort        ouvrage_sort[]
 }
 
-model specialite_divinite {
-  id                                                       Int                        @id @default(autoincrement())
-  entite_id                                                Int?
-  culte_et_adoration                                       String?                    @db.VarChar(255)
-  autres_particularites                                    String?                    @db.VarChar(255)
-  entite_entite_specialite_divinit_idTospecialite_divinite entite[]                   @relation("entite_specialite_divinit_idTospecialite_divinite")
-  entite_specialite_divinit                                entite_specialite_divinit?
-  entite_specialite_divinite_entite_idToentite             entite?                    @relation("specialite_divinite_entite_idToentite", fields: [entite_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_specialiteDivinite_entiteId")
-}
 
 model Investigateur {
   id        Int      @id @default(autoincrement())
