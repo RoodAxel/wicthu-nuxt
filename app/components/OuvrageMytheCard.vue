@@ -27,7 +27,7 @@ function openDetail(id: number) {
     <span class="col-date row-muted">{{ date ?? '—' }}</span>
     <span class="col-sm row-sanity">{{ sante_mental ?? '—' }}</span>
     <span class="col-gain row-gain">
-      <span v-if="gain_mythe_initial != null">{{ gain_mythe_initial }}/{{ gain_mythe_complet }}</span>
+      <span v-if="gain_mythe_initial != null">+{{ gain_mythe_initial }}%/{{ gain_mythe_complet }}%</span>
       <span v-else>—</span>
     </span>
     <span class="col-mythe row-mythe">{{ mythe_cthulhu != null ? `${mythe_cthulhu}%` : '—' }}</span>
@@ -68,6 +68,7 @@ function openDetail(id: number) {
 .row-sanity {
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
+  font-weight: bold;
   color: var(--color-crimson);
 }
 

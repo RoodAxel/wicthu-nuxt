@@ -214,17 +214,17 @@ const selectedCategoryNames = computed(() =>
     </div>
 
     <div v-else class="list-container">
-      <div class="list-header-row">
-        <button class="col-name col-sortable" :class="{ 'sort-active': sortName !== null }" @click="cycleSortName">
-          Compétence <span class="sort-icon">{{ sortNameIcon }}</span>
-        </button>
-        <span class="col-category">Catégorie</span>
-        <span class="col-badge">Type</span>
-        <button class="col-base col-sortable" :class="{ 'sort-active': sortBase !== null }" @click="cycleSortBase">
-          Base <span class="sort-icon">{{ sortBaseIcon }}</span>
-        </button>
-      </div>
       <div class="list-body">
+        <div class="list-header-row">
+          <button class="col-name col-sortable" :class="{ 'sort-active': sortName !== null }" @click="cycleSortName">
+            Compétence <span class="sort-icon">{{ sortNameIcon }}</span>
+          </button>
+          <span class="col-category">Catégorie</span>
+          <span class="col-badge">Type</span>
+          <button class="col-base col-sortable" :class="{ 'sort-active': sortBase !== null }" @click="cycleSortBase">
+            Base <span class="sort-icon">{{ sortBaseIcon }}</span>
+          </button>
+        </div>
         <div
           v-for="(competence, index) in filtered"
           :key="competence.id"
@@ -389,20 +389,20 @@ const selectedCategoryNames = computed(() =>
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-  flex-shrink: 0;
 }
 
 .legend-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .legend-desc {
   font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-secondary);
+  font-size: var(--fs-section-hint);
   color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 /* ── TOOLBAR ─────────────────────────────────────────────── */
@@ -625,6 +625,9 @@ const selectedCategoryNames = computed(() =>
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .col-sortable {

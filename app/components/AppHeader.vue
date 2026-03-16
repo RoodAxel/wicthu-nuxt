@@ -251,6 +251,7 @@ async function confirmSignOut() {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
+  overflow: visible;
 }
 
 /* ── LOGO ──────────────────────────────────────────────── */
@@ -270,7 +271,8 @@ async function confirmSignOut() {
   gap: 2px;
   flex: 1;
   flex-wrap: nowrap;
-  overflow: hidden;
+  min-width: 0;
+  overflow: visible;
 }
 
 .nav-link {
@@ -297,6 +299,7 @@ async function confirmSignOut() {
 /* ── NAV GROUP (dropdown) ──────────────────────────────── */
 .nav-group {
   position: relative;
+  z-index: 200;
 }
 
 .nav-group-btn {

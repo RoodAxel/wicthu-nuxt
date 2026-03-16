@@ -227,19 +227,18 @@ function isFixedSkill(skill: OccupationSkill) {
     </div>
 
     <div v-else class="list-container">
-      <div class="list-header-row">
-        <button class="col-sortable sort-active" @click="cycleSortName">
-          Occupation <span class="sort-icon">{{ sortNameIcon }}</span>
-        </button>
-        <span>Formule de points</span>
-        <button class="col-sortable" :class="{ 'sort-active': sortCredit !== null }" @click="cycleSortCredit">
-          Crédit <span class="sort-icon">{{ sortCreditIcon }}</span>
-        </button>
-        <span>Type</span>
-        <span />
-      </div>
-
       <div class="list-body">
+        <div class="list-header-row">
+          <button class="col-sortable sort-active" @click="cycleSortName">
+            Occupation <span class="sort-icon">{{ sortNameIcon }}</span>
+          </button>
+          <span>Formule de points</span>
+          <button class="col-sortable" :class="{ 'sort-active': sortCredit !== null }" @click="cycleSortCredit">
+            Crédit <span class="sort-icon">{{ sortCreditIcon }}</span>
+          </button>
+          <span>Type</span>
+          <span />
+        </div>
         <template v-for="(occ, index) in filtered" :key="occ.id">
           <div
             class="list-row"
@@ -773,15 +772,16 @@ function isFixedSkill(skill: OccupationSkill) {
   color: var(--color-text-muted);
 }
 .legend-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 .legend-desc {
   font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-secondary);
+  font-size: var(--fs-section-hint);
   color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 /* ── TRANSITION ──────────────────────────────────────────── */

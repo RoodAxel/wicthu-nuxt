@@ -179,6 +179,22 @@ const filtered = computed(() => {
       </div>
     </div>
 
+    <div class="legend">
+      <span class="legend-title">Légende</span>
+      <div class="legend-item">
+        <span class="legend-token token-crimson">S.M.</span>
+        <span class="legend-desc">Perte de Santé Mentale liée à la lecture du livre.</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-arcane">Gain</span>
+        <span class="legend-desc">Gain de Mythe de Cthulhu — le premier chiffre correspond aux points gagnés lors d'une lecture initiale <span class="legend-abbr">(GMI)</span>, le second lors d'une étude complète <span class="legend-abbr">(GMC)</span>.</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-token token-gold">Mythe%</span>
+        <span class="legend-desc">Valeur seuil de la compétence Mythe de Cthulhu — le lecteur ne peut gagner le GMC que si sa compétence est <em>inférieure</em> à cette valeur.</span>
+      </div>
+    </div>
+
   </main>
 </template>
 
@@ -366,6 +382,7 @@ const filtered = computed(() => {
 .list-body {
   max-height: 600px;
   overflow-y: scroll;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
@@ -398,5 +415,58 @@ const filtered = computed(() => {
   :deep(.ouvrage-row) { grid-template-columns: 1fr 80px 70px; }
   .col-sm { display: none; }
   :deep(.col-sm) { display: none; }
+}
+
+/* ── LEGEND ──────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.legend-title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-badge);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+.legend-token {
+  font-family: var(--font-heading);
+  font-size: var(--fs-badge);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.token-crimson { background: rgba(139,58,58,0.15);  color: var(--color-crimson); border: 1px solid var(--color-crimson-dim); }
+.token-arcane  { background: rgba(127,179,138,0.15); color: var(--color-arcane);  border: 1px solid var(--color-arcane-dim); }
+.token-gold    { background: rgba(184,146,74,0.12);  color: var(--color-gold);    border: 1px solid var(--color-gold-dim); }
+.legend-desc {
+  font-family: var(--font-flavor);
+  font-size: var(--fs-section-hint);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.legend-abbr {
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-size: var(--fs-badge);
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
 }
 </style>

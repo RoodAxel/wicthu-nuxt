@@ -200,18 +200,18 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
     </div>
 
     <div v-else class="list-container">
-      <div class="list-header-row">
-        <button class="col-sortable sort-active" @click="cycleSortName">
-          Article <span class="sort-icon">{{ sortNameIcon }}</span>
-        </button>
-        <button class="col-sortable sort-active" @click="cycleSortCategory">
-          Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
-        </button>
-        <button class="col-sortable" :class="{ 'sort-active': sortPrice !== null }" @click="cycleSortPrice">
-          Prix <span class="sort-icon">{{ sortPriceIcon }}</span>
-        </button>
-      </div>
       <div class="list-body">
+        <div class="list-header-row">
+          <button class="col-sortable sort-active" @click="cycleSortName">
+            Article <span class="sort-icon">{{ sortNameIcon }}</span>
+          </button>
+          <button class="col-sortable sort-active" @click="cycleSortCategory">
+            Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
+          </button>
+          <button class="col-sortable" :class="{ 'sort-active': sortPrice !== null }" @click="cycleSortPrice">
+            Prix <span class="sort-icon">{{ sortPriceIcon }}</span>
+          </button>
+        </div>
         <div
           v-for="(item, index) in filtered"
           :key="item.id"
@@ -505,6 +505,9 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .col-sortable {

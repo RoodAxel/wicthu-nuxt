@@ -193,25 +193,25 @@ function toggle(id: number) {
     </div>
 
     <div v-else class="list-container">
-      <div class="list-header-row">
-        <button class="col-sortable" :class="{ 'sort-active': titleIsActive }" @click="cycleSortTitle">
-          Titre <span class="sort-icon">{{ sortTitleIcon }}</span>
-        </button>
-        <button class="col-sortable" :class="{ 'sort-active': sortAuthor !== null }" @click="cycleSortAuthor">
-          Auteur <span class="sort-icon">{{ sortAuthorIcon }}</span>
-        </button>
-        <span class="col-lang">Langue</span>
-        <button class="col-sortable" :class="{ 'sort-active': sortDate !== null }" @click="cycleSortDate">
-          Date <span class="sort-icon">{{ sortDateIcon }}</span>
-        </button>
-        <button class="col-sortable" :class="{ 'sort-active': sortSanity !== null }" @click="cycleSortSanity">
-          Santé ment. <span class="sort-icon">{{ sortSanityIcon }}</span>
-        </button>
-        <button class="col-sortable" :class="{ 'sort-active': sortGain !== null }" @click="cycleSortGain">
-          Gain Occ. <span class="sort-icon">{{ sortGainIcon }}</span>
-        </button>
-      </div>
       <div class="list-body">
+        <div class="list-header-row">
+          <button class="col-sortable" :class="{ 'sort-active': titleIsActive }" @click="cycleSortTitle">
+            Titre <span class="sort-icon">{{ sortTitleIcon }}</span>
+          </button>
+          <button class="col-sortable" :class="{ 'sort-active': sortAuthor !== null }" @click="cycleSortAuthor">
+            Auteur <span class="sort-icon">{{ sortAuthorIcon }}</span>
+          </button>
+          <span class="col-lang">Langue</span>
+          <button class="col-sortable" :class="{ 'sort-active': sortDate !== null }" @click="cycleSortDate">
+            Date <span class="sort-icon">{{ sortDateIcon }}</span>
+          </button>
+          <button class="col-sortable" :class="{ 'sort-active': sortSanity !== null }" @click="cycleSortSanity">
+            Santé ment. <span class="sort-icon">{{ sortSanityIcon }}</span>
+          </button>
+          <button class="col-sortable" :class="{ 'sort-active': sortGain !== null }" @click="cycleSortGain">
+            Gain Occ. <span class="sort-icon">{{ sortGainIcon }}</span>
+          </button>
+        </div>
         <template v-for="ouvrage in filtered" :key="ouvrage.id">
           <div
             class="list-row"
@@ -410,6 +410,9 @@ function toggle(id: number) {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .col-sortable {
@@ -471,6 +474,7 @@ function toggle(id: number) {
 .row-sanity {
   font-family: var(--font-heading);
   font-size: var(--fs-md);
+  font-weight: bold;
   color: var(--color-crimson);
 }
 .row-gain {

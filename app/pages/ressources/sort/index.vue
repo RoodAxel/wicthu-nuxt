@@ -364,6 +364,7 @@ const filtered = computed(() => {
 .list-body {
   height: 520px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }

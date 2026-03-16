@@ -248,6 +248,11 @@ async function saveCharacter() {
   finally { isSaving.value = false }
 }
 
+const { generateName } = useRandomName()
+function generateRandomName() {
+  form['Nom'] = generateName()
+}
+
 async function generatePdf() {
   error.value = null
   savedSuccess.value = false
@@ -364,7 +369,17 @@ const backgroundFields = [
         <h2 class="section-title">Identité</h2>
         <div class="identity-grid">
           <div class="field-group col-2">
-            <label class="field-label" for="Nom">Nom de l'investigateur</label>
+            <div class="field-label-row">
+              <label class="field-label" for="Nom">Nom de l'investigateur</label>
+              <button
+                type="button"
+                class="random-name-btn"
+                title="Générer un nom américain aléatoire"
+                @click="generateRandomName"
+              >
+                ⚄
+              </button>
+            </div>
             <input id="Nom" v-model="form['Nom']" class="field-input" type="text" placeholder="Arkham, 1923…">
           </div>
           <div class="field-group col-2">
@@ -694,6 +709,11 @@ const backgroundFields = [
 }
 .col-2 { grid-column: span 1; }
 .field-group { display: flex; flex-direction: column; gap: var(--space-xs); }
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .field-label {
   font-family: var(--font-heading);
   font-size: var(--fs-field-label);
@@ -701,6 +721,28 @@ const backgroundFields = [
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
+.random-name-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 0.95rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  line-height: 1;
+}
+.random-name-btn:hover:not(:disabled) {
+  border-color: var(--color-arcane-dim);
+  color: var(--color-arcane);
+  background: var(--color-arcane-glow);
+}
+.random-name-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .required { color: var(--color-crimson); }
 .field-input, .field-textarea {
   background: var(--color-elevated);

@@ -517,6 +517,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   grid-template-columns: subgrid;
   max-height: 600px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }

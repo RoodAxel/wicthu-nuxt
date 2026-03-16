@@ -348,24 +348,23 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
     </div>
 
     <div v-else class="table-outer">
-      <div class="list-header-row">
-        <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortName">
-          Arme <span class="sort-icon">{{ sortNameIcon }}</span>
-        </button>
-        <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortCategory">
-          Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
-        </button>
-        <span class="col-skill">Compétence</span>
-        <button class="col-header-btn" :class="{ 'sort-active': sortDamage !== null }" @click="cycleSortDamage">
-          Dégâts <span class="sort-icon">{{ sortDamageIcon }}</span>
-        </button>
-        <span class="col-range">Portée</span>
-        <span class="col-price">Prix</span>
-        <span class="col-era">Époque</span>
-        <span class="col-chevron" />
-      </div>
-
       <div class="list-body">
+        <div class="list-header-row">
+          <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortName">
+            Arme <span class="sort-icon">{{ sortNameIcon }}</span>
+          </button>
+          <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortCategory">
+            Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
+          </button>
+          <span class="col-skill">Compétence</span>
+          <button class="col-header-btn" :class="{ 'sort-active': sortDamage !== null }" @click="cycleSortDamage">
+            Dégâts <span class="sort-icon">{{ sortDamageIcon }}</span>
+          </button>
+          <span class="col-range">Portée</span>
+          <span class="col-price">Prix</span>
+          <span class="col-era">Époque</span>
+          <span class="col-chevron" />
+        </div>
         <template v-for="(weapon, index) in filtered" :key="weapon.id">
           <div
             class="list-row"
@@ -1074,7 +1073,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .legend-title {
   font-family: var(--font-heading);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-badge);
   font-weight: bold;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1084,16 +1083,17 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 .legend-desc {
   font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-section-hint);
   color: var(--color-text-muted);
+  line-height: 1.5;
 }
 .legend-token {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xs);
+  font-size: var(--fs-row-value);
   font-weight: bold;
   letter-spacing: 0.1em;
   padding: 2px 6px;
