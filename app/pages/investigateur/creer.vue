@@ -7,52 +7,52 @@ definePageMeta({ middleware: 'auth' })
 
 const { data: occupationList } = useFetch<OccupationListItem[]>('/api/occupation')
 const selectedOccupationId = ref<number | null>(null)
-const occupationDetail     = ref<OccupationDetail | null>(null)
+const occupationDetail = ref<OccupationDetail | null>(null)
 
 // ── MAPPING COMPÉTENCES DB → CLÉS FORMULAIRE ─────────────────────────────────
 
 const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
-  'Anthropologie':      ['ANT_0'],
-  'Archéologie':        ['ARC_0'],
-  'Arts et métiers':    ['ART_0', 'AR1_0', 'AR2_0', 'AR3_0'],
-  'Baratin':            ['BAR_0'],
-  'Bibliothèque':       ['BIB_0'],
-  'Charme':             ['CHA_0'],
-  'Combat à distance':  ['CD1_0', 'CD2_0', 'CD3_0', 'CD4_0'],
-  'Combat rapproché':   ['CR1_0', 'CR2_0', 'CR3_0'],
-  'Conduite':           ['COD_0'],
-  'Crochetage':         ['CRE_0'],
-  'Discrétion':         ['DIS_0'],
-  'Droit':              ['DRO_0'],
-  'Écouter':            ['ECO_0'],
-  'Électricité':        ['ELE_0'],
-  'Équitation':         ['EQU_0'],
-  'Esquive':            ['ESQ_0'],
-  'Estimation':         ['EST_0'],
-  'Grimper':            ['GRI_0'],
-  'Histoire':           ['HIS_0'],
-  'Imposture':          ['IPO_0'],
-  'Intimidation':       ['ITI_0'],
-  'Langue maternelle':  ['LAN_0'],
-  'Langues':            ['LG1_0', 'LG2_0', 'LG3_0'],
-  'Mécanique':          ['MEC_0'],
-  'Médecine':           ['MED_0'],
-  'Nager':              ['NAG_0'],
-  'Naturalisme':        ['NAT_0'],
-  'Occultisme':         ['OCC_0'],
-  'Orientation':        ['ORI_0'],
-  'Persuasion':         ['PER_0'],
-  'Pickpocket':         ['PIC_0'],
-  'Pilotage':           ['PIL_0', 'PL1_0'],
-  'Pister':             ['PIS_0'],
-  'Plongée':            ['PLO_0'],
-  'Premiers soins':     ['PRE_0'],
-  'Psychanalyse':       ['PSA_0'],
-  'Psychologie':        ['PSO_0'],
-  'Sauter':             ['SAU_0'],
-  'Sciences':           ['SCI_0', 'SC1_0', 'SC2_0', 'SC3_0'],
-  'Survie':             ['SUR_0'],
-  'Trouver Objet Caché': ['TOC_0'],
+  'Anthropologie': ['ANT_0'],
+  'Archéologie': ['ARC_0'],
+  'Arts et métiers': ['ART_0', 'AR1_0', 'AR2_0', 'AR3_0'],
+  'Baratin': ['BAR_0'],
+  'Bibliothèque': ['BIB_0'],
+  'Charme': ['CHA_0'],
+  'Combat à distance': ['CD1_0', 'CD2_0', 'CD3_0', 'CD4_0'],
+  'Combat rapproché': ['CR1_0', 'CR2_0', 'CR3_0'],
+  'Conduite': ['COD_0'],
+  'Crochetage': ['CRE_0'],
+  'Discrétion': ['DIS_0'],
+  'Droit': ['DRO_0'],
+  'Écouter': ['ECO_0'],
+  'Électricité': ['ELE_0'],
+  'Équitation': ['EQU_0'],
+  'Esquive': ['ESQ_0'],
+  'Estimation': ['EST_0'],
+  'Grimper': ['GRI_0'],
+  'Histoire': ['HIS_0'],
+  'Imposture': ['IPO_0'],
+  'Intimidation': ['ITI_0'],
+  'Langue maternelle': ['LAN_0'],
+  'Langues': ['LG1_0', 'LG2_0', 'LG3_0'],
+  'Mécanique': ['MEC_0'],
+  'Médecine': ['MED_0'],
+  'Nager': ['NAG_0'],
+  'Naturalisme': ['NAT_0'],
+  'Occultisme': ['OCC_0'],
+  'Orientation': ['ORI_0'],
+  'Persuasion': ['PER_0'],
+  'Pickpocket': ['PIC_0'],
+  'Pilotage': ['PIL_0', 'PL1_0'],
+  'Pister': ['PIS_0'],
+  'Plongée': ['PLO_0'],
+  'Premiers soins': ['PRE_0'],
+  'Psychanalyse': ['PSA_0'],
+  'Psychologie': ['PSO_0'],
+  'Sauter': ['SAU_0'],
+  'Sciences': ['SCI_0', 'SC1_0', 'SC2_0', 'SC3_0'],
+  'Survie': ['SUR_0'],
+  'Trouver Objet Caché': ['TOC_0']
 }
 
 const highlightedKeys = computed((): Set<string> => {
@@ -123,9 +123,17 @@ const form = reactive<Record<string, string>>({
   capital: '', depencesCourantes: '', 'Espèces': ''
 })
 
-function n(val: string | undefined) { return Number(val) || 0 }
-function half(val: string | undefined) { const v = Math.floor(n(val) / 2); return v > 0 ? String(v) : '' }
-function fifth(val: string | undefined) { const v = Math.floor(n(val) / 5); return v > 0 ? String(v) : '' }
+function n(val: string | undefined) {
+  return Number(val) || 0
+}
+function half(val: string | undefined) {
+  const v = Math.floor(n(val) / 2)
+  return v > 0 ? String(v) : ''
+}
+function fifth(val: string | undefined) {
+  const v = Math.floor(n(val) / 5)
+  return v > 0 ? String(v) : ''
+}
 
 const pv_max = computed(() => {
   const v = Math.floor((n(form['CON_0']) + n(form['TAI_0'])) / 10)
@@ -172,7 +180,10 @@ const mvt = computed(() => {
 // ── WATCHERS OCCUPATION (après form) ─────────────────────────────────────────
 
 watch(selectedOccupationId, async (id) => {
-  if (!id) { occupationDetail.value = null; return }
+  if (!id) {
+    occupationDetail.value = null
+    return
+  }
   const occ = occupationList.value?.find(o => o.id === id)
   if (occ) form['Occupation'] = occ.name
   occupationDetail.value = await $fetch<OccupationDetail>(`/api/occupation/${id}`)
@@ -208,8 +219,7 @@ onMounted(async () => {
   try {
     const data = await $fetch<{ data: Record<string, string> }>(`/api/investigateur/${editId.value}`)
     Object.assign(form, data.data)
-  }
-  catch {
+  } catch {
     error.value = 'Impossible de charger la fiche.'
   }
 })
@@ -221,8 +231,7 @@ async function persistForm(): Promise<number> {
       body: form
     })
     return res.id
-  }
-  else {
+  } else {
     const res = await $fetch<{ id: number }>('/api/investigateur', {
       method: 'POST',
       body: form
@@ -241,11 +250,9 @@ async function saveCharacter() {
     if (!editId.value) {
       await router.replace(`/investigateur/creer?edit=${id}`)
     }
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     error.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
-  }
-  finally { isSaving.value = false }
+  } finally { isSaving.value = false }
 }
 
 const { generateName } = useRandomName()
@@ -269,11 +276,9 @@ async function generatePdf() {
       body: form
     })
     window.open(url, '_blank')
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     error.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
-  }
-  finally { isLoading.value = false }
+  } finally { isLoading.value = false }
 }
 
 const caracteristiques = [
@@ -501,44 +506,44 @@ const backgroundFields = [
       <section class="form-section">
         <h2 class="section-title">Combat, Art, Langues, Sciences & Compétences personnelles</h2>
         <div class="variable-grid">
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('ART_0','AR1_0','AR2_0','AR3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('ART_0', 'AR1_0', 'AR2_0', 'AR3_0') }">
             <h3 class="variable-subtitle">Art et métier</h3>
-            <div v-for="i in [1,2,3]" :key="`ar${i}`" class="variable-row">
+            <div v-for="i in [1, 2, 3]" :key="`ar${i}`" class="variable-row">
               <input v-model="form[`AR${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…">
               <input v-model="form[`AR${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CD1_0','CD2_0','CD3_0','CD4_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CD1_0', 'CD2_0', 'CD3_0', 'CD4_0') }">
             <h3 class="variable-subtitle">Combat à distance (custom)</h3>
-            <div v-for="i in [3,4]" :key="`cd${i}`" class="variable-row">
+            <div v-for="i in [3, 4]" :key="`cd${i}`" class="variable-row">
               <input v-model="form[`CD${i}_label`]" class="field-input label-input" type="text" placeholder="Arme…">
               <input v-model="form[`CD${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CR1_0','CR2_0','CR3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CR1_0', 'CR2_0', 'CR3_0') }">
             <h3 class="variable-subtitle">Combat rapproché (custom)</h3>
-            <div v-for="i in [2,3]" :key="`cr${i}`" class="variable-row">
+            <div v-for="i in [2, 3]" :key="`cr${i}`" class="variable-row">
               <input v-model="form[`CR${i}_label`]" class="field-input label-input" type="text" placeholder="Arme…">
               <input v-model="form[`CR${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('LG1_0','LG2_0','LG3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('LG1_0', 'LG2_0', 'LG3_0') }">
             <h3 class="variable-subtitle">Langues étrangères</h3>
-            <div v-for="i in [1,2,3]" :key="`lg${i}`" class="variable-row">
+            <div v-for="i in [1, 2, 3]" :key="`lg${i}`" class="variable-row">
               <input v-model="form[`LG${i}_label`]" class="field-input label-input" type="text" placeholder="Langue…">
               <input v-model="form[`LG${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('PIL_0','PL1_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('PIL_0', 'PL1_0') }">
             <h3 class="variable-subtitle">Pilotage (custom)</h3>
             <div class="variable-row">
               <input v-model="form['PL1_label']" class="field-input label-input" type="text" placeholder="Véhicule…">
               <input v-model="form['PL1_0']" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('SCI_0','SC1_0','SC2_0','SC3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('SCI_0', 'SC1_0', 'SC2_0', 'SC3_0') }">
             <h3 class="variable-subtitle">Sciences</h3>
-            <div v-for="i in [1,2,3]" :key="`sc${i}`" class="variable-row">
+            <div v-for="i in [1, 2, 3]" :key="`sc${i}`" class="variable-row">
               <input v-model="form[`SC${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…">
               <input v-model="form[`SC${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
@@ -546,7 +551,7 @@ const backgroundFields = [
           <div class="variable-group variable-group--full">
             <h3 class="variable-subtitle">Compétences personnelles</h3>
             <div class="variable-row-grid">
-              <div v-for="i in [1,2,3,4,5]" :key="`cp${i}`" class="variable-row">
+              <div v-for="i in [1, 2, 3, 4, 5]" :key="`cp${i}`" class="variable-row">
                 <input v-model="form[`CP${i}_label`]" class="field-input label-input" type="text" placeholder="Compétence…">
                 <input v-model="form[`CP${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
               </div>

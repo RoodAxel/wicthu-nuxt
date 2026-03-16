@@ -1,9 +1,19 @@
 import type { CharacterFormData } from '../types/investigateur'
 
-function s(val: unknown): string { return val != null ? String(val) : '' }
-function half(val: unknown): string { const n = Math.floor(Number(val) / 2); return n > 0 ? String(n) : '' }
-function fifth(val: unknown): string { const n = Math.floor(Number(val) / 5); return n > 0 ? String(n) : '' }
-function v(body: CharacterFormData, key: string): string { return s(body[key]) }
+function s(val: unknown): string {
+  return val != null ? String(val) : ''
+}
+function half(val: unknown): string {
+  const n = Math.floor(Number(val) / 2)
+  return n > 0 ? String(n) : ''
+}
+function fifth(val: unknown): string {
+  const n = Math.floor(Number(val) / 5)
+  return n > 0 ? String(n) : ''
+}
+function v(body: CharacterFormData, key: string): string {
+  return s(body[key])
+}
 
 const CARAC = [
   { key: 'FOR', label: 'FOR' },
@@ -61,7 +71,7 @@ const SKILLS = [
   { key: 'SAU', label: 'Sauter', base: 20 },
   { key: 'SCI', label: 'Sciences', base: 1 },
   { key: 'SUR', label: 'Survie', base: 10 },
-  { key: 'TOC', label: 'Trouver Objet Caché', base: 25 },
+  { key: 'TOC', label: 'Trouver Objet Caché', base: 25 }
 ]
 
 const CUSTOM_SKILLS = [
@@ -71,7 +81,7 @@ const CUSTOM_SKILLS = [
   { prefix: 'LG', count: 3, label: 'Langue étrangère' },
   { prefix: 'PL', count: 1, label: 'Pilotage' },
   { prefix: 'SC', count: 3, label: 'Sciences' },
-  { prefix: 'CP', count: 5, label: 'Compétence perso.' },
+  { prefix: 'CP', count: 5, label: 'Compétence perso.' }
 ]
 
 const BACKGROUND_FIELDS = [
@@ -84,7 +94,7 @@ const BACKGROUND_FIELDS = [
   { key: 'bienPrécieux', label: 'Biens précieux' },
   { key: 'ouvragesOccultes', label: 'Ouvrages occultes' },
   { key: 'rencontresEntites', label: 'Rencontres avec des entités' },
-  { key: 'sequellesCicatrices', label: 'Séquelles et cicatrices' },
+  { key: 'sequellesCicatrices', label: 'Séquelles et cicatrices' }
 ]
 
 function field(label: string, value: string): string {
@@ -105,11 +115,6 @@ function skillRow(label: string, base: number, val: string, customLabel?: string
 }
 
 export function buildInvestigateurHtml(body: CharacterFormData): string {
-  // Compétences fixes
-  const skillsHtml = SKILLS.map(sk =>
-    skillRow(sk.label, sk.base, v(body, `${sk.key}_0`))
-  ).join('')
-
   // Compétences variables
   const customSkillsHtml = CUSTOM_SKILLS.map(({ prefix, count, start = 1, label }) => {
     const rows = Array.from({ length: count }, (_, i) => {
@@ -122,26 +127,16 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
     return rows
   }).join('')
 
-  // Caractéristiques
-  const caracHtml = CARAC.map(c => {
-    const val = v(body, `${c.key}_0`)
-    return `
-      <tr>
-        <td class="carac-label">${c.label}</td>
-        <td>${val || ''}</td>
-        <td>${half(val)}</td>
-        <td>${fifth(val)}</td>
-      </tr>`
-  }).join('')
-
   // Background
-  const backgroundHtml = BACKGROUND_FIELDS.map(f => {
+  const backgroundHtml = BACKGROUND_FIELDS.map((f) => {
     const val = v(body, f.key)
-    return val ? `
+    return val
+      ? `
       <div class="bg-field">
         <div class="bg-label">${f.label}</div>
         <div class="bg-value">${val}</div>
-      </div>` : ''
+      </div>`
+      : ''
   }).filter(Boolean).join('')
 
   return `<!DOCTYPE html>
@@ -241,11 +236,11 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
       ${CARAC.slice(0, 4).map((c, i) => {
         const val1 = v(body, `${c.key}_0`)
         const c2 = CARAC[i + 4]
-        const val2 = v(body, `${c2.key}_0`)
+        const val2 = c2 ? v(body, `${c2.key}_0`) : ''
         return `<tr>
           <td class="carac-label">${c.label}</td>
           <td>${val1}</td><td>${half(val1)}</td><td>${fifth(val1)}</td>
-          <td class="carac-label" style="border-left:3px solid #999">${c2.label}</td>
+          <td class="carac-label" style="border-left:3px solid #999">${c2?.label ?? ''}</td>
           <td>${val2}</td><td>${half(val2)}</td><td>${fifth(val2)}</td>
         </tr>`
       }).join('')}
@@ -303,7 +298,8 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
   </div>
 
   <!-- ── COMPÉTENCES VARIABLES ── -->
-  ${customSkillsHtml ? `
+  ${customSkillsHtml
+    ? `
   <h2>Combat, Arts, Langues, Sciences &amp; Compétences personnelles</h2>
   <div class="skills-cols">
     <div>
@@ -313,7 +309,8 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
       ${customSkillsHtml}
     </div>
     <div></div>
-  </div>` : ''}
+  </div>`
+    : ''}
 
   <!-- ── PAGE 2 : BACKGROUND & FINANCES ── -->
   <div class="page-break"></div>

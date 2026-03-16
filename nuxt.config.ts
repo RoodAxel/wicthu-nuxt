@@ -6,14 +6,11 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase'
   ],
 
-  supabase: {
-    redirect: false,
-    redirectOptions: {
-      login: '/auth/login',
-      callback: '/auth/confirm',
-      passwordReset: '/auth/reset-password'
-    }
+  devtools: {
+    enabled: true
   },
+
+  css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
     // Variables privées (server only)
@@ -28,25 +25,19 @@ export default defineNuxtConfig({
     }
   },
 
-  typescript: {
-    strict: true
-  },
-
-  devtools: {
-    enabled: true
-  },
-
-  css: ['~/assets/css/main.css'],
-
   routeRules: {
     '/': { prerender: true }
   },
+
+  compatibilityDate: '2025-01-15',
 
   nitro: {
     serverAssets: [{ baseName: 'pdfs', dir: './server/assets/pdfs' }]
   },
 
-  compatibilityDate: '2025-01-15',
+  typescript: {
+    strict: true
+  },
 
   eslint: {
     config: {

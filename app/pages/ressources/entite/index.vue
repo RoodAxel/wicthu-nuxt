@@ -2,20 +2,20 @@
 import type { EntiteItem } from '~/types/entite'
 
 const CATEGORIES = [
-  { value: 'CREATURE_MYTHE',       label: 'Créatures du Mythe',      badge: 'Créature' },
-  { value: 'DIVINITE_MYTHE',       label: 'Divinités du Mythe',       badge: 'Divinité' },
+  { value: 'CREATURE_MYTHE', label: 'Créatures du Mythe', badge: 'Créature' },
+  { value: 'DIVINITE_MYTHE', label: 'Divinités du Mythe', badge: 'Divinité' },
   { value: 'HORREUR_TRADITIONNEL', label: 'Horreurs Traditionnelles', badge: 'Horreur' },
-  { value: 'FAUNE',                label: 'Faune',                    badge: 'Faune' },
+  { value: 'FAUNE', label: 'Faune', badge: 'Faune' }
 ]
 
 const { data: entites, status, error } = useFetch<EntiteItem[]>('/api/entite')
 
-const search                = ref('')
-const selectedCategories    = ref<Set<string>>(new Set())
-const categoryDropdownOpen  = ref(false)
-const categoryDropdownRef   = ref<HTMLElement | null>(null)
+const search = ref('')
+const selectedCategories = ref<Set<string>>(new Set())
+const categoryDropdownOpen = ref(false)
+const categoryDropdownRef = ref<HTMLElement | null>(null)
 
-const sortName      = ref<'asc' | 'desc'>('asc')
+const sortName = ref<'asc' | 'desc'>('asc')
 const sortCategorie = ref(false)
 
 const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
@@ -45,8 +45,8 @@ onMounted(() => document.addEventListener('mousedown', handleClickOutside))
 onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 
 function nameColor(categorie: string) {
-  if (categorie === 'CREATURE_MYTHE')  return 'var(--color-crimson)'
-  if (categorie === 'DIVINITE_MYTHE')  return 'var(--color-gold)'
+  if (categorie === 'CREATURE_MYTHE') return 'var(--color-crimson)'
+  if (categorie === 'DIVINITE_MYTHE') return 'var(--color-gold)'
   return 'var(--color-arcane)'
 }
 

@@ -4,7 +4,9 @@ import { buildInvestigateurHtml } from '../../utils/investigateur-html'
 
 const GOTENBERG_URL = 'https://demo.gotenberg.dev/forms/chromium/convert/html'
 
-function str(val: unknown): string { return val != null ? String(val) : '' }
+function str(val: unknown): string {
+  return val != null ? String(val) : ''
+}
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
@@ -23,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   const formData = new FormData()
   formData.append('files', new Blob([html], { type: 'text/html' }), 'index.html')
-  formData.append('paperWidth', '8.27')   // A4
+  formData.append('paperWidth', '8.27') // A4
   formData.append('paperHeight', '11.69') // A4
   formData.append('marginTop', '0')
   formData.append('marginBottom', '0')

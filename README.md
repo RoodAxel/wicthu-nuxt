@@ -9,7 +9,6 @@ Application web dédiée aux joueurs de **L'Appel de Cthulhu 7e édition** (jeu 
 - **Bibliothèque de ressources** : Armes, artefacts, compétences, entités du Mythe, équipements, manies, phobies, occupations, ouvrages, sorts
 - **Fiche d'investigateur** : Création, édition, sauvegarde et export PDF
 - **Authentification** : Inscription, connexion, réinitialisation de mot de passe (Supabase Auth)
-- **Design thématique** : Système de design *Arkham Codex* (thème Cthulhu)
 
 ---
 
@@ -34,7 +33,6 @@ Application web dédiée aux joueurs de **L'Appel de Cthulhu 7e édition** (jeu 
 - **Node.js** >= 20
 - **npm** >= 10
 - Un projet **Supabase** (PostgreSQL + Auth + Storage)
-- Un bucket Supabase Storage nommé `fiches` (accès privé)
 
 ---
 

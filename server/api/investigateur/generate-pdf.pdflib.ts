@@ -3,15 +3,24 @@ import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
 import type { CharacterFormData } from '../../types/investigateur'
 
-function str(val: unknown): string { return val !== undefined && val !== null ? String(val) : '' }
-function half(val: unknown) { const n = Math.floor(Number(val) / 2); return n > 0 ? String(n) : '' }
-function fifth(val: unknown) { const n = Math.floor(Number(val) / 5); return n > 0 ? String(n) : '' }
+function str(val: unknown): string {
+  return val !== undefined && val !== null ? String(val) : ''
+}
+function half(val: unknown) {
+  const n = Math.floor(Number(val) / 2)
+  return n > 0 ? String(n) : ''
+}
+function fifth(val: unknown) {
+  const n = Math.floor(Number(val) / 5)
+  return n > 0 ? String(n) : ''
+}
 
 function setField(form: ReturnType<PDFDocument['getForm']>, name: string, value: unknown) {
   const s = str(value)
   if (!s) return
-  try { form.getTextField(name).setText(s) }
-  catch { /* champ absent — ignoré */ }
+  try {
+    form.getTextField(name).setText(s)
+  } catch { /* champ absent — ignoré */ }
 }
 
 export default defineEventHandler(async (event) => {
@@ -39,12 +48,12 @@ export default defineEventHandler(async (event) => {
   const form = pdfDoc.getForm()
 
   const carac = ['FOR', 'CON', 'TAI', 'DEX', 'APP', 'INT', 'POU', 'EDU'] as const
-  const skills = ['ANT','ARC','ART','BAR','BIB','CHA',
-    'CD1','CD2','CR1','COM','COD','CEL','CRE','CRO',
-    'DIS','DRO','ECO','ELE',
-    'EQU','ESQ','EST','GRI','HIS','IPO','ITI','LAN','MEC','MED','MYT','NAG',
-    'NAT','OCC','ORI','PER','PIL','PIC','PIS','PLO','PRE','PSA','PSO','SAU',
-    'SCI','SUR','TOC'] as const
+  const skills = ['ANT', 'ARC', 'ART', 'BAR', 'BIB', 'CHA',
+    'CD1', 'CD2', 'CR1', 'COM', 'COD', 'CEL', 'CRE', 'CRO',
+    'DIS', 'DRO', 'ECO', 'ELE',
+    'EQU', 'ESQ', 'EST', 'GRI', 'HIS', 'IPO', 'ITI', 'LAN', 'MEC', 'MED', 'MYT', 'NAG',
+    'NAT', 'OCC', 'ORI', 'PER', 'PIL', 'PIC', 'PIS', 'PLO', 'PRE', 'PSA', 'PSO', 'SAU',
+    'SCI', 'SUR', 'TOC'] as const
   const customGroups = [
     ['AR1', 'AR2', 'AR3'],
     ['CD3', 'CD4'],

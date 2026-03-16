@@ -17,7 +17,10 @@ onMounted(async () => {
       token_hash,
       type: type as 'recovery' | 'signup' | 'invite' | 'magiclink' | 'email'
     })
-    if (error) { errorMsg.value = error.message; return }
+    if (error) {
+      errorMsg.value = error.message
+      return
+    }
     await router.replace(type === 'recovery' ? '/auth/reset-password' : '/')
     return
   }

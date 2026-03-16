@@ -14,7 +14,7 @@ export default defineEventHandler(async () => {
       gain_mythe_complet: true,
       mythe_cthulhu: true,
       semaine: true,
-      _count: { select: { ouvrage_sort: true } },
-    },
+      _count: { select: { ouvrage_sort: true } }
+    }
   })
 })

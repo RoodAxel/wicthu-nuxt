@@ -7,7 +7,7 @@ const id = route.params.id as string
 const { data: sort, status, error } = await useFetch<SortDetail>(`/api/sort/${id}`)
 
 useHead(() => ({
-  title: sort.value ? `${sort.value.name} — Sorts` : 'Sort',
+  title: sort.value ? `${sort.value.name} — Sorts` : 'Sort'
 }))
 
 const searchVariantes = ref('')

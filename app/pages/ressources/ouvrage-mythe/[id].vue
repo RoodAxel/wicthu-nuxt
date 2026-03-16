@@ -7,7 +7,7 @@ const id = route.params.id as string
 const { data: ouvrage, status, error } = await useFetch<OuvrageMytheDetail>(`/api/ouvrage-mythe/${id}`)
 
 useHead(() => ({
-  title: ouvrage.value ? `${ouvrage.value.titre} — Ouvrages du Mythe` : 'Ouvrage du Mythe',
+  title: ouvrage.value ? `${ouvrage.value.titre} — Ouvrages du Mythe` : 'Ouvrage du Mythe'
 }))
 
 const searchSorts = ref('')
@@ -17,8 +17,8 @@ const filteredSorts = computed(() => {
   const q = normalizeStr(searchSorts.value.trim())
   if (!q) return ouvrage.value.ouvrage_sort
   return ouvrage.value.ouvrage_sort.filter(e =>
-    normalizeStr(e.sort.name).includes(q) ||
-    (e.nom_dans_ouvrage ? normalizeStr(e.nom_dans_ouvrage).includes(q) : false)
+    normalizeStr(e.sort.name).includes(q)
+    || (e.nom_dans_ouvrage ? normalizeStr(e.nom_dans_ouvrage).includes(q) : false)
   )
 })
 </script>

@@ -56,11 +56,9 @@ async function confirmGeneratePdf() {
     })
     window.open(url, '_blank')
     closeModal()
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     modalError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
-  }
-  finally { isLoading.value = false }
+  } finally { isLoading.value = false }
 }
 
 // ── SUPPRIMER FICHE ───────────────────────────────────────────
@@ -72,11 +70,9 @@ async function confirmDeleteFiche() {
     await $fetch(`/api/investigateur/${modalFiche.value.id}`, { method: 'DELETE' })
     closeModal()
     await refresh()
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     modalError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
-  }
-  finally { isLoading.value = false }
+  } finally { isLoading.value = false }
 }
 
 // ── CHANGER MOT DE PASSE ──────────────────────────────────────
@@ -92,11 +88,9 @@ async function sendPasswordReset() {
     const { error } = await supabase.auth.resetPasswordForEmail(user.value.email)
     if (error) throw error
     passwordEmailSent.value = true
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     passwordError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
-  }
-  finally { isSendingPassword.value = false }
+  } finally { isSendingPassword.value = false }
 }
 
 // ── SUPPRIMER COMPTE ──────────────────────────────────────────
@@ -107,11 +101,9 @@ async function confirmDeleteAccount() {
     await $fetch('/api/user', { method: 'DELETE' })
     await supabase.auth.signOut()
     router.push('/')
-  }
-  catch (e: unknown) {
+  } catch (e: unknown) {
     modalError.value = `Erreur : ${e instanceof Error ? e.message : String(e)}`
-  }
-  finally { isLoading.value = false }
+  } finally { isLoading.value = false }
 }
 
 // ── UTILS ─────────────────────────────────────────────────────
@@ -170,7 +162,7 @@ function formatDate(iso: string) {
             <button class="btn-action btn-pdf" @click="openPdfModal(fiche)">
               Générer PDF
             </button>
-            <button class="btn-action btn-delete-fiche" @click="openDeleteFicheModal(fiche)" title="Supprimer">
+            <button class="btn-action btn-delete-fiche" title="Supprimer" @click="openDeleteFicheModal(fiche)">
               ✕
             </button>
           </div>

@@ -14,16 +14,16 @@ export default defineEventHandler(async (event) => {
       children: {
         orderBy: { name: 'asc' },
         select: {
-          id:                  true,
-          name:                true,
-          cout:                true,
-          temps_incantation:   true,
-          description:         true,
+          id: true,
+          name: true,
+          cout: true,
+          temps_incantation: true,
+          description: true,
           version_approfondie: true,
-          autre_name:          true,
-        },
-      },
-    },
+          autre_name: true
+        }
+      }
+    }
   })
 
   if (!sort) {

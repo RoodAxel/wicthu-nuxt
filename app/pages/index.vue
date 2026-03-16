@@ -1,12 +1,12 @@
 <script setup lang="ts">
 </script>
+
 <template>
   <main class="home-wrapper">
 
     <!-- ── HERO ───────────────────────────────────────────── -->
     <section class="hero">
       <img src="/logoWicthu.png" alt="Wicthu" class="hero-logo">
-      <p class="hero-tagline">Compagnon de l'Investigateur</p>
       <p class="hero-description">
         Un outil pour les Guardiens et joueurs de <em>L'Appel de Cthulhu</em> —
         consultez les archives et gérer vos fiches d'investigateurs.

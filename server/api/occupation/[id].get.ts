@@ -14,18 +14,18 @@ export default defineEventHandler(async (event) => {
         orderBy: { sortOrder: 'asc' },
         include: {
           competence: {
-            select: { id: true, name: true, isCategory: true },
+            select: { id: true, name: true, isCategory: true }
           },
           options: {
             include: {
               competence: {
-                select: { id: true, name: true },
-              },
-            },
-          },
-        },
-      },
-    },
+                select: { id: true, name: true }
+              }
+            }
+          }
+        }
+      }
+    }
   })
 
   if (!occupation) {

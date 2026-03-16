@@ -4,21 +4,21 @@ import type { equipement_moderne } from '@prisma/client'
 const { data: items, status, error } = useFetch<equipement_moderne[]>('/api/equipement-moderne')
 
 // ── FILTRES ───────────────────────────────────────────────────────────────────
-const searchName  = ref('')
+const searchName = ref('')
 const searchPrice = ref('')
 
-const selectedCategories   = ref<Set<string>>(new Set())
+const selectedCategories = ref<Set<string>>(new Set())
 const categoryDropdownOpen = ref(false)
-const categoryDropdownRef  = ref<HTMLElement | null>(null)
+const categoryDropdownRef = ref<HTMLElement | null>(null)
 
 // ── TRIS ──────────────────────────────────────────────────────────────────────
 const sortCategory = ref<'asc' | 'desc'>('asc')
-const sortName     = ref<'asc' | 'desc'>('asc')
-const sortPrice    = ref<'asc' | 'desc' | null>(null)
+const sortName = ref<'asc' | 'desc'>('asc')
+const sortPrice = ref<'asc' | 'desc' | null>(null)
 
 const sortCategoryIcon = computed(() => sortCategory.value === 'asc' ? '↑' : '↓')
-const sortNameIcon     = computed(() => sortName.value === 'asc' ? '↑' : '↓')
-const sortPriceIcon    = computed(() => sortPrice.value === 'asc' ? '↑' : sortPrice.value === 'desc' ? '↓' : '↕')
+const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortPriceIcon = computed(() => sortPrice.value === 'asc' ? '↑' : sortPrice.value === 'desc' ? '↓' : '↕')
 
 function cycleSortCategory() {
   sortPrice.value = null
@@ -66,7 +66,7 @@ const filtered = computed(() => {
     if (searchPrice.value.trim()) {
       const q = searchPrice.value.trim()
       const matchBase = String(e.base_price).includes(q)
-      const matchMax  = e.max_price !== null && String(e.max_price).includes(q)
+      const matchMax = e.max_price !== null && String(e.max_price).includes(q)
       if (!matchBase && !matchMax) return false
     }
     if (selectedCategories.value.size > 0 && !selectedCategories.value.has(e.category ?? '')) return false
@@ -94,7 +94,7 @@ const filtered = computed(() => {
 const stats = computed(() => ({
   total: items.value?.length ?? 0,
   categories: categories.value.length,
-  superior: items.value?.filter(e => e.superior).length ?? 0,
+  superior: items.value?.filter(e => e.superior).length ?? 0
 }))
 
 function formatPrice(base: number, max: number | null, unit: string | null, superior: boolean) {
@@ -588,8 +588,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .legend-desc {
   font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-section-hint);
   color: var(--color-text-muted);
 }
 

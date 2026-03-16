@@ -4,28 +4,28 @@ import type { OccupationSkillType } from '@prisma/client'
 // ── TYPES ────────────────────────────────────────────────────────────────────
 
 type OccupationListItem = {
-  id:               number
-  name:             string
-  credit_min:       number | null
-  credit_max:       number | null
+  id: number
+  name: string
+  credit_min: number | null
+  credit_max: number | null
   point_competence: string | null
-  is_lovecraftian:  boolean
-  is_modern:        boolean
+  is_lovecraftian: boolean
+  is_modern: boolean
 }
 
 type SkillOption = {
-  competence: { id: number; name: string }
+  competence: { id: number, name: string }
 }
 
 type OccupationSkill = {
-  id:           number
-  type:         OccupationSkillType
-  competence:   { id: number; name: string; isCategory: boolean | null } | null
-  specName:     string | null
-  choiceCount:  number | null
-  note:         string | null
-  sortOrder:    number
-  options:      SkillOption[]
+  id: number
+  type: OccupationSkillType
+  competence: { id: number, name: string, isCategory: boolean | null } | null
+  specName: string | null
+  choiceCount: number | null
+  note: string | null
+  sortOrder: number
+  options: SkillOption[]
 }
 
 type OccupationDetail = OccupationListItem & { skills: OccupationSkill[] }
@@ -34,15 +34,15 @@ type OccupationDetail = OccupationListItem & { skills: OccupationSkill[] }
 
 const { data: occupations, status, error } = useFetch<OccupationListItem[]>('/api/occupation')
 
-const searchName    = ref('')
+const searchName = ref('')
 const searchFormula = ref('')
-const searchCredit  = ref('')
-const activeFilter  = ref<'all' | 'lovecraftian' | 'modern'>('all')
-const expandedId    = ref<number | null>(null)
-const detailCache   = ref<Record<number, OccupationDetail>>({})
-const loadingId     = ref<number | null>(null)
-const sortName      = ref<'asc' | 'desc'>('asc')
-const sortCredit    = ref<'desc' | 'asc' | null>(null)
+const searchCredit = ref('')
+const activeFilter = ref<'all' | 'lovecraftian' | 'modern'>('all')
+const expandedId = ref<number | null>(null)
+const detailCache = ref<Record<number, OccupationDetail>>({})
+const loadingId = ref<number | null>(null)
+const sortName = ref<'asc' | 'desc'>('asc')
+const sortCredit = ref<'desc' | 'asc' | null>(null)
 
 // ── COMPUTED ─────────────────────────────────────────────────────────────────
 
@@ -88,7 +88,7 @@ const filtered = computed(() => {
   return result
 })
 
-const sortNameIcon   = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
 const sortCreditIcon = computed(() => sortCredit.value === 'desc' ? '↓' : sortCredit.value === 'asc' ? '↑' : '↕')
 
 function cycleSortName() {
@@ -102,9 +102,9 @@ function cycleSortCredit() {
 }
 
 const stats = computed(() => ({
-  total:        occupations.value?.length ?? 0,
+  total: occupations.value?.length ?? 0,
   lovecraftian: occupations.value?.filter(o => o.is_lovecraftian).length ?? 0,
-  modern:       occupations.value?.filter(o => o.is_modern).length ?? 0,
+  modern: occupations.value?.filter(o => o.is_modern).length ?? 0
 }))
 
 // ── ACTIONS ──────────────────────────────────────────────────────────────────
@@ -183,9 +183,9 @@ function isFixedSkill(skill: OccupationSkill) {
 
     <div class="toolbar">
       <div class="filters">
-        <button class="tag" :class="{ active: activeFilter === 'all' }"          @click="activeFilter = 'all'">Toutes</button>
+        <button class="tag" :class="{ active: activeFilter === 'all' }" @click="activeFilter = 'all'">Toutes</button>
         <button class="tag" :class="{ active: activeFilter === 'lovecraftian' }" @click="activeFilter = 'lovecraftian'">Lovecraftiennes</button>
-        <button class="tag" :class="{ active: activeFilter === 'modern' }"       @click="activeFilter = 'modern'">Modernes</button>
+        <button class="tag" :class="{ active: activeFilter === 'modern' }" @click="activeFilter = 'modern'">Modernes</button>
       </div>
     </div>
 
@@ -232,11 +232,11 @@ function isFixedSkill(skill: OccupationSkill) {
           <button class="col-sortable sort-active" @click="cycleSortName">
             Occupation <span class="sort-icon">{{ sortNameIcon }}</span>
           </button>
-          <span>Formule de points</span>
+          <span class="col-formula">Formule de points</span>
           <button class="col-sortable" :class="{ 'sort-active': sortCredit !== null }" @click="cycleSortCredit">
             Crédit <span class="sort-icon">{{ sortCreditIcon }}</span>
           </button>
-          <span>Type</span>
+          <span class="col-type">Type</span>
           <span />
         </div>
         <template v-for="(occ, index) in filtered" :key="occ.id">
@@ -248,9 +248,9 @@ function isFixedSkill(skill: OccupationSkill) {
             <span class="row-name">{{ occ.name }}</span>
             <span class="row-formula">{{ occ.point_competence ?? '—' }}</span>
             <span class="row-credit">{{ occ.credit_min ?? 0 }}–{{ occ.credit_max ?? 0 }}</span>
-            <span class="row-badges">
+            <span class="row-badges col-type">
               <span v-if="occ.is_lovecraftian" class="badge badge-lore">Lovecraft</span>
-              <span v-if="occ.is_modern"       class="badge badge-modern">Moderne</span>
+              <span v-if="occ.is_modern" class="badge badge-modern">Moderne</span>
             </span>
             <span class="chevron" :class="{ open: expandedId === occ.id }">›</span>
           </div>
@@ -798,24 +798,34 @@ function isFixedSkill(skill: OccupationSkill) {
 }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
+
+/* Tablette large : masquer la colonne formule */
 @media (max-width: 900px) {
   .list-header-row,
   .list-row { grid-template-columns: 1fr 80px 100px 28px; }
-  .col-formula { display: none; }
+  .col-formula, .row-formula { display: none; }
 }
 
-@media (max-width: 640px) {
-  .page-wrapper { padding: var(--space-md); }
-  .stats-panel { max-width: 100%; }
-  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
+/* Tablette : réorganiser stats, recherche, détail et masquer la colonne Type */
+@media (max-width: 768px) {
+  .stats-panel { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
   .search-row { flex-direction: column; }
   .search-field { width: 100%; }
   .search-bar { width: 100%; }
   .search-input, .search-input--credit { width: 100%; box-sizing: border-box; }
-  .list-header-row { display: none; }
-  .list-row { grid-template-columns: 1fr auto 28px; }
-  .row-formula, .row-credit { display: none; }
   .skills-grid { grid-template-columns: 1fr; }
+  .list-header-row,
+  .list-row { grid-template-columns: 1fr 80px 28px; }
+  .col-type { display: none; }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .page-wrapper { padding: var(--space-md); }
+  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
+  .list-header-row { display: none; }
+  .list-row { grid-template-columns: 1fr 28px; }
+  .row-credit { display: none; }
   .list-body { max-height: none; }
 }
 </style>

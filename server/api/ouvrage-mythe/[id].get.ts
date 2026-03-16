@@ -13,10 +13,10 @@ export default defineEventHandler(async (event) => {
       ouvrage_sort: {
         orderBy: { nom_dans_ouvrage: 'asc' },
         include: {
-          sort: { select: { id: true, name: true } },
-        },
-      },
-    },
+          sort: { select: { id: true, name: true } }
+        }
+      }
+    }
   })
 
   if (!ouvrage) {

@@ -2,7 +2,7 @@
 import type { Competence } from '@prisma/client'
 
 type CompetenceWithCategory = Competence & {
-  category: { id: number; name: string } | null
+  category: { id: number, name: string } | null
 }
 
 const { data: competences, status, error } = useFetch<CompetenceWithCategory[]>('/api/competence')

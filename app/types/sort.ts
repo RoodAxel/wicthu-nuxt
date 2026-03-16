@@ -16,6 +16,6 @@ export type SortItem = SortBase & {
 
 export type SortDetail = SortBase & {
   parentId: number | null
-  parent: { id: number; name: string } | null
+  parent: { id: number, name: string } | null
   children: SortChild[]
 }

@@ -3,9 +3,9 @@ import type { SortItem } from '~/types/sort'
 
 const { data: sorts, status, error } = useFetch<SortItem[]>('/api/sort')
 
-const search        = ref('')
+const search = ref('')
 const avecVariantes = ref(false)
-const sortName      = ref<'asc' | 'desc'>('asc')
+const sortName = ref<'asc' | 'desc'>('asc')
 
 function cycleSortName() {
   sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
@@ -23,8 +23,8 @@ const filtered = computed(() => {
   let result = sorts.value.filter((s) => {
     if (avecVariantes.value && s._count.children === 0) return false
     if (q) {
-      const matchName  = normalizeStr(s.name).includes(q)
-      const matchCout  = s.cout ? normalizeStr(s.cout).includes(q) : false
+      const matchName = normalizeStr(s.name).includes(q)
+      const matchCout = s.cout ? normalizeStr(s.cout).includes(q) : false
       const matchIncan = s.temps_incantation ? normalizeStr(s.temps_incantation).includes(q) : false
       if (!matchName && !matchCout && !matchIncan) return false
     }

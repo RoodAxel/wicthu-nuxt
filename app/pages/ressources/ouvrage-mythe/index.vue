@@ -3,41 +3,52 @@ import type { OuvrageMytheItem } from '~/types/ouvrage-mythe'
 
 const { data: ouvrages, status, error } = useFetch<OuvrageMytheItem[]>('/api/ouvrage-mythe')
 
-const search      = ref('')
-const sortTitre     = ref<'asc' | 'desc'>('asc')
-const sortAuteur    = ref<'asc' | 'desc' | null>(null)
-const sortMythe     = ref<'desc' | 'asc' | null>(null)
-const sortSanity    = ref<'desc' | 'asc' | null>(null)
+const search = ref('')
+const sortTitre = ref<'asc' | 'desc'>('asc')
+const sortAuteur = ref<'asc' | 'desc' | null>(null)
+const sortMythe = ref<'desc' | 'asc' | null>(null)
+const sortSanity = ref<'desc' | 'asc' | null>(null)
 const sortSortCount = ref<'asc' | 'desc' | null>(null)
 
 const titreIsActive = computed(() =>
   sortAuteur.value === null && sortMythe.value === null && sortSanity.value === null && sortSortCount.value === null
 )
 
-const sortTitreIcon     = computed(() => sortTitre.value === 'asc' ? '↑' : '↓')
-const sortAuteurIcon    = computed(() => sortAuteur.value === 'asc' ? '↑' : sortAuteur.value === 'desc' ? '↓' : '↕')
-const sortMytheIcon     = computed(() => sortMythe.value === 'desc' ? '↓' : sortMythe.value === 'asc' ? '↑' : '↕')
-const sortSanityIcon    = computed(() => sortSanity.value === 'desc' ? '↓' : sortSanity.value === 'asc' ? '↑' : '↕')
+const sortTitreIcon = computed(() => sortTitre.value === 'asc' ? '↑' : '↓')
+const sortAuteurIcon = computed(() => sortAuteur.value === 'asc' ? '↑' : sortAuteur.value === 'desc' ? '↓' : '↕')
+const sortMytheIcon = computed(() => sortMythe.value === 'desc' ? '↓' : sortMythe.value === 'asc' ? '↑' : '↕')
+const sortSanityIcon = computed(() => sortSanity.value === 'desc' ? '↓' : sortSanity.value === 'asc' ? '↑' : '↕')
 const sortSortCountIcon = computed(() => sortSortCount.value === 'desc' ? '↓' : sortSortCount.value === 'asc' ? '↑' : '↕')
 
 function cycleSortTitre() {
-  sortAuteur.value = null; sortMythe.value = null; sortSanity.value = null; sortSortCount.value = null
+  sortAuteur.value = null
+  sortMythe.value = null
+  sortSanity.value = null
+  sortSortCount.value = null
   sortTitre.value = sortTitre.value === 'asc' ? 'desc' : 'asc'
 }
 function cycleSortAuteur() {
-  sortMythe.value = null; sortSanity.value = null; sortSortCount.value = null
+  sortMythe.value = null
+  sortSanity.value = null
+  sortSortCount.value = null
   sortAuteur.value = sortAuteur.value === null ? 'asc' : sortAuteur.value === 'asc' ? 'desc' : null
 }
 function cycleSortMythe() {
-  sortAuteur.value = null; sortSanity.value = null; sortSortCount.value = null
+  sortAuteur.value = null
+  sortSanity.value = null
+  sortSortCount.value = null
   sortMythe.value = sortMythe.value === null ? 'desc' : sortMythe.value === 'desc' ? 'asc' : null
 }
 function cycleSortSanity() {
-  sortAuteur.value = null; sortMythe.value = null; sortSortCount.value = null
+  sortAuteur.value = null
+  sortMythe.value = null
+  sortSortCount.value = null
   sortSanity.value = sortSanity.value === null ? 'desc' : sortSanity.value === 'desc' ? 'asc' : null
 }
 function cycleSortSortCount() {
-  sortAuteur.value = null; sortMythe.value = null; sortSanity.value = null
+  sortAuteur.value = null
+  sortMythe.value = null
+  sortSanity.value = null
   sortSortCount.value = sortSortCount.value === null ? 'desc' : sortSortCount.value === 'desc' ? 'asc' : null
 }
 
@@ -45,7 +56,7 @@ function parseSanityMax(s: string | null): number | null {
   if (!s) return null
   const m = s.match(/(\d+)[dD](\d+)(?:\+(\d+))?$/)
   if (!m) return null
-  return parseInt(m[1]) * parseInt(m[2]) + (m[3] ? parseInt(m[3]) : 0)
+  return parseInt(m[1] ?? '0') * parseInt(m[2] ?? '0') + (m[3] ? parseInt(m[3]) : 0)
 }
 
 const filtered = computed(() => {
@@ -163,8 +174,8 @@ const filtered = computed(() => {
         </div>
         <OuvrageMytheCard
           v-for="o in filtered"
-          :key="o.id"
           :id="o.id"
+          :key="o.id"
           :titre="o.titre"
           :auteur="o.auteur"
           :langue="o.langue"

@@ -3,19 +3,19 @@ import type { artefact } from '@prisma/client'
 
 const { data: artefacts, status, error } = useFetch<artefact[]>('/api/artefact')
 
-const search   = ref('')
+const search = ref('')
 const expandedId = ref<number | null>(null)
 
-const selectedUseBy        = ref<Set<string>>(new Set())
-const useByDropdownOpen    = ref(false)
-const useByDropdownRef     = ref<HTMLElement | null>(null)
+const selectedUseBy = ref<Set<string>>(new Set())
+const useByDropdownOpen = ref(false)
+const useByDropdownRef = ref<HTMLElement | null>(null)
 
 // ── TRIS ──────────────────────────────────────────────────────────────────────
-const sortName  = ref<'asc' | 'desc'>('asc')
+const sortName = ref<'asc' | 'desc'>('asc')
 const sortUseBy = ref<'asc' | 'desc' | null>(null)
 
-const nameIsActive  = computed(() => sortUseBy.value === null)
-const sortNameIcon  = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const nameIsActive = computed(() => sortUseBy.value === null)
+const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
 const sortUseByIcon = computed(() => sortUseBy.value === 'asc' ? '↑' : sortUseBy.value === 'desc' ? '↓' : '↕')
 
 function cycleSortName() {
@@ -64,7 +64,7 @@ const filtered = computed(() => {
   let result = artefacts.value.filter((a) => {
     if (q) {
       const matchName = normalizeStr(a.name).includes(q)
-      const matchUse  = a.use_by ? normalizeStr(a.use_by).includes(q) : false
+      const matchUse = a.use_by ? normalizeStr(a.use_by).includes(q) : false
       if (!matchName && !matchUse) return false
     }
     if (selectedUseBy.value.size > 0 && !selectedUseBy.value.has(a.use_by ?? '')) return false

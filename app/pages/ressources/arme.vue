@@ -8,15 +8,15 @@ type WeaponWithSkill = arme & {
 const { data: weapons, status, error } = useFetch<WeaponWithSkill[]>('/api/arme')
 
 // ── FILTRES ───────────────────────────────────────────────────────────────────
-const searchName  = ref('')
+const searchName = ref('')
 const searchSkill = ref('')
 const searchPrice = ref('')
-const eraFilter       = ref<'all' | 'classique' | 'moderne'>('all')
+const eraFilter = ref<'all' | 'classique' | 'moderne'>('all')
 const filterExplosive = ref(false)
 
-const selectedCategories   = ref<Set<string>>(new Set())
+const selectedCategories = ref<Set<string>>(new Set())
 const categoryDropdownOpen = ref(false)
-const categoryDropdownRef  = ref<HTMLElement | null>(null)
+const categoryDropdownRef = ref<HTMLElement | null>(null)
 
 const expandedId = ref<number | null>(null)
 
@@ -28,48 +28,52 @@ const expandedId = ref<number | null>(null)
 //   - Un '+string' non numérique est ignoré (1d8+Imp → 8)
 function parseDamageValue(dmg: string | null): number | null {
   if (!dmg) return null
-  const s = dmg.split('/')[0].trim()
+  const s = (dmg.split('/')[0] ?? '').trim()
   const diceRe = /(\d+)[dD](\d+)/g
   let total = 0
   let hasDice = false
   let lastEnd = 0
   let m: RegExpExecArray | null
   while ((m = diceRe.exec(s)) !== null) {
-    total += parseInt(m[1]) * parseInt(m[2])
+    total += parseInt(m[1] ?? '0') * parseInt(m[2] ?? '0')
     hasDice = true
     lastEnd = m.index + m[0].length
   }
   if (!hasDice) return null
   const bonus = s.slice(lastEnd).match(/^\+(\d+)$/)
-  if (bonus) total += parseInt(bonus[1])
+  if (bonus) total += parseInt(bonus[1] ?? '0')
   return total
 }
 
 // ── TRIS ──────────────────────────────────────────────────────────────────────
-const sortCategory     = ref<'asc' | 'desc'>('asc')
-const sortName         = ref<'asc' | 'desc'>('asc')
-const sortDamage       = ref<'desc' | 'asc' | null>(null)
+const sortCategory = ref<'asc' | 'desc'>('asc')
+const sortName = ref<'asc' | 'desc'>('asc')
+const sortDamage = ref<'desc' | 'asc' | null>(null)
 const sortClassicPrice = ref<'desc' | 'asc' | null>(null)
-const sortModernPrice  = ref<'desc' | 'asc' | null>(null)
+const sortModernPrice = ref<'desc' | 'asc' | null>(null)
 
 const alphaIsActive = computed(() =>
   sortDamage.value === null && sortClassicPrice.value === null && sortModernPrice.value === null
 )
 const sortCategoryIcon = computed(() => sortCategory.value === 'asc' ? '↑' : '↓')
-const sortNameIcon     = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
 
 function cycleSortCategory() {
-  sortDamage.value = null; sortClassicPrice.value = null; sortModernPrice.value = null
+  sortDamage.value = null
+  sortClassicPrice.value = null
+  sortModernPrice.value = null
   sortCategory.value = sortCategory.value === 'asc' ? 'desc' : 'asc'
 }
 function cycleSortName() {
-  sortDamage.value = null; sortClassicPrice.value = null; sortModernPrice.value = null
+  sortDamage.value = null
+  sortClassicPrice.value = null
+  sortModernPrice.value = null
   sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
 }
 
-const sortDamageIcon       = computed(() => sortDamage.value === 'desc' ? '↓' : sortDamage.value === 'asc' ? '↑' : '↕')
+const sortDamageIcon = computed(() => sortDamage.value === 'desc' ? '↓' : sortDamage.value === 'asc' ? '↑' : '↕')
 const sortClassicPriceIcon = computed(() => sortClassicPrice.value === 'desc' ? '↓' : sortClassicPrice.value === 'asc' ? '↑' : '↕')
-const sortModernPriceIcon  = computed(() => sortModernPrice.value === 'desc' ? '↓' : sortModernPrice.value === 'asc' ? '↑' : '↕')
+const sortModernPriceIcon = computed(() => sortModernPrice.value === 'desc' ? '↓' : sortModernPrice.value === 'asc' ? '↑' : '↕')
 
 function cycleSortDamage() {
   sortClassicPrice.value = null
@@ -122,7 +126,7 @@ const filtered = computed(() => {
     if (searchPrice.value.trim()) {
       const q = searchPrice.value.trim()
       const matchClassic = w.classic_price !== null && String(w.classic_price).includes(q)
-      const matchModern  = w.modern_price  !== null && String(w.modern_price).includes(q)
+      const matchModern = w.modern_price !== null && String(w.modern_price).includes(q)
       if (!matchClassic && !matchModern) return false
     }
     if (selectedCategories.value.size > 0 && !selectedCategories.value.has(w.category)) return false
@@ -178,7 +182,7 @@ const stats = computed(() => ({
   total: weapons.value?.length ?? 0,
   categories: categories.value.length,
   classic: weapons.value?.filter(w => w.epoque.includes('classique')).length ?? 0,
-  modern: weapons.value?.filter(w => w.epoque.includes('moderne')).length ?? 0,
+  modern: weapons.value?.filter(w => w.epoque.includes('moderne')).length ?? 0
 }))
 
 function toggleRow(id: number) {
@@ -236,7 +240,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
       <div class="filter-block">
         <span class="filter-block-label">Époque</span>
         <div class="filter-block-controls">
-          <button class="tag" :class="{ active: eraFilter === 'all' }"       @click="eraFilter = 'all'">Toutes</button>
+          <button class="tag" :class="{ active: eraFilter === 'all' }" @click="eraFilter = 'all'">Toutes</button>
           <button class="tag" :class="{ active: eraFilter === 'classique' }" @click="eraFilter = 'classique'">Classique</button>
           <button class="tag modern-tag" :class="{ active: eraFilter === 'moderne' }" @click="eraFilter = 'moderne'">Moderne</button>
         </div>
@@ -730,7 +734,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .sort-tag.modern-sort-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
 
 .sort-icon { font-size: 0.7rem; opacity: 0.8; }
-
 
 /* ── DROPDOWN ────────────────────────────────────────────── */
 .dropdown-caret { font-size: 0.5rem; opacity: 0.6; }

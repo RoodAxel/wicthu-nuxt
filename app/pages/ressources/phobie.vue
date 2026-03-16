@@ -3,8 +3,8 @@ import type { phobie } from '@prisma/client'
 
 const { data: phobies, status, error } = useFetch<phobie[]>('/api/phobie')
 
-const search   = ref('')
-const random   = ref<phobie | null>(null)
+const search = ref('')
+const random = ref<phobie | null>(null)
 const sortName = ref<'asc' | 'desc'>('asc')
 
 const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')

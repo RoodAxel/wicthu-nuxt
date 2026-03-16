@@ -7,11 +7,11 @@ export default defineEventHandler(async (event) => {
   const entite = await prisma.entite.findUnique({
     where: { id },
     include: {
-      statBlocks:  { orderBy: { sortOrder: 'asc' } },
-      pouvoirs:    { orderBy: { sortOrder: 'asc' } },
-      attaques:    { orderBy: { sortOrder: 'asc' } },
-      competences: { orderBy: { sortOrder: 'asc' } },
-    },
+      statBlocks: { orderBy: { sortOrder: 'asc' } },
+      pouvoirs: { orderBy: { sortOrder: 'asc' } },
+      attaques: { orderBy: { sortOrder: 'asc' } },
+      competences: { orderBy: { sortOrder: 'asc' } }
+    }
   })
 
   if (!entite) throw createError({ statusCode: 404, message: 'Entité introuvable' })

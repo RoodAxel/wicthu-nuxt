@@ -11,10 +11,10 @@ defineProps<{
 }>()
 
 const CATEGORIE_LABELS: Record<string, string> = {
-  CREATURE_MYTHE:      'Créature du Mythe',
-  DIVINITE_MYTHE:      'Divinité du Mythe',
+  CREATURE_MYTHE: 'Créature du Mythe',
+  DIVINITE_MYTHE: 'Divinité du Mythe',
   HORREUR_TRADITIONNEL: 'Horreur Traditionnelle',
-  FAUNE:               'Faune',
+  FAUNE: 'Faune'
 }
 
 function openDetail(id: number) {

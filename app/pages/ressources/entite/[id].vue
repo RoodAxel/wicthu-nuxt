@@ -2,13 +2,13 @@
 import type { EntiteDetail, StatBlock } from '~/types/entite'
 
 const CATEGORIE_LABELS: Record<string, string> = {
-  CREATURE_MYTHE:       'Créature du Mythe',
-  DIVINITE_MYTHE:       'Divinité du Mythe',
+  CREATURE_MYTHE: 'Créature du Mythe',
+  DIVINITE_MYTHE: 'Divinité du Mythe',
   HORREUR_TRADITIONNEL: 'Horreur Traditionnelle',
-  FAUNE:                'Faune',
+  FAUNE: 'Faune'
 }
 
-const STAT_ROWS: { label: string; val: keyof StatBlock; jet: keyof StatBlock }[] = [
+const STAT_ROWS: { label: string, val: keyof StatBlock, jet: keyof StatBlock }[] = [
   { label: 'FOR', val: 'forVal', jet: 'forJet' },
   { label: 'CON', val: 'conVal', jet: 'conJet' },
   { label: 'TAI', val: 'taiVal', jet: 'taiJet' },
@@ -16,7 +16,7 @@ const STAT_ROWS: { label: string; val: keyof StatBlock; jet: keyof StatBlock }[]
   { label: 'INT', val: 'intVal', jet: 'intJet' },
   { label: 'POU', val: 'pouVal', jet: 'pouJet' },
   { label: 'APP', val: 'appVal', jet: 'appJet' },
-  { label: 'EDU', val: 'eduVal', jet: 'eduJet' },
+  { label: 'EDU', val: 'eduVal', jet: 'eduJet' }
 ]
 
 const route = useRoute()
@@ -25,7 +25,7 @@ const id = route.params.id as string
 const { data: entite, status, error } = await useFetch<EntiteDetail>(`/api/entite/${id}`)
 
 useHead(() => ({
-  title: entite.value ? `${entite.value.name} — Bestiaire` : 'Entité',
+  title: entite.value ? `${entite.value.name} — Bestiaire` : 'Entité'
 }))
 </script>
 

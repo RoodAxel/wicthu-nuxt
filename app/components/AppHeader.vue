@@ -4,44 +4,52 @@ const user = useSupabaseUser()
 const router = useRouter()
 const route = useRoute()
 
-type SimpleLink = { label: string; to: string }
-type GroupLink  = { label: string; children: SimpleLink[] }
-type NavItem    = SimpleLink | GroupLink
+type SimpleLink = { label: string, to: string }
+type GroupLink = { label: string, children: SimpleLink[] }
+type NavItem = SimpleLink | GroupLink
 
 function isGroup(item: NavItem): item is GroupLink {
   return 'children' in item
 }
 
 const resources: NavItem[] = [
-  { label: 'Arme',        to: '/ressources/arme' },
-  { label: 'Artefact',    to: '/ressources/artefact' },
-  { label: 'Compétence',  to: '/ressources/competence' },
-  { label: 'Entité',      to: '/ressources/entite' },
-  { label: 'Équipement',  children: [
+  { label: 'Arme', to: '/ressources/arme' },
+  { label: 'Artefact', to: '/ressources/artefact' },
+  { label: 'Compétence', to: '/ressources/competence' },
+  { label: 'Entité', to: '/ressources/entite' },
+  { label: 'Équipement', children: [
     { label: 'Classique', to: '/ressources/equipement-classique' },
-    { label: 'Moderne',   to: '/ressources/equipement-moderne' },
-  ]},
+    { label: 'Moderne', to: '/ressources/equipement-moderne' }
+  ] },
   { label: 'Trauma', children: [
-    { label: 'Manie',  to: '/ressources/manie' },
-    { label: 'Phobie', to: '/ressources/phobie' },
-  ]},
-  { label: 'Occupation',  to: '/ressources/occupation' },
+    { label: 'Manie', to: '/ressources/manie' },
+    { label: 'Phobie', to: '/ressources/phobie' }
+  ] },
+  { label: 'Occupation', to: '/ressources/occupation' },
   { label: 'Ouvrage', children: [
-    { label: 'Mythe',    to: '/ressources/ouvrage-mythe' },
-    { label: 'Occulte',  to: '/ressources/ouvrage-occulte' },
-  ]},
-  { label: 'Sort',        to: '/ressources/sort' },
+    { label: 'Mythe', to: '/ressources/ouvrage-mythe' },
+    { label: 'Occulte', to: '/ressources/ouvrage-occulte' }
+  ] },
+  { label: 'Sort', to: '/ressources/sort' }
 ]
 
-const menuOpen     = ref(false)
+const menuOpen = ref(false)
 const userMenuOpen = ref(false)
 const showSignOutModal = ref(false)
-const openGroup    = ref<string | null>(null)
+const openGroup = ref<string | null>(null)
 
-function toggleMenu()    { menuOpen.value = !menuOpen.value }
-function closeMenu()     { menuOpen.value = false }
-function toggleUserMenu() { userMenuOpen.value = !userMenuOpen.value }
-function closeUserMenu() { userMenuOpen.value = false }
+function toggleMenu() {
+  menuOpen.value = !menuOpen.value
+}
+function closeMenu() {
+  menuOpen.value = false
+}
+function toggleUserMenu() {
+  userMenuOpen.value = !userMenuOpen.value
+}
+function closeUserMenu() {
+  userMenuOpen.value = false
+}
 function toggleGroup(label: string) {
   openGroup.value = openGroup.value === label ? null : label
 }

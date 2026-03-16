@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const pdfBase64 = readFileSync(resolve('public/fiche_investigateur.pdf')).toString('base64')
 
-  const upload = await $fetch<{ error: boolean; url?: string; message?: string }>(
+  const upload = await $fetch<{ error: boolean, url?: string, message?: string }>(
     'https://api.pdf.co/v1/file/upload/base64',
     {
       method: 'POST',
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: upload.message ?? 'PDF.co upload error' })
   }
 
-  const response = await $fetch<{ error: boolean; info?: { FieldsInfo?: { Fields?: unknown[] } }; message?: string }>(
+  const response = await $fetch<{ error: boolean, info?: { FieldsInfo?: { Fields?: unknown[] } }, message?: string }>(
     'https://api.pdf.co/v1/pdf/info/fields',
     {
       method: 'POST',
