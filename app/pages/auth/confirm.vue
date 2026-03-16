@@ -11,26 +11,27 @@ onMounted(async () => {
   const token_hash = route.query.token_hash as string
   const type = route.query.type as string
 
-  if (!token_hash || !type) {
-    errorMsg.value = 'Lien invalide ou expiré.'
+  // Flow PKCE : token_hash dans les query params
+  if (token_hash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as 'recovery' | 'signup' | 'invite' | 'magiclink' | 'email'
+    })
+    if (error) { errorMsg.value = error.message; return }
+    await router.replace(type === 'recovery' ? '/auth/reset-password' : '/')
     return
   }
 
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash,
-    type: type as 'recovery' | 'signup' | 'invite' | 'magiclink' | 'email'
-  })
-
-  if (error) {
-    errorMsg.value = error.message
+  // Flow implicite : access_token dans le hash fragment (#access_token=...&type=recovery)
+  // Le client Supabase détecte et établit la session automatiquement au chargement
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) {
+    const hashType = new URLSearchParams(window.location.hash.slice(1)).get('type')
+    await router.replace(hashType === 'recovery' ? '/auth/reset-password' : '/')
     return
   }
 
-  if (type === 'recovery') {
-    await router.replace('/auth/reset-password')
-  } else {
-    await router.replace('/')
-  }
+  errorMsg.value = 'Lien invalide ou expiré.'
 })
 </script>
 

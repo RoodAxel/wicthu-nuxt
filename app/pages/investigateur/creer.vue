@@ -1,20 +1,7 @@
 <script setup lang="ts">
+import type { OccupationListItem, OccupationDetail } from '~/types/investigateur'
+
 definePageMeta({ middleware: 'auth' })
-
-// ── TYPES OCCUPATION ─────────────────────────────────────────────────────────
-
-type OccupationListItem = {
-  id: number; name: string
-  credit_min: number | null; credit_max: number | null
-  point_competence: string | null
-  is_lovecraftian: boolean; is_modern: boolean
-}
-type OccupationSkill = {
-  type: string
-  competence: { name: string } | null
-  options: { competence: { name: string } }[]
-}
-type OccupationDetail = OccupationListItem & { skills: OccupationSkill[] }
 
 // ── ÉTAT OCCUPATION ──────────────────────────────────────────────────────────
 

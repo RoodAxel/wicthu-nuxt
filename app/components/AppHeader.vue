@@ -215,7 +215,7 @@ async function confirmSignOut() {
     </Transition>
 
     <!-- Overlay pour fermer les dropdowns -->
-    <div v-if="userMenuOpen || openGroup !== null" class="dropdown-overlay" @click="closeUserMenu(); openGroup = null" />
+    <div v-if="(userMenuOpen || openGroup !== null) && !menuOpen" class="dropdown-overlay" @click="closeUserMenu(); openGroup = null" />
 
     <!-- Modal de confirmation déconnexion -->
     <Transition name="modal">
@@ -269,7 +269,8 @@ async function confirmSignOut() {
   align-items: center;
   gap: 2px;
   flex: 1;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .nav-link {
@@ -639,7 +640,7 @@ async function confirmSignOut() {
 .mobile-menu-leave-from { max-height: 600px; }
 
 /* ── RESPONSIVE ────────────────────────────────────────── */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .header-nav  { display: none; }
   .header-auth { display: none; }
   .hamburger   { display: flex; }

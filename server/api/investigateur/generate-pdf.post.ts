@@ -1,35 +1,10 @@
-import { defineEventHandler, readBody, createError, getRequestHeader } from 'h3'
-import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
+import type { CharacterFormData } from '../../types/investigateur'
+import { buildInvestigateurHtml } from '../../utils/investigateur-html'
 
-interface CharacterFormData {
-  Nom: string; Joueur: string; Occupation: string; age: string
-  Sexe: string; 'Résidence': string; 'Lieu de naissance': string; MVT: string
-  FOR_0: string; CON_0: string; TAI_0: string; DEX_0: string
-  APP_0: string; INT_0: string; POU_0: string; EDU_0: string
-  pv_max: string; pm_max: string; sm_initial: string
-  BlessureGrave: string; impact: string; carrure: string
-  LG1_label: string; LG1_0: string; LG2_label: string; LG2_0: string; LG3_label: string; LG3_0: string
-  SC1_label: string; SC1_0: string; SC2_label: string; SC2_0: string; SC3_label: string; SC3_0: string
-  CP1_label: string; CP1_0: string; CP2_label: string; CP2_0: string; CP3_label: string; CP3_0: string
-  CP4_label: string; CP4_0: string; CP5_label: string; CP5_0: string
-  Description: string; ideologieEtCroyance: string; traits: string
-  personnesImportantes: string; sequellesCicatrices: string; lieuxSignificatifs: string
-  phobiesManies: string; 'bienPrécieux': string; ouvragesOccultes: string; rencontresEntites: string
-  capital: string; depencesCourantes: string; 'Espèces': string
-  [key: string]: string
-}
+const GOTENBERG_URL = 'https://demo.gotenberg.dev/forms/chromium/convert/html'
 
-function str(val: unknown): string { return val !== undefined && val !== null ? String(val) : '' }
-function half(val: unknown) { const n = Math.floor(Number(val) / 2); return n > 0 ? String(n) : '' }
-function fifth(val: unknown) { const n = Math.floor(Number(val) / 5); return n > 0 ? String(n) : '' }
-
-function setField(form: ReturnType<PDFDocument['getForm']>, name: string, value: unknown) {
-  const s = str(value)
-  if (!s) return
-  try { form.getTextField(name).setText(s) }
-  catch { /* champ absent — ignoré */ }
-}
+function str(val: unknown): string { return val != null ? String(val) : '' }
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
@@ -39,101 +14,39 @@ export default defineEventHandler(async (event) => {
   }
 
   const rawBody = await readBody<Record<string, unknown>>(event)
-  // Convertit toutes les valeurs en string (les <input type="number"> envoient des nombres JSON)
   const body = Object.fromEntries(
     Object.entries(rawBody).map(([k, v]) => [k, str(v)])
   ) as CharacterFormData
 
-  // ── 1. Remplissage du PDF avec pdf-lib ─────────────────────
-  const host = getRequestHeader(event, 'host') ?? ''
-  const protocol = host.includes('localhost') ? 'http' : 'https'
-  const pdfResponse = await fetch(`${protocol}://${host}/fiche_investigateur.pdf`)
-  if (!pdfResponse.ok) {
-    throw createError({ statusCode: 500, statusMessage: `PDF template fetch failed: ${pdfResponse.status}` })
-  }
-  const pdfBytes = await pdfResponse.arrayBuffer()
-  const pdfDoc = await PDFDocument.load(pdfBytes)
-  const form = pdfDoc.getForm()
+  // ── 1. Génération du HTML et envoi à Gotenberg ─────────────
+  const html = buildInvestigateurHtml(body)
 
-  const carac = ['FOR', 'CON', 'TAI', 'DEX', 'APP', 'INT', 'POU', 'EDU'] as const
-  const skills = ['ANT','ARC','ART','BAR','BIB','CHA',
-    'CD1','CD2','CR1','COM','COD','CEL','CRE','CRO',
-    'DIS','DRO','ECO','ELE',
-    'EQU','ESQ','EST','GRI','HIS','IPO','ITI','LAN','MEC','MED','MYT','NAG',
-    'NAT','OCC','ORI','PER','PIL','PIC','PIS','PLO','PRE','PSA','PSO','SAU',
-    'SCI','SUR','TOC'] as const
-  const customGroups = [
-    ['AR1', 'AR2', 'AR3'],
-    ['CD3', 'CD4'],
-    ['CR2', 'CR3'],
-    ['LG1', 'LG2', 'LG3'],
-    ['PL1'],
-    ['SC1', 'SC2', 'SC3'],
-    ['CP1', 'CP2', 'CP3', 'CP4', 'CP5']
-  ] as const
+  const formData = new FormData()
+  formData.append('files', new Blob([html], { type: 'text/html' }), 'index.html')
+  formData.append('paperWidth', '8.27')   // A4
+  formData.append('paperHeight', '11.69') // A4
+  formData.append('marginTop', '0')
+  formData.append('marginBottom', '0')
+  formData.append('marginLeft', '0')
+  formData.append('marginRight', '0')
+  formData.append('printBackground', 'true')
 
-  setField(form, 'Nom', body.Nom ?? '')
-  setField(form, 'Joueur', body.Joueur ?? '')
-  setField(form, 'Occupation', body.Occupation ?? '')
-  setField(form, 'age', body.age ?? '')
-  setField(form, 'Sexe', body.Sexe ?? '')
-  setField(form, 'Résidence', body['Résidence'] ?? '')
-  setField(form, 'Lieu de naissance', body['Lieu de naissance'] ?? '')
-  setField(form, 'MVT', body.MVT ?? '')
+  const gotenbergRes = await fetch(GOTENBERG_URL, { method: 'POST', body: formData })
 
-  for (const c of carac) {
-    const v = body[`${c}_0`] ?? ''
-    setField(form, `${c}_0`, v)
-    setField(form, `${c}_1`, half(v))
-    setField(form, `${c}_2`, fifth(v))
+  if (!gotenbergRes.ok) {
+    const detail = await gotenbergRes.text().catch(() => '')
+    throw createError({ statusCode: 502, statusMessage: `Gotenberg error: ${gotenbergRes.status} ${detail}` })
   }
 
-  setField(form, 'pv_max', body.pv_max ?? '')
-  setField(form, 'pm_max', body.pm_max ?? '')
-  setField(form, 'sm_initial', body.sm_initial ?? '')
-  setField(form, 'BlessureGrave', body.BlessureGrave ?? '')
-  setField(form, 'impact', body.impact ?? '')
-  setField(form, 'carrure', body.carrure ?? '')
+  const pdfBuffer = await gotenbergRes.arrayBuffer()
 
-  for (const s of skills) {
-    const v = body[`${s}_0`] ?? ''
-    setField(form, `${s}_0`, v)
-    setField(form, `${s}_1`, half(v))
-    setField(form, `${s}_2`, fifth(v))
-  }
-
-  for (const group of customGroups) {
-    for (const prefix of group) {
-      setField(form, `${prefix}_label`, body[`${prefix}_label`] ?? '')
-      const v = body[`${prefix}_0`] ?? ''
-      setField(form, `${prefix}_0`, v)
-      setField(form, `${prefix}_1`, half(v))
-      setField(form, `${prefix}_2`, fifth(v))
-    }
-  }
-
-  for (const key of ['Description', 'ideologieEtCroyance', 'traits', 'personnesImportantes',
-    'sequellesCicatrices', 'lieuxSignificatifs', 'phobiesManies', 'bienPrécieux',
-    'ouvragesOccultes', 'rencontresEntites']) {
-    setField(form, key, body[key] ?? '')
-  }
-
-  setField(form, 'capital', body.capital ?? '')
-  setField(form, 'depencesCourantes', body.depencesCourantes ?? '')
-  setField(form, 'Espèces', body['Espèces'] ?? '')
-
-  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  pdfDoc.getForm().updateFieldAppearances(helvetica)
-  const filledBytes = await pdfDoc.save()
-
-  // ── 2. Upload sur Supabase Storage (API externe) ───────────
+  // ── 2. Upload sur Supabase Storage ─────────────────────────
   const supabase = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
-
   const fileName = `${Date.now()}_${(body.Nom || 'investigateur').replace(/\s+/g, '_')}.pdf`
 
   const { error: uploadError } = await supabase.storage
     .from('fiches')
-    .upload(fileName, Buffer.from(filledBytes), {
+    .upload(fileName, Buffer.from(pdfBuffer), {
       contentType: 'application/pdf',
       upsert: false
     })
@@ -151,7 +64,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: `Signed URL error: ${signError?.message}` })
   }
 
-  // Nettoyage asynchrone après 70s (une fois le téléchargement terminé)
   setTimeout(() => {
     supabase.storage.from('fiches').remove([fileName]).catch(() => {})
   }, 70_000)
