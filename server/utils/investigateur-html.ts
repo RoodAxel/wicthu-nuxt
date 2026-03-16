@@ -115,17 +115,19 @@ function skillRow(label: string, base: number, val: string, customLabel?: string
 }
 
 export function buildInvestigateurHtml(body: CharacterFormData): string {
-  // Compétences variables
-  const customSkillsHtml = CUSTOM_SKILLS.map(({ prefix, count, start = 1, label }) => {
-    const rows = Array.from({ length: count }, (_, i) => {
+  // Compétences variables — collectées dans un tableau pour répartition en 2 colonnes de 10
+  const customSkillRows: string[] = []
+  for (const { prefix, count, start = 1, label } of CUSTOM_SKILLS) {
+    for (let i = 0; i < count; i++) {
       const idx = start + i
       const customLabel = v(body, `${prefix}${idx}_label`)
-      return customLabel || v(body, `${prefix}${idx}_0`)
-        ? skillRow(label, 0, v(body, `${prefix}${idx}_0`), customLabel || '?')
-        : ''
-    }).filter(Boolean).join('')
-    return rows
-  }).join('')
+      if (customLabel || v(body, `${prefix}${idx}_0`)) {
+        customSkillRows.push(skillRow(label, 0, v(body, `${prefix}${idx}_0`), customLabel || '?'))
+      }
+    }
+  }
+  const customLeft = customSkillRows.slice(0, 10).join('')
+  const customRight = customSkillRows.slice(10, 20).join('')
 
   // Background
   const backgroundHtml = BACKGROUND_FIELDS.map((f) => {
@@ -172,10 +174,19 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
     .carac-label { font-weight: bold; font-size: 8pt; background: #f5f5f5; }
 
     /* Stats dérivées */
-    .derived-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .derived-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
     .derived-card { border: 1px solid #ccc; text-align: center; padding: 3px 2px; background: #fafafa; }
+    .derived-card--empty { background: white; }
     .derived-card-label { font-size: 6.5pt; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
     .derived-card-value { font-size: 10pt; font-weight: bold; }
+
+    /* Armes */
+    .weapons-table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+    .weapons-table th { background: #444; color: white; padding: 2px 4px; font-size: 6.5pt;
+                        text-align: center; border: 1px solid #999; text-transform: uppercase; }
+    .weapons-table td { padding: 2px 4px; border: 1px solid #ddd; font-size: 7.5pt; }
+    .weapons-table td:first-child { font-weight: bold; }
+    .weapons-table tr:nth-child(even) { background: #f9f9f9; }
 
     /* Compétences */
     .skills-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6px; }
@@ -254,6 +265,10 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
       <div class="derived-card-label">PV max</div>
       <div class="derived-card-value">${v(body, 'pv_max') || '—'}</div>
     </div>
+    <div class="derived-card derived-card--empty">
+      <div class="derived-card-label">PV courants</div>
+      <div class="derived-card-value">&nbsp;</div>
+    </div>
     <div class="derived-card">
       <div class="derived-card-label">PM max</div>
       <div class="derived-card-value">${v(body, 'pm_max') || '—'}</div>
@@ -261,6 +276,10 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
     <div class="derived-card">
       <div class="derived-card-label">SM départ</div>
       <div class="derived-card-value">${v(body, 'sm_initial') || '—'}</div>
+    </div>
+    <div class="derived-card">
+      <div class="derived-card-label">Chance</div>
+      <div class="derived-card-value">${v(body, 'Chance') || '—'}</div>
     </div>
     <div class="derived-card">
       <div class="derived-card-label">Impact</div>
@@ -298,7 +317,7 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
   </div>
 
   <!-- ── COMPÉTENCES VARIABLES ── -->
-  ${customSkillsHtml
+  ${customSkillRows.length
     ? `
   <h2>Combat, Arts, Langues, Sciences &amp; Compétences personnelles</h2>
   <div class="skills-cols">
@@ -306,18 +325,59 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
       <div class="skills-header">
         <span>Compétence</span><span>Base</span><span>Val.</span><span>½</span><span>⅕</span>
       </div>
-      ${customSkillsHtml}
+      ${customLeft}
     </div>
-    <div></div>
+    <div>
+      ${customRight ? `<div class="skills-header">
+        <span>Compétence</span><span>Base</span><span>Val.</span><span>½</span><span>⅕</span>
+      </div>${customRight}` : ''}
+    </div>
   </div>`
     : ''}
 
-  <!-- ── PAGE 2 : BACKGROUND & FINANCES ── -->
+  <!-- ── PAGE 2 : ARMES, BACKGROUND & FINANCES ── -->
   <div class="page-break"></div>
 
   <h1>Fiche d'Investigateur — ${v(body, 'Nom') || 'Sans nom'}</h1>
 
-  <h2>Histoire &amp; Background</h2>
+  <!-- ── ARMES ── -->
+  <h2>Armes</h2>
+  <table class="weapons-table">
+    <thead>
+      <tr>
+        <th>Arme</th><th>Ord.</th><th>Maj.</th><th>Ext.</th>
+        <th>Dégâts</th><th>Portée</th><th>Cap.</th><th>Panne</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Corps à corps</td>
+        <td>${v(body, 'Arm1_ORD')}</td>
+        <td>${v(body, 'Arm1_MAJ')}</td>
+        <td>${v(body, 'Arm1_EXT')}</td>
+        <td>—</td>
+        <td>${v(body, 'Arm1_PORT') || 'Allonge'}</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      ${[2, 3, 4, 5].map((i) => {
+        const nom = v(body, `ARM${i}`)
+        if (!nom) return ''
+        return `<tr>
+          <td>${nom}</td>
+          <td>${v(body, `Arm${i}_ORD`)}</td>
+          <td>${v(body, `Arm${i}_MAJ`)}</td>
+          <td>${v(body, `Arm${i}_EXT`)}</td>
+          <td>${v(body, `Arm${i}_DEG`)}</td>
+          <td>${v(body, `Arm${i}_PORT`)}</td>
+          <td>${v(body, `Arm${i}_CAP`)}</td>
+          <td>${v(body, `Arm${i}_PANN`)}</td>
+        </tr>`
+      }).filter(Boolean).join('')}
+    </tbody>
+  </table>
+
+  <h2 class="mt">Histoire &amp; Background</h2>
   <div class="two-col">
     ${backgroundHtml}
   </div>

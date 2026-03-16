@@ -12,7 +12,7 @@ useHead({
 })
 
 useSeoMeta({
-  title: 'Wicthu — Compagnon de l \'Investigateur',
+  title: 'Wicthu — Wiki L\'Appel de Cthulhu',
   description: 'Compagnon de jeu pour L\'Appel de Cthulhu.'
 })
 </script>
