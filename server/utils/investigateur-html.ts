@@ -268,10 +268,6 @@ export function buildInvestigateurHtml(body: CharacterFormData): string {
       <div class="derived-card-value">${v(body, 'sm_initial') || '—'}</div>
     </div>
     <div class="derived-card">
-      <div class="derived-card-label">Blessure grave</div>
-      <div class="derived-card-value">${v(body, 'BlessureGrave') || '—'}</div>
-    </div>
-    <div class="derived-card">
       <div class="derived-card-label">Impact</div>
       <div class="derived-card-value">${v(body, 'impact') || '—'}</div>
     </div>

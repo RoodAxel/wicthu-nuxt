@@ -12,7 +12,7 @@ export interface CharacterFormData {
   APP_0: string; INT_0: string; POU_0: string; EDU_0: string
   // Stats dérivées
   pv_max: string; pm_max: string; sm_initial: string
-  BlessureGrave: string; impact: string; carrure: string
+  impact: string; carrure: string
   // Langues
   LG1_label: string; LG1_0: string
   LG2_label: string; LG2_0: string

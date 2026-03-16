@@ -87,7 +87,7 @@ const form = reactive<Record<string, string>>({
   FOR_0: '', CON_0: '', TAI_0: '', DEX_0: '',
   APP_0: '', INT_0: '', POU_0: '', EDU_0: '',
   // Stats dérivées
-  pv_max: '', pm_max: '', sm_initial: '', BlessureGrave: '', impact: '', carrure: '',
+  pv_max: '', pm_max: '', sm_initial: '', impact: '', carrure: '',
   // Compétences fixes
   ANT_0: '', ARC_0: '', ART_0: '', BAR_0: '', BIB_0: '',
   CHA_0: '', CD1_0: '', CD2_0: '', CR1_0: '', COM_0: '',
@@ -137,10 +137,6 @@ const pm_max = computed(() => {
 })
 const sm_initial = computed(() => {
   const v = n(form['POU_0'])
-  return v > 0 ? String(v) : ''
-})
-const blessureGrave = computed(() => {
-  const v = Math.ceil(Number(pv_max.value) / 2)
   return v > 0 ? String(v) : ''
 })
 const impact = computed(() => {
@@ -196,7 +192,6 @@ watchEffect(() => {
   form['pv_max'] = pv_max.value
   form['pm_max'] = pm_max.value
   form['sm_initial'] = sm_initial.value
-  form['BlessureGrave'] = blessureGrave.value
   form['impact'] = impact.value
   form['carrure'] = carrure.value
   form['MVT'] = mvt.value
@@ -454,11 +449,6 @@ const backgroundFields = [
             <span class="derived-label">SM départ</span>
             <span class="derived-value">{{ sm_initial || '—' }}</span>
             <span class="derived-formula">= POU</span>
-          </div>
-          <div class="derived-card">
-            <span class="derived-label">Blessure grave</span>
-            <span class="derived-value">{{ blessureGrave || '—' }}</span>
-            <span class="derived-formula">PV ÷ 2</span>
           </div>
           <div class="derived-card">
             <span class="derived-label">Impact</span>

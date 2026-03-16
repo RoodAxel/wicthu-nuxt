@@ -3,12 +3,23 @@ definePageMeta({ layout: false })
 
 const supabase = useSupabaseClient()
 const router = useRouter()
+const route = useRoute()
 
 const password = ref('')
 const confirm = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
 const done = ref(false)
+
+// Flow PKCE : le lien email contient ?token_hash=...&type=recovery directement sur cette page
+onMounted(async () => {
+  const token_hash = route.query.token_hash as string
+  const type = route.query.type as string
+  if (token_hash && type === 'recovery') {
+    const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'recovery' })
+    if (error) errorMsg.value = 'Lien invalide ou expiré. Veuillez recommencer.'
+  }
+})
 
 async function handleUpdate() {
   errorMsg.value = ''

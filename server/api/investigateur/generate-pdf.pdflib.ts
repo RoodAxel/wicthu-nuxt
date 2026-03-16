@@ -74,7 +74,6 @@ export default defineEventHandler(async (event) => {
   setField(form, 'pv_max', body.pv_max ?? '')
   setField(form, 'pm_max', body.pm_max ?? '')
   setField(form, 'sm_initial', body.sm_initial ?? '')
-  setField(form, 'BlessureGrave', body.BlessureGrave ?? '')
   setField(form, 'impact', body.impact ?? '')
   setField(form, 'carrure', body.carrure ?? '')
 

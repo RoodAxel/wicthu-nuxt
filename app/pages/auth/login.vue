@@ -32,7 +32,7 @@ async function handleLogin() {
 async function handleReset() {
   loading.value = true
   errorMsg.value = ''
-  const redirectTo = `${window.location.origin}/auth/confirm`
+  const redirectTo = `${window.location.origin}/auth/reset-password`
   const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.value, { redirectTo })
   loading.value = false
   if (error) {
