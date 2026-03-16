@@ -306,6 +306,17 @@ model sort {
 }
 
 
+model ArmePerso {
+  id        Int      @id @default(autoincrement())
+  userId    String   @db.Uuid
+  nom       String   @db.VarChar(255)
+  deg       String?  @db.VarChar(100)
+  port      String?  @db.VarChar(100)
+  cap       String?  @db.VarChar(100)
+  pann      String?  @db.VarChar(100)
+  createdAt DateTime @default(now())
+}
+
 model Investigateur {
   id        Int      @id @default(autoincrement())
   userId    String   @db.Uuid

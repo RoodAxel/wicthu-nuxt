@@ -20,7 +20,10 @@ const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
   'Charme': ['CHA_0'],
   'Combat à distance': ['CD1_0', 'CD2_0', 'CD3_0', 'CD4_0'],
   'Combat rapproché': ['CR1_0', 'CR2_0', 'CR3_0'],
+  'Comptabilité': ['COM_0'],
   'Conduite': ['COD_0'],
+  'Conduite engin lourd': ['CEL_0'],
+  'Crédit': ['CRE_0'],
   'Crochetage': ['CRE_0'],
   'Discrétion': ['DIS_0'],
   'Droit': ['DRO_0'],
@@ -33,10 +36,11 @@ const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
   'Histoire': ['HIS_0'],
   'Imposture': ['IPO_0'],
   'Intimidation': ['ITI_0'],
-  'Langue maternelle': ['LAN_0'],
+  'Langue maternelle': ['LAG_0'],
   'Langues': ['LG1_0', 'LG2_0', 'LG3_0'],
   'Mécanique': ['MEC_0'],
   'Médecine': ['MED_0'],
+  'Mythe de Cthulhu': ['MYT_0'],
   'Nager': ['NAG_0'],
   'Naturalisme': ['NAT_0'],
   'Occultisme': ['OCC_0'],
@@ -56,7 +60,7 @@ const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
 }
 
 const highlightedKeys = computed((): Set<string> => {
-  const keys = new Set<string>()
+  const keys = new Set<string>(['CRE_0'])
   if (!occupationDetail.value) return keys
   for (const skill of occupationDetail.value.skills) {
     const names: string[] = []
@@ -86,6 +90,8 @@ const form = reactive<Record<string, string>>({
   // Caractéristiques
   FOR_0: '', CON_0: '', TAI_0: '', DEX_0: '',
   APP_0: '', INT_0: '', POU_0: '', EDU_0: '',
+  // Chance
+  Chance: '',
   // Stats dérivées
   pv_max: '', pm_max: '', sm_initial: '', impact: '', carrure: '',
   // Compétences fixes
@@ -115,6 +121,12 @@ const form = reactive<Record<string, string>>({
   // Compétences perso
   CP1_label: '', CP1_0: '', CP2_label: '', CP2_0: '', CP3_label: '', CP3_0: '',
   CP4_label: '', CP4_0: '', CP5_label: '', CP5_0: '',
+  // Armes
+  Arm1_ORD: '', Arm1_MAJ: '', Arm1_EXT: '', Arm1_PORT: 'Allonge', Arm1_CAP: '', Arm1_PANN: '',
+  ARM2: '', Arm2_ORD: '', Arm2_MAJ: '', Arm2_EXT: '', Arm2_DEG: '', Arm2_PORT: '', Arm2_CAP: '', Arm2_PANN: '',
+  ARM3: '', Arm3_ORD: '', Arm3_MAJ: '', Arm3_EXT: '', Arm3_DEG: '', Arm3_PORT: '', Arm3_CAP: '', Arm3_PANN: '',
+  ARM4: '', Arm4_ORD: '', Arm4_MAJ: '', Arm4_EXT: '', Arm4_DEG: '', Arm4_PORT: '', Arm4_CAP: '', Arm4_PANN: '',
+  ARM5: '', Arm5_ORD: '', Arm5_MAJ: '', Arm5_EXT: '', Arm5_DEG: '', Arm5_PORT: '', Arm5_CAP: '', Arm5_PANN: '',
   // Background
   Description: '', ideologieEtCroyance: '', traits: '',
   personnesImportantes: '', sequellesCicatrices: '', lieuxSignificatifs: '',
@@ -177,6 +189,73 @@ const mvt = computed(() => {
   return '8'
 })
 
+// ── ÂGE & MODIFICATEURS ──────────────────────────────────────────────────────
+
+type AgeCat = {
+  label: string
+  range: string
+  eduTests: number
+  eduYouthMalus: boolean
+  physMalus: number
+  physStats: string[]
+  appMalus: number
+}
+
+const ageCategory = computed((): AgeCat | null => {
+  const age = Number(form['age']) || 0
+  if (age < 15 || age > 89) return null
+  if (age <= 19) return { label: 'Jeunesse', range: '15–19', eduTests: 0, eduYouthMalus: true, physMalus: 5, physStats: ['FOR', 'TAI'], appMalus: 0 }
+  if (age <= 39) return { label: 'Adulte', range: '20–39', eduTests: 1, eduYouthMalus: false, physMalus: 0, physStats: [], appMalus: 0 }
+  if (age <= 49) return { label: 'Maturité', range: '40–49', eduTests: 2, eduYouthMalus: false, physMalus: 5, physStats: ['FOR', 'CON', 'DEX'], appMalus: 5 }
+  if (age <= 59) return { label: 'Âge mûr', range: '50–59', eduTests: 3, eduYouthMalus: false, physMalus: 10, physStats: ['FOR', 'CON', 'DEX'], appMalus: 10 }
+  if (age <= 69) return { label: 'Sénior', range: '60–69', eduTests: 4, eduYouthMalus: false, physMalus: 20, physStats: ['FOR', 'CON', 'DEX'], appMalus: 15 }
+  if (age <= 79) return { label: 'Vieillesse', range: '70–79', eduTests: 4, eduYouthMalus: false, physMalus: 40, physStats: ['FOR', 'CON', 'DEX'], appMalus: 20 }
+  return { label: 'Grand âge', range: '80–89', eduTests: 4, eduYouthMalus: false, physMalus: 80, physStats: ['FOR', 'CON', 'DEX'], appMalus: 25 }
+})
+
+type EduTestResult = { index: number, roll: number, threshold: number, success: boolean, bonus: number }
+const eduTestResults = ref<EduTestResult[]>([])
+
+watch(() => form['age'], () => {
+  eduTestResults.value = []
+})
+
+function rollEduTests() {
+  const cat = ageCategory.value
+  if (!cat || cat.eduTests === 0) return
+  const results: EduTestResult[] = []
+  let runningEdu = n(form['EDU_0'])
+  for (let i = 0; i < cat.eduTests; i++) {
+    const roll = Math.floor(Math.random() * 100) + 1
+    const success = roll > runningEdu
+    const bonus = success ? Math.floor(Math.random() * 10) + 1 : 0
+    results.push({ index: i + 1, roll, threshold: runningEdu, success, bonus })
+    if (success) runningEdu = Math.min(99, runningEdu + bonus)
+  }
+  eduTestResults.value = results
+}
+
+const totalEduBonus = computed(() => eduTestResults.value.reduce((s, r) => s + r.bonus, 0))
+
+function roll3d6x5() {
+  return (Math.floor(Math.random() * 6) + 1
+    + Math.floor(Math.random() * 6) + 1
+    + Math.floor(Math.random() * 6) + 1) * 5
+}
+
+function rollChance() {
+  const isYouth = ageCategory.value?.eduYouthMalus ?? false
+  if (isYouth) {
+    const a = roll3d6x5()
+    const b = roll3d6x5()
+    form['Chance'] = String(Math.max(a, b))
+  } else {
+    form['Chance'] = String(roll3d6x5())
+  }
+}
+
+const customOccupation = ref(false)
+
 // ── WATCHERS OCCUPATION (après form) ─────────────────────────────────────────
 
 watch(selectedOccupationId, async (id) => {
@@ -196,7 +275,17 @@ watch([occupationList, () => form['Occupation']], () => {
     o => o.name.toLowerCase() === form['Occupation']!.toLowerCase()
   )
   if (match) selectedOccupationId.value = match.id
+  else if (form['Occupation']) customOccupation.value = true
 }, { immediate: true })
+
+watch(customOccupation, (custom) => {
+  if (custom) {
+    selectedOccupationId.value = null
+    occupationDetail.value = null
+  } else {
+    form['Occupation'] = ''
+  }
+})
 
 // Synchronise les dérivées calculées dans form pour l'envoi
 watchEffect(() => {
@@ -206,15 +295,151 @@ watchEffect(() => {
   form['impact'] = impact.value
   form['carrure'] = carrure.value
   form['MVT'] = mvt.value
+  // Arm1 synchronisée avec Corps à corps (valeur saisie ou base 25)
+  form['Arm1_ORD'] = form['CR1_0'] || '25'
+  // Auto-calcul ½ et ⅕ des compétences d'armes
+  for (const i of [1, 2, 3, 4, 5]) {
+    form[`Arm${i}_MAJ`] = half(form[`Arm${i}_ORD`])
+    form[`Arm${i}_EXT`] = fifth(form[`Arm${i}_ORD`])
+  }
 })
+
+// ── BIBLIOTHÈQUE D'ARMES ─────────────────────────────────────────────────────
+
+interface ArmePerso { id: number, nom: string, deg: string | null, port: string | null, cap: string | null, pann: string | null }
+interface ArmeRulebook { id: number, name: string, category: string, damage: string | null, range: string | null, capacity: string | null, failure: number | null, competence: { name: string, baseValue: number | null } }
+
+const showLibrary = ref(false)
+const libraryTab = ref<'perso' | 'rulebook'>('perso')
+const rulebookSearch = ref('')
+const rulebookCategory = ref('')
+
+const { data: armePersoData, refresh: refreshArmePerso } = useFetch<ArmePerso[]>('/api/arme-perso')
+const armePersoList = computed(() => armePersoData.value ?? [])
+
+const { data: armeRulebookData } = useLazyFetch<ArmeRulebook[]>('/api/arme')
+const rulebookCategories = computed(() => [...new Set((armeRulebookData.value ?? []).map(a => a.category))].sort())
+const filteredRulebook = computed(() => {
+  const search = rulebookSearch.value.toLowerCase()
+  return (armeRulebookData.value ?? []).filter(a =>
+    (!rulebookCategory.value || a.category === rulebookCategory.value)
+    && (!search || a.name.toLowerCase().includes(search))
+  )
+})
+
+// Compétences uniques du catalogue pour les dropdowns de spécialité
+const uniqueWeaponCompetences = computed(() => {
+  const seen = new Map<string, number | null>()
+  for (const w of armeRulebookData.value ?? []) {
+    if (!seen.has(w.competence.name)) seen.set(w.competence.name, w.competence.baseValue)
+  }
+  return Array.from(seen.entries())
+    .map(([name, baseValue]) => ({ name, baseValue }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+})
+
+// Valeur de base de la compétence sélectionnée dans un slot de spécialité
+function getCompBase(labelKey: string): string {
+  const label = form[labelKey]
+  if (!label) return '0'
+  const comp = uniqueWeaponCompetences.value.find(c => c.name === label)
+  return comp?.baseValue != null ? String(comp.baseValue) : '0'
+}
+
+// Mapping compétence fixe → clé de formulaire + valeur de base
+const FIXED_COMPETENCE_MAP: Record<string, { key: string, base: number }> = {
+  'Corps à corps': { key: 'CR1_0', base: 25 },
+  'Armes de poing': { key: 'CD1_0', base: 15 },
+  'Fusils': { key: 'CD2_0', base: 25 }
+}
+
+function resolveOrd(weapon: ArmeRulebook): string {
+  const compName = weapon.competence.name
+  const base = weapon.competence.baseValue ?? 0
+
+  // 1. Compétence fixe → valeur saisie dans la fiche ou valeur de base
+  const fixed = FIXED_COMPETENCE_MAP[compName]
+  if (fixed) {
+    return form[fixed.key] || String(fixed.base)
+  }
+  // 2. Slot de spécialité labelisé avec cette compétence → valeur saisie ou base
+  for (const slot of ['CR2', 'CR3', 'CD3', 'CD4']) {
+    if (form[`${slot}_label`] === compName) {
+      return form[`${slot}_0`] || String(base)
+    }
+  }
+  // 3. Fallback : valeur de base de la compétence
+  return base > 0 ? String(base) : ''
+}
+
+async function saveWeaponToLibrary(slot: number) {
+  const nom = form[`ARM${slot}`]
+  if (!nom?.trim()) return
+  await $fetch('/api/arme-perso', {
+    method: 'POST',
+    body: {
+      nom: nom.trim(),
+      deg: form[`Arm${slot}_DEG`] || null,
+      port: form[`Arm${slot}_PORT`] || null,
+      cap: form[`Arm${slot}_CAP`] || null,
+      pann: form[`Arm${slot}_PANN`] || null
+    }
+  })
+  await refreshArmePerso()
+}
+
+async function deleteArmePerso(id: number) {
+  await $fetch(`/api/arme-perso/${id}`, { method: 'DELETE' })
+  await refreshArmePerso()
+}
+
+function importArmeToSlot(slot: number, arme: { nom: string, deg?: string | null, port?: string | null, cap?: string | null, pann?: string | null }) {
+  form[`ARM${slot}`] = arme.nom
+  form[`Arm${slot}_DEG`] = arme.deg ?? ''
+  form[`Arm${slot}_PORT`] = arme.port ?? ''
+  form[`Arm${slot}_CAP`] = arme.cap ?? ''
+  form[`Arm${slot}_PANN`] = arme.pann ?? ''
+}
+
+function importRulebookToSlot(slot: number, arme: ArmeRulebook) {
+  importArmeToSlot(slot, {
+    nom: arme.name,
+    deg: arme.damage,
+    port: arme.range,
+    cap: arme.capacity,
+    pann: arme.failure != null ? String(arme.failure) : null
+  })
+  form[`Arm${slot}_ORD`] = resolveOrd(arme)
+}
+
+// Auto-résolution ORD réactive pour les armes reconnues dans le catalogue (ARM2–5)
+// Séparé du watchEffect principal car armeRulebookData est déclaré après
+watchEffect(() => {
+  for (const i of [2, 3, 4, 5]) {
+    const weapon = (armeRulebookData.value ?? []).find(w => w.name === form[`ARM${i}`])
+    if (weapon) form[`Arm${i}_ORD`] = resolveOrd(weapon)
+  }
+})
+
+// Slot cible sélectionné dans le panel bibliothèque
+const importTargetSlot = ref<2 | 3 | 4 | 5>(2)
 
 const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref<string | null>(null)
 const savedSuccess = ref(false)
 
+// ── STICKY DETECTION ─────────────────────────────────────────────────────────
+const bottomSentinel = ref<HTMLElement | null>(null)
+const isStuck = ref(true)
+
 // Charge les données si mode édition
 onMounted(async () => {
+  const observer = new IntersectionObserver(([entry]) => {
+    isStuck.value = !entry.isIntersecting
+  })
+  if (bottomSentinel.value) observer.observe(bottomSentinel.value)
+  onUnmounted(() => observer.disconnect())
   if (!editId.value) return
   try {
     const data = await $fetch<{ data: Record<string, string> }>(`/api/investigateur/${editId.value}`)
@@ -282,15 +507,110 @@ async function generatePdf() {
 }
 
 const caracteristiques = [
-  { key: 'FOR_0', label: 'FOR', desc: 'Force' },
-  { key: 'CON_0', label: 'CON', desc: 'Constitution' },
-  { key: 'TAI_0', label: 'TAI', desc: 'Taille' },
-  { key: 'DEX_0', label: 'DEX', desc: 'Dextérité' },
-  { key: 'APP_0', label: 'APP', desc: 'Apparence' },
-  { key: 'INT_0', label: 'INT', desc: 'Intelligence' },
-  { key: 'POU_0', label: 'POU', desc: 'Pouvoir' },
-  { key: 'EDU_0', label: 'EDU', desc: 'Éducation' }
+  { key: 'FOR_0', label: 'FOR', desc: 'Force', formula: '3d6' },
+  { key: 'CON_0', label: 'CON', desc: 'Constitution', formula: '3d6' },
+  { key: 'TAI_0', label: 'TAI', desc: 'Taille', formula: '2d6+6' },
+  { key: 'DEX_0', label: 'DEX', desc: 'Dextérité', formula: '3d6' },
+  { key: 'APP_0', label: 'APP', desc: 'Apparence', formula: '3d6' },
+  { key: 'INT_0', label: 'INT', desc: 'Intelligence', formula: '2d6+6' },
+  { key: 'POU_0', label: 'POU', desc: 'Pouvoir', formula: '3d6' },
+  { key: 'EDU_0', label: 'EDU', desc: 'Éducation', formula: '2d6+6' }
 ] as const
+
+// ── GÉNÉRATION DES CARACTÉRISTIQUES ──────────────────────────────────────────
+
+type GenMethod = 'classic' | 'free' | 'buy' | 'quick'
+const genMethod = ref<GenMethod>('classic')
+
+function d6() {
+  return Math.floor(Math.random() * 6) + 1
+}
+function rollFormula(formula: '3d6' | '2d6+6'): number {
+  return formula === '3d6'
+    ? (d6() + d6() + d6()) * 5
+    : (d6() + d6() + 6) * 5
+}
+
+function rollOneStat(key: string) {
+  const c = caracteristiques.find(c => c.key === key)
+  if (c) form[key] = String(rollFormula(c.formula as '3d6' | '2d6+6'))
+}
+function rollAllClassic() {
+  for (const c of caracteristiques) form[c.key] = String(rollFormula(c.formula as '3d6' | '2d6+6'))
+}
+
+// Nombre de stats < 50 (options 1 & 2)
+const lowStatsCount = computed(() =>
+  caracteristiques.filter(c => n(form[c.key]) > 0 && n(form[c.key]) < 50).length
+)
+
+// Option 2 : coup de pouce
+const option2Bonus = ref(0)
+function rollOption2() {
+  option2Bonus.value = d6() * 5
+}
+
+// Pool (options 3 & 5)
+type PoolEntry = { value: number, assignedTo: string | null }
+const pool = ref<PoolEntry[]>([])
+const selectedPoolIdx = ref<number | null>(null)
+const isPoolMode = computed(() => genMethod.value === 'free' || genMethod.value === 'quick')
+
+function clearCaracStats() {
+  for (const c of caracteristiques) form[c.key] = ''
+}
+function initFreePool() {
+  const vals: number[] = []
+  for (let i = 0; i < 5; i++) vals.push(rollFormula('3d6'))
+  for (let i = 0; i < 3; i++) vals.push(rollFormula('2d6+6'))
+  vals.sort(() => Math.random() - 0.5)
+  pool.value = vals.map(v => ({ value: v, assignedTo: null }))
+  selectedPoolIdx.value = null
+  clearCaracStats()
+}
+function initQuickPool() {
+  pool.value = [80, 70, 60, 60, 50, 50, 50, 40].map(v => ({ value: v, assignedTo: null }))
+  selectedPoolIdx.value = null
+  clearCaracStats()
+}
+
+function selectPool(idx: number) {
+  const entry = pool.value[idx]
+  if (entry.assignedTo) {
+    // Clic sur une valeur déjà assignée → désassigner
+    form[entry.assignedTo] = ''
+    entry.assignedTo = null
+    return
+  }
+  selectedPoolIdx.value = selectedPoolIdx.value === idx ? null : idx
+}
+function assignPool(statKey: string) {
+  const idx = selectedPoolIdx.value
+  if (idx === null) return
+  // Désassigner si ce stat avait déjà une valeur pool
+  const prev = pool.value.findIndex(p => p.assignedTo === statKey)
+  if (prev >= 0) {
+    pool.value[prev].assignedTo = null
+    if (prev === idx) {
+      selectedPoolIdx.value = null
+      return
+    }
+  }
+  pool.value[idx].assignedTo = statKey
+  form[statKey] = String(pool.value[idx].value)
+  selectedPoolIdx.value = null
+}
+
+// Budget achat (option 4)
+const buyBudget = computed(() =>
+  460 - caracteristiques.reduce((sum, c) => sum + n(form[c.key]), 0)
+)
+
+watch(genMethod, (m) => {
+  if (m === 'quick') initQuickPool()
+  if (m !== 'free' && m !== 'quick') pool.value = []
+  option2Bonus.value = 0
+})
 
 const competences = [
   { key: 'ANT_0', label: 'Anthropologie', base: 1 },
@@ -299,14 +619,14 @@ const competences = [
   { key: 'BAR_0', label: 'Baratin', base: 5 },
   { key: 'BIB_0', label: 'Bibliothèque', base: 20 },
   { key: 'CHA_0', label: 'Charme', base: 15 },
-  { key: 'CD1_0', label: 'Combat à dist. 1', base: 15 },
-  { key: 'CD2_0', label: 'Combat à dist. 2', base: 25 },
-  { key: 'CR1_0', label: 'Combat rappr. 1', base: 25 },
-  { key: 'COM_0', label: 'Bagarre', base: 25 },
+  { key: 'CD1_0', label: 'Armes de poing', base: 15 },
+  { key: 'CD2_0', label: 'Fusils', base: 25 },
+  { key: 'CR1_0', label: 'Corps à corps', base: 25 },
+  { key: 'COM_0', label: 'Comptabilité', base: 25 },
   { key: 'COD_0', label: 'Conduite', base: 20 },
-  { key: 'CEL_0', label: 'Celer', base: 5 },
-  { key: 'CRE_0', label: 'Crochetage', base: 1 },
-  { key: 'CRO_0', label: 'Crochets', base: 25 },
+  { key: 'CEL_0', label: 'Conduite engin lourd', base: 5 },
+  { key: 'CRE_0', label: 'Crédit', base: 0 },
+  { key: 'CRO_0', label: 'Crochetage', base: 1 },
   { key: 'DIS_0', label: 'Discrétion', base: 20 },
   { key: 'DRO_0', label: 'Droit', base: 5 },
   { key: 'ECO_0', label: 'Écoute', base: 20 },
@@ -318,12 +638,12 @@ const competences = [
   { key: 'HIS_0', label: 'Histoire', base: 5 },
   { key: 'IPO_0', label: 'Imposture', base: 5 },
   { key: 'ITI_0', label: 'Intimidation', base: 15 },
-  { key: 'LAN_0', label: 'Langue maternelle', base: 0 },
+  { key: 'LAG_0', label: 'Langue maternelle', base: 0 },
   { key: 'MEC_0', label: 'Mécanique', base: 10 },
   { key: 'MED_0', label: 'Médecine', base: 1 },
   { key: 'MYT_0', label: 'Mythe de Cthulhu', base: 0 },
-  { key: 'NAG_0', label: 'Nager', base: 1 },
-  { key: 'NAT_0', label: 'Naturalisme', base: 20 },
+  { key: 'NAG_0', label: 'Nager', base: 20 },
+  { key: 'NAT_0', label: 'Naturalisme', base: 10 },
   { key: 'OCC_0', label: 'Occultisme', base: 5 },
   { key: 'ORI_0', label: 'Orientation', base: 10 },
   { key: 'PER_0', label: 'Persuasion', base: 10 },
@@ -339,6 +659,94 @@ const competences = [
   { key: 'SUR_0', label: 'Survie', base: 10 },
   { key: 'TOC_0', label: 'Trouver Objet Caché', base: 25 }
 ] as const
+
+// ── POINTS D'OCCUPATION ──────────────────────────────────────────────────────
+
+const CARAC_KEY: Record<string, string> = {
+  'ÉDU': 'EDU_0', 'EDU': 'EDU_0',
+  'DEX': 'DEX_0', 'FOR': 'FOR_0',
+  'APP': 'APP_0', 'POU': 'POU_0',
+  'CON': 'CON_0', 'TAI': 'TAI_0',
+  'INT': 'INT_0'
+}
+
+// base value de chaque champ compétence (valeur sans investissement)
+const COMP_BASE: Record<string, number> = {
+  ANT_0: 1, ARC_0: 1, ART_0: 5, BAR_0: 5, BIB_0: 20, CHA_0: 15,
+  CD1_0: 15, CD2_0: 25, CR1_0: 25, COM_0: 25, COD_0: 20, CEL_0: 5,
+  CRE_0: 0, CRO_0: 1, DIS_0: 20, DRO_0: 5, ECO_0: 20, ELE_0: 1,
+  EQU_0: 5, ESQ_0: 0, EST_0: 5, GRI_0: 20, HIS_0: 5, IPO_0: 5,
+  ITI_0: 15, LAN_0: 0, MEC_0: 10, MED_0: 1, MYT_0: 0, NAG_0: 20,
+  NAT_0: 10, OCC_0: 5, ORI_0: 10, PER_0: 10, PIC_0: 10, PIL_0: 1,
+  PIS_0: 20, PLO_0: 1, PRE_0: 30, PSA_0: 1, PSO_0: 10, SAU_0: 20,
+  SCI_0: 1, SUR_0: 10, TOC_0: 25,
+  AR1_0: 5, AR2_0: 5, AR3_0: 5,
+  CD3_0: 15, CD4_0: 15,
+  CR2_0: 25, CR3_0: 25,
+  LG1_0: 1, LG2_0: 1, LG3_0: 1,
+  PL1_0: 1,
+  SC1_0: 1, SC2_0: 1, SC3_0: 1,
+  CP1_0: 0, CP2_0: 0, CP3_0: 0, CP4_0: 0, CP5_0: 0
+}
+
+// Valeur de base dynamique : Esquive = DEX÷2, Langue maternelle = EDU
+function getSkillBase(key: string): number {
+  if (key === 'ESQ_0') return Math.floor(n(form['DEX_0']) / 2)
+  if (key === 'LAG_0') return n(form['EDU_0'])
+  return COMP_BASE[key] ?? 0
+}
+
+function parseOccPoints(formula: string | null): number {
+  if (!formula) return 0
+  let total = 0
+  const terms = formula.split('+').map(t => t.trim())
+  for (const term of terms) {
+    if (term.startsWith('(')) {
+      const inner = term.replace(/[()]/g, '')
+      const options = inner.split(/\s+ou\s+/i)
+      const vals = options.map((opt) => {
+        const m = opt.trim().match(/^([A-ZÉÈÀÂ]+)\s*x\s*(\d+)$/i)
+        if (!m) return 0
+        const key = CARAC_KEY[m[1]!.toUpperCase()] ?? ''
+        return n(form[key]) * parseInt(m[2]!)
+      })
+      total += Math.max(0, ...vals)
+    } else {
+      const m = term.match(/^([A-ZÉÈÀÂ]+)\s*x\s*(\d+)$/i)
+      if (!m) continue
+      const key = CARAC_KEY[m[1]!.toUpperCase()] ?? ''
+      total += n(form[key]) * parseInt(m[2]!)
+    }
+  }
+  return total
+}
+
+const occPointsTotal = computed(() =>
+  parseOccPoints(occupationDetail.value?.point_competence ?? null)
+)
+
+const highlightedInvested = computed(() =>
+  Object.keys(COMP_BASE).reduce((sum, key) => {
+    if (!highlightedKeys.value.has(key)) return sum
+    return sum + Math.max(0, n(form[key]) - getSkillBase(key))
+  }, 0)
+)
+
+const nonHighlightedInvested = computed(() =>
+  Object.keys(COMP_BASE).reduce((sum, key) => {
+    if (highlightedKeys.value.has(key)) return sum
+    return sum + Math.max(0, n(form[key]) - getSkillBase(key))
+  }, 0)
+)
+
+const occOverflow = computed(() => Math.max(0, highlightedInvested.value - occPointsTotal.value))
+
+const occPointsSpent = computed(() => highlightedInvested.value)
+const occPointsRemaining = computed(() => Math.max(0, occPointsTotal.value - highlightedInvested.value))
+
+const intPointsTotal = computed(() => n(form['INT_0']) * 2)
+const intPointsSpent = computed(() => nonHighlightedInvested.value + occOverflow.value)
+const intPointsRemaining = computed(() => intPointsTotal.value - intPointsSpent.value)
 
 const backgroundFields = [
   { key: 'Description', label: 'Description physique' },
@@ -367,7 +775,7 @@ const backgroundFields = [
       <cite>— Journal retrouvé à Arkham, sans date</cite>
     </blockquote>
 
-    <form class="character-form" @submit.prevent="generatePdf">
+    <form class="character-form">
 
       <!-- ── IDENTITÉ ─────────────────────────────────────── -->
       <section class="form-section">
@@ -392,8 +800,23 @@ const backgroundFields = [
             <input id="Joueur" v-model="form['Joueur']" class="field-input" type="text">
           </div>
           <div class="field-group col-2">
-            <label class="field-label" for="Occupation">Profession</label>
+            <div class="field-label-row">
+              <label class="field-label" for="Occupation">Occupation</label>
+              <label class="custom-occ-label">
+                <input v-model="customOccupation" type="checkbox" class="custom-occ-checkbox">
+                Occupation personnalisée
+              </label>
+            </div>
+            <input
+              v-if="customOccupation"
+              id="Occupation"
+              v-model="form['Occupation']"
+              class="field-input"
+              type="text"
+              placeholder="Saisir une occupation…"
+            >
             <select
+              v-else
               id="Occupation"
               v-model="selectedOccupationId"
               class="field-select"
@@ -429,22 +852,239 @@ const backgroundFields = [
         </div>
       </section>
 
+      <!-- ── MODIFICATEURS D'ÂGE ──────────────────────────── -->
+      <Transition name="age-panel">
+        <section v-if="ageCategory" class="form-section age-panel">
+          <h2 class="section-title">
+            Modificateurs d'âge
+            <span class="age-badge">{{ ageCategory.label }} · {{ ageCategory.range }}</span>
+          </h2>
+
+          <div class="age-rules">
+            <!-- Malus ÉDU jeunesse -->
+            <div v-if="ageCategory.eduYouthMalus" class="age-rule">
+              <span class="age-rule-glyph">−</span>
+              <span>
+                Réduire l'<strong>ÉDU de 5</strong>.
+                <span v-if="n(form['EDU_0']) > 0" class="age-target">
+                  {{ n(form['EDU_0']) }} → {{ Math.max(0, n(form['EDU_0']) - 5) }}
+                </span>
+              </span>
+            </div>
+
+            <!-- Malus physique -->
+            <div v-if="ageCategory.physMalus > 0" class="age-rule">
+              <span class="age-rule-glyph">−</span>
+              <span>
+                Retirer <strong>{{ ageCategory.physMalus }} points</strong> à répartir entre
+                <strong>{{ ageCategory.physStats.join(', ') }}</strong>.
+                <span class="age-hint">Les ½ et ⅕ se recalculeront automatiquement.</span>
+              </span>
+            </div>
+
+            <!-- Malus APP -->
+            <div v-if="ageCategory.appMalus > 0" class="age-rule">
+              <span class="age-rule-glyph">−</span>
+              <span>
+                Réduire l'<strong>APP de {{ ageCategory.appMalus }}</strong>.
+                <span v-if="n(form['APP_0']) > 0" class="age-target">
+                  {{ n(form['APP_0']) }} → {{ Math.max(0, n(form['APP_0']) - ageCategory.appMalus) }}
+                </span>
+              </span>
+            </div>
+
+            <!-- Tests d'expérience ÉDU -->
+            <div v-if="ageCategory.eduTests > 0" class="age-rule age-rule--edu">
+              <span class="age-rule-glyph">+</span>
+              <div class="age-edu">
+                <span>
+                  <strong>{{ ageCategory.eduTests }} test{{ ageCategory.eduTests > 1 ? 's' : '' }} d'expérience</strong> en ÉDU
+                  <span v-if="!n(form['EDU_0'])" class="age-hint"> — saisir ÉDU d'abord</span>
+                </span>
+                <button
+                  type="button"
+                  class="btn-roll"
+                  :disabled="!n(form['EDU_0'])"
+                  @click="rollEduTests"
+                >
+                  ⚂ {{ eduTestResults.length ? 'Relancer' : 'Lancer les dés' }}
+                </button>
+
+                <div v-if="eduTestResults.length" class="edu-results">
+                  <div
+                    v-for="r in eduTestResults"
+                    :key="r.index"
+                    class="edu-result"
+                    :class="r.success ? 'edu-result--success' : 'edu-result--fail'"
+                  >
+                    <span class="edu-result-label">Test {{ r.index }}</span>
+                    <span class="edu-result-roll">{{ r.roll }}</span>
+                    <span class="edu-result-vs">/ ÉDU {{ r.threshold }}</span>
+                    <span class="edu-result-outcome">{{ r.success ? `+${r.bonus}` : '—' }}</span>
+                  </div>
+                  <div class="edu-total">
+                    <template v-if="totalEduBonus > 0">
+                      Ajouter <strong>+{{ totalEduBonus }}</strong> à ÉDU
+                      <span v-if="n(form['EDU_0']) > 0" class="age-target">
+                        {{ n(form['EDU_0']) }} → {{ Math.min(99, n(form['EDU_0']) + totalEduBonus) }}
+                      </span>
+                    </template>
+                    <template v-else>Aucun bonus d'ÉDU.</template>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Note chance pour jeunes -->
+            <div v-if="ageCategory.eduYouthMalus" class="age-rule age-rule--note">
+              <span class="age-rule-glyph">✦</span>
+              <span class="age-hint">La Chance sera tirée deux fois, garder le meilleur résultat — disponible à l'étape Chance.</span>
+            </div>
+          </div>
+        </section>
+      </Transition>
+
       <!-- ── CARACTÉRISTIQUES ───────────────────────────────── -->
       <section class="form-section">
         <h2 class="section-title">Caractéristiques</h2>
-        <p class="section-hint">Valeur principale — les ½ et ⅕ sont remplis automatiquement dans le PDF.</p>
+
+        <!-- Sélecteur de méthode -->
+        <div class="gen-methods">
+          <button
+            v-for="m in ([
+              { id: 'classic', label: 'Classique' },
+              { id: 'free', label: 'Distribution libre' },
+              { id: 'buy', label: 'Achat' },
+              { id: 'quick', label: 'Création accélérée' }
+            ] as const)"
+            :key="m.id"
+            type="button"
+            class="gen-method-btn"
+            :class="{ 'gen-method-btn--active': genMethod === m.id }"
+            @click="genMethod = m.id"
+          >{{ m.label }}</button>
+        </div>
+
+        <!-- Panneau méthode classique -->
+        <div v-if="genMethod === 'classic'" class="gen-panel">
+          <div class="gen-panel-actions">
+            <button type="button" class="btn-roll" @click="rollAllClassic">⚂ Tout lancer</button>
+            <span class="gen-formula-hint">FOR/CON/DEX/POU/APP = 3d6×5 · TAI/INT/ÉDU = (2d6+6)×5</span>
+          </div>
+          <div v-if="lowStatsCount >= 3" class="gen-low-stats">
+            <span>{{ lowStatsCount }} caractéristiques &lt; 50</span>
+            <span class="gen-opt-label">Option 1 : recommencer à zéro</span>
+            <span class="gen-opt-sep">·</span>
+            <span class="gen-opt-label">Option 2 : coup de pouce</span>
+            <button type="button" class="btn-roll btn-roll--sm" @click="rollOption2">⚂ 1d6×5</button>
+            <span v-if="option2Bonus > 0" class="gen-opt-bonus">+{{ option2Bonus }} pts à répartir sur les stats faibles</span>
+          </div>
+        </div>
+
+        <!-- Panneau distribution libre -->
+        <div v-else-if="genMethod === 'free'" class="gen-panel">
+          <div class="gen-panel-actions">
+            <button type="button" class="btn-roll" @click="initFreePool">
+              ⚂ {{ pool.length ? 'Relancer le pool' : 'Générer le pool' }}
+            </button>
+            <span class="gen-formula-hint">5×(3d6×5) + 3×((2d6+6)×5), à distribuer librement · INT/TAI recommandées ≥ 40</span>
+          </div>
+          <div v-if="pool.length" class="pool-chips">
+            <button
+              v-for="(entry, i) in pool"
+              :key="i"
+              type="button"
+              class="pool-chip"
+              :class="{
+                'pool-chip--selected': selectedPoolIdx === i,
+                'pool-chip--assigned': !!entry.assignedTo
+              }"
+              @click="selectPool(i)"
+            >
+              <span class="pool-chip-value">{{ entry.value }}</span>
+              <span v-if="entry.assignedTo" class="pool-chip-tag">{{ entry.assignedTo.replace('_0', '') }}</span>
+            </button>
+          </div>
+          <p v-if="pool.length && selectedPoolIdx !== null" class="gen-hint">Cliquez une ligne du tableau pour assigner {{ pool[selectedPoolIdx].value }}.</p>
+        </div>
+
+        <!-- Panneau achat -->
+        <div v-else-if="genMethod === 'buy'" class="gen-panel">
+          <div class="gen-panel-actions">
+            <div class="buy-budget" :class="{ 'buy-budget--over': buyBudget < 0 }">
+              <span class="buy-budget-label">Budget restant</span>
+              <span class="buy-budget-value">{{ buyBudget }} / 460</span>
+            </div>
+            <span class="gen-formula-hint">Valeurs entre 15 et 90 · INT/TAI recommandées ≥ 40</span>
+            <button type="button" class="btn-roll btn-roll--sm" @click="clearCaracStats">Réinitialiser</button>
+          </div>
+        </div>
+
+        <!-- Panneau création accélérée -->
+        <div v-else-if="genMethod === 'quick'" class="gen-panel">
+          <div class="gen-panel-actions">
+            <button type="button" class="btn-roll btn-roll--sm" @click="initQuickPool">Réinitialiser</button>
+            <span class="gen-formula-hint">Valeurs fixes à distribuer : 80, 70, 60, 60, 50, 50, 50, 40</span>
+          </div>
+          <div class="pool-chips">
+            <button
+              v-for="(entry, i) in pool"
+              :key="i"
+              type="button"
+              class="pool-chip"
+              :class="{
+                'pool-chip--selected': selectedPoolIdx === i,
+                'pool-chip--assigned': !!entry.assignedTo
+              }"
+              @click="selectPool(i)"
+            >
+              <span class="pool-chip-value">{{ entry.value }}</span>
+              <span v-if="entry.assignedTo" class="pool-chip-tag">{{ entry.assignedTo.replace('_0', '') }}</span>
+            </button>
+          </div>
+          <p v-if="selectedPoolIdx !== null" class="gen-hint">Cliquez une ligne du tableau pour assigner {{ pool[selectedPoolIdx].value }}.</p>
+        </div>
+
+        <!-- Tableau des caractéristiques -->
         <div class="carac-table">
           <div class="carac-header">
             <span>Carac.</span>
-            <span>Description</span>
+            <span class="carac-desc">Description</span>
             <span class="col-center">Valeur</span>
             <span class="col-center">½</span>
             <span class="col-center">⅕</span>
           </div>
-          <div v-for="c in caracteristiques" :key="c.key" class="carac-row">
+          <div
+            v-for="c in caracteristiques"
+            :key="c.key"
+            class="carac-row"
+            :class="{
+              'carac-row--assignable': isPoolMode && selectedPoolIdx !== null,
+              'carac-row--pool-assigned': isPoolMode && pool.some(p => p.assignedTo === c.key)
+            }"
+            @click="isPoolMode ? assignPool(c.key) : undefined"
+          >
             <span class="carac-code">{{ c.label }}</span>
             <span class="carac-desc">{{ c.desc }}</span>
-            <input v-model="form[c.key]" class="carac-input" type="number" min="0" max="100" placeholder="—">
+            <div class="carac-input-wrap">
+              <input
+                v-model="form[c.key]"
+                class="carac-input"
+                :class="{ 'carac-input--buy': genMethod === 'buy' }"
+                type="number"
+                :min="genMethod === 'buy' ? 15 : 0"
+                :max="genMethod === 'buy' ? 90 : 100"
+                placeholder="—"
+                @click.stop
+              >
+              <button
+                v-if="genMethod === 'classic'"
+                type="button"
+                class="carac-roll-btn"
+                :title="`Lancer ${c.formula}×5`"
+                @click.stop="rollOneStat(c.key)"
+              >⚂</button>
+            </div>
             <span class="carac-derived">{{ half(form[c.key]) || '—' }}</span>
             <span class="carac-derived">{{ fifth(form[c.key]) || '—' }}</span>
           </div>
@@ -488,16 +1128,68 @@ const backgroundFields = [
         </div>
       </section>
 
+      <!-- ── CHANCE ────────────────────────────────────────────── -->
+      <section class="form-section chance-section">
+        <h2 class="section-title">Chance</h2>
+        <div class="chance-row">
+          <div class="chance-card">
+            <div class="chance-input-group">
+              <input
+                id="Chance"
+                v-model="form['Chance']"
+                class="chance-input"
+                type="number"
+                min="0"
+                max="100"
+                placeholder="—"
+              >
+            </div>
+            <div class="chance-roll-col">
+              <button type="button" class="btn-roll" @click="rollChance">
+                ⚂ {{ form['Chance'] ? 'Relancer' : 'Tirer la Chance' }}
+              </button>
+              <span class="chance-formula">
+                3d6 × 5
+                <span v-if="ageCategory?.eduYouthMalus" class="chance-youth-note"> · ×2 meilleur</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ── COMPÉTENCES ─────────────────────────────────────── -->
       <section class="form-section">
         <h2 class="section-title">Compétences</h2>
         <p class="section-hint">Valeur finale après répartition — les ½ et ⅕ sont calculés automatiquement.</p>
+        <div class="points-trackers">
+          <div v-if="occupationDetail?.point_competence" class="occ-points-tracker" :class="{ 'occ-points-over': occOverflow > 0 }">
+            <span class="occ-points-label">Occupation</span>
+            <span class="occ-points-formula">{{ occupationDetail.point_competence }}</span>
+            <span class="occ-points-sep">·</span>
+            <span class="occ-points-count">{{ occPointsSpent }} / {{ occPointsTotal }}</span>
+            <span class="occ-points-remaining">
+              <template v-if="occOverflow > 0">
+                complet <span class="occ-overflow-badge">+{{ occOverflow }} → intérêt</span>
+              </template>
+              <template v-else>{{ occPointsRemaining }} restants</template>
+            </span>
+          </div>
+          <div v-if="intPointsTotal > 0" class="occ-points-tracker occ-points-tracker--int" :class="{ 'occ-points-over': intPointsRemaining < 0 }">
+            <span class="occ-points-label">Intérêt personnel</span>
+            <span class="occ-points-formula">INT × 2</span>
+            <span class="occ-points-sep">·</span>
+            <span class="occ-points-count">{{ intPointsSpent }} / {{ intPointsTotal }}</span>
+            <span class="occ-points-remaining">
+              {{ intPointsRemaining >= 0 ? `${intPointsRemaining} restants` : `${Math.abs(intPointsRemaining)} de trop` }}
+            </span>
+          </div>
+        </div>
         <p v-if="occupationDetail" class="highlight-hint">Les compétences <span class="highlight-sample">surlignées</span> sont recommandées par votre occupation.</p>
         <div class="comp-grid">
           <div v-for="c in competences" :key="c.key" class="comp-row" :class="{ 'comp-highlighted': highlightedKeys.has(c.key) }">
             <span class="comp-name">{{ c.label }}</span>
-            <span class="comp-base">{{ c.base }}%</span>
-            <input v-model="form[c.key]" class="comp-input" type="number" min="0" max="100" :placeholder="String(c.base)">
+            <span class="comp-base">{{ getSkillBase(c.key) }}%</span>
+            <input v-model="form[c.key]" class="comp-input" type="number" min="0" max="100" :placeholder="String(getSkillBase(c.key))">
           </div>
         </div>
       </section>
@@ -516,15 +1208,21 @@ const backgroundFields = [
           <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CD1_0', 'CD2_0', 'CD3_0', 'CD4_0') }">
             <h3 class="variable-subtitle">Combat à distance (custom)</h3>
             <div v-for="i in [3, 4]" :key="`cd${i}`" class="variable-row">
-              <input v-model="form[`CD${i}_label`]" class="field-input label-input" type="text" placeholder="Arme…">
-              <input v-model="form[`CD${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
+              <select v-model="form[`CD${i}_label`]" class="field-select label-select">
+                <option value="">— Compétence —</option>
+                <option v-for="c in uniqueWeaponCompetences" :key="c.name" :value="c.name">{{ c.name }}</option>
+              </select>
+              <input v-model="form[`CD${i}_0`]" class="comp-input" type="number" min="0" max="100" :placeholder="getCompBase(`CD${i}_label`)">
             </div>
           </div>
           <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CR1_0', 'CR2_0', 'CR3_0') }">
             <h3 class="variable-subtitle">Combat rapproché (custom)</h3>
             <div v-for="i in [2, 3]" :key="`cr${i}`" class="variable-row">
-              <input v-model="form[`CR${i}_label`]" class="field-input label-input" type="text" placeholder="Arme…">
-              <input v-model="form[`CR${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
+              <select v-model="form[`CR${i}_label`]" class="field-select label-select">
+                <option value="">— Compétence —</option>
+                <option v-for="c in uniqueWeaponCompetences" :key="c.name" :value="c.name">{{ c.name }}</option>
+              </select>
+              <input v-model="form[`CR${i}_0`]" class="comp-input" type="number" min="0" max="100" :placeholder="getCompBase(`CR${i}_label`)">
             </div>
           </div>
           <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('LG1_0', 'LG2_0', 'LG3_0') }">
@@ -558,6 +1256,148 @@ const backgroundFields = [
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- ── ARMES ─────────────────────────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">Armes</h2>
+        <div class="weapons-table-wrap">
+          <div class="weapons-table">
+
+            <!-- Header -->
+            <div class="weapons-header">
+              <span>Arme</span>
+              <span class="col-center">Ord.</span>
+              <span class="col-center">Maj.</span>
+              <span class="col-center">Ext.</span>
+              <span class="col-center">Dégâts</span>
+              <span class="col-center">Portée</span>
+              <span class="col-center">Cap.</span>
+              <span class="col-center">Panne</span>
+              <span />
+            </div>
+
+            <!-- Arm1 : Corps à corps (nom et dégâts déjà dans le PDF) -->
+            <div class="weapons-row weapons-row--melee">
+              <span class="weapon-melee-label">Corps à corps</span>
+              <span class="weapon-auto">{{ form['Arm1_ORD'] || '—' }}</span>
+              <span class="weapon-auto">{{ form['Arm1_MAJ'] || '—' }}</span>
+              <span class="weapon-auto">{{ form['Arm1_EXT'] || '—' }}</span>
+              <span class="weapon-fixed">—</span>
+              <input v-model="form['Arm1_PORT']" class="weapon-input" type="text" placeholder="Allonge">
+              <span class="weapon-fixed">—</span>
+              <span class="weapon-fixed">—</span>
+              <span />
+            </div>
+
+            <!-- Arm2–5 : armes libres -->
+            <div
+              v-for="i in [2, 3, 4, 5]"
+              :key="i"
+              class="weapons-row"
+            >
+              <input v-model="form[`ARM${i}`]" class="weapon-input weapon-input--name" type="text" placeholder="Nom de l'arme…">
+              <input v-model="form[`Arm${i}_ORD`]" class="weapon-input" type="number" min="0" max="100" placeholder="—">
+              <span class="weapon-auto">{{ form[`Arm${i}_MAJ`] || '—' }}</span>
+              <span class="weapon-auto">{{ form[`Arm${i}_EXT`] || '—' }}</span>
+              <input v-model="form[`Arm${i}_DEG`]" class="weapon-input" type="text" placeholder="—">
+              <input v-model="form[`Arm${i}_PORT`]" class="weapon-input" type="text" placeholder="—">
+              <input v-model="form[`Arm${i}_CAP`]" class="weapon-input" type="text" placeholder="—">
+              <input v-model="form[`Arm${i}_PANN`]" class="weapon-input" type="text" placeholder="—">
+              <button
+                type="button"
+                class="weapon-save-btn"
+                :disabled="!form[`ARM${i}`]"
+                :title="form[`ARM${i}`] ? `Sauvegarder « ${form[`ARM${i}`]} » dans la bibliothèque` : 'Saisir un nom d\'arme d\'abord'"
+                @click="saveWeaponToLibrary(i)"
+              >💾</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── BIBLIOTHÈQUE ─────────────────────────── -->
+        <div class="library-section">
+          <button type="button" class="library-toggle" @click="showLibrary = !showLibrary">
+            <span class="library-toggle-icon">{{ showLibrary ? '▾' : '▸' }}</span>
+            Bibliothèque d'armes
+            <span v-if="armePersoList.length" class="library-count">{{ armePersoList.length }}</span>
+          </button>
+
+          <div v-show="showLibrary" class="library-panel">
+            <!-- Slot cible -->
+            <div class="library-target-row">
+              <span class="library-target-label">Importer dans</span>
+              <div class="library-slot-btns">
+                <button
+                  v-for="s in [2, 3, 4, 5]"
+                  :key="s"
+                  type="button"
+                  class="library-slot-btn"
+                  :class="{ 'library-slot-btn--active': importTargetSlot === s }"
+                  @click="importTargetSlot = s"
+                >ARM{{ s }}</button>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="library-tabs">
+              <button type="button" class="library-tab" :class="{ 'library-tab--active': libraryTab === 'perso' }" @click="libraryTab = 'perso'">
+                Mes armes <span v-if="armePersoList.length" class="library-count">{{ armePersoList.length }}</span>
+              </button>
+              <button type="button" class="library-tab" :class="{ 'library-tab--active': libraryTab === 'rulebook' }" @click="libraryTab = 'rulebook'">
+                Armurerie
+              </button>
+            </div>
+
+            <!-- Mes armes -->
+            <div v-if="libraryTab === 'perso'">
+              <p v-if="!armePersoList.length" class="library-empty">Aucune arme sauvegardée. Remplissez un slot ARM2–5 et cliquez 💾.</p>
+              <div v-else class="library-list">
+                <div v-for="arme in armePersoList" :key="arme.id" class="library-item">
+                  <div class="library-item-info">
+                    <span class="library-item-name">{{ arme.nom }}</span>
+                    <span v-if="arme.deg" class="library-item-meta">{{ arme.deg }}</span>
+                    <span v-if="arme.port" class="library-item-meta">{{ arme.port }}</span>
+                  </div>
+                  <div class="library-item-actions">
+                    <button type="button" class="btn-import" @click="importArmeToSlot(importTargetSlot, arme)">
+                      → ARM{{ importTargetSlot }}
+                    </button>
+                    <button type="button" class="btn-delete-arme" @click="deleteArmePerso(arme.id)">✕</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Armurerie (livre de règles) -->
+            <div v-else-if="libraryTab === 'rulebook'">
+              <div class="rulebook-filters">
+                <input v-model="rulebookSearch" class="field-input rulebook-search" type="text" placeholder="Rechercher une arme…">
+                <select v-model="rulebookCategory" class="field-select rulebook-cat">
+                  <option value="">Toutes catégories</option>
+                  <option v-for="cat in rulebookCategories" :key="cat" :value="cat">{{ cat }}</option>
+                </select>
+              </div>
+              <div class="library-list">
+                <div v-for="arme in filteredRulebook" :key="arme.id" class="library-item">
+                  <div class="library-item-info">
+                    <span class="library-item-name">{{ arme.name }}</span>
+                    <span class="library-item-meta">{{ arme.competence.name }}</span>
+                    <span v-if="arme.damage" class="library-item-meta">{{ arme.damage }}</span>
+                    <span v-if="arme.range" class="library-item-meta">{{ arme.range }}</span>
+                  </div>
+                  <div class="library-item-actions">
+                    <button type="button" class="btn-import" @click="importRulebookToSlot(importTargetSlot, arme)">
+                      → ARM{{ importTargetSlot }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </section>
 
       <!-- ── BACKGROUND ──────────────────────────────────────── -->
@@ -595,7 +1435,8 @@ const backgroundFields = [
 
       <div v-if="savedSuccess" class="form-success">Fiche sauvegardée avec succès.</div>
 
-      <div class="form-actions">
+      <div ref="bottomSentinel" class="bottom-sentinel" />
+      <div class="form-actions" :class="{ 'is-stuck': isStuck }">
         <button
           type="button"
           class="btn-save"
@@ -606,9 +1447,10 @@ const backgroundFields = [
           <span v-else>Sauvegarder</span>
         </button>
         <button
-          type="submit"
+          type="button"
           class="btn-generate"
           :disabled="isLoading || isSaving"
+          @click="generatePdf"
         >
           <span v-if="isLoading" class="btn-sigil">۞</span>
           <span v-else>Générer la fiche PDF</span>
@@ -719,6 +1561,54 @@ const backgroundFields = [
   align-items: center;
   justify-content: space-between;
 }
+.custom-occ-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-heading);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition-fast);
+}
+.custom-occ-label:hover {
+  color: var(--color-arcane);
+}
+.custom-occ-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+.custom-occ-checkbox:hover {
+  border-color: var(--color-arcane-dim);
+}
+.custom-occ-checkbox:checked {
+  background: var(--color-arcane-glow);
+  border-color: var(--color-arcane);
+}
+.custom-occ-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 5px;
+  height: 8px;
+  border: 1.5px solid var(--color-arcane);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
 .field-label {
   font-family: var(--font-heading);
   font-size: var(--fs-field-label);
@@ -796,6 +1686,80 @@ const backgroundFields = [
   display: flex; gap: var(--space-sm); flex-wrap: wrap;
 }
 
+/* ── POINTS D'OCCUPATION ─────────────────────────────────── */
+.points-trackers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+.occ-points-tracker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-arcane);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.06em;
+  transition: border-color var(--transition-fast);
+}
+.occ-points-tracker--int {
+  border-left-color: var(--color-gold);
+}
+.occ-points-tracker--int .occ-points-count,
+.occ-points-tracker--int .occ-points-remaining {
+  color: var(--color-gold);
+}
+.occ-points-tracker.occ-points-over {
+  border-left-color: var(--color-crimson);
+}
+.occ-points-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+  font-size: var(--fs-micro);
+}
+.occ-points-formula {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-secondary);
+}
+.occ-points-sep {
+  color: var(--color-border);
+}
+.occ-points-count {
+  color: var(--color-arcane);
+  font-weight: bold;
+}
+.occ-points-over .occ-points-count {
+  color: var(--color-crimson);
+}
+.occ-points-remaining {
+  margin-left: auto;
+  font-weight: bold;
+  color: var(--color-arcane);
+}
+.occ-points-over .occ-points-remaining {
+  color: var(--color-crimson);
+}
+.occ-overflow-badge {
+  display: inline-block;
+  margin-left: var(--space-xs);
+  padding: 1px 6px;
+  background: rgba(139, 58, 58, 0.15);
+  border: 1px solid var(--color-crimson-dim);
+  border-radius: var(--radius-sm);
+  color: var(--color-crimson);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+}
+
 /* ── HIGHLIGHT ───────────────────────────────────────────── */
 .highlight-hint {
   font-family: var(--font-flavor);
@@ -822,11 +1786,107 @@ const backgroundFields = [
 }
 .variable-group--highlighted .variable-subtitle { color: var(--color-gold); }
 
+/* ── GÉNÉRATION DES CARACTÉRISTIQUES ─────────────────────── */
+.gen-methods {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-bottom: var(--space-md);
+}
+.gen-method-btn {
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.gen-method-btn:hover { color: var(--color-text-secondary); border-color: var(--color-border-glow); }
+.gen-method-btn--active {
+  color: var(--color-gold);
+  border-color: var(--color-gold);
+  background: rgba(184,146,74,0.08);
+}
+.gen-panel {
+  display: flex; flex-direction: column; gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.gen-panel-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-md); }
+.gen-formula-hint { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-secondary); color: var(--color-text-muted); }
+.gen-hint { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-secondary); color: var(--color-gold); }
+.gen-low-stats {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(139,58,58,0.12);
+  border: 1px solid rgba(139,58,58,0.3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-secondary);
+  color: var(--color-crimson);
+}
+.gen-opt-label { color: var(--color-text-muted); font-style: italic; font-family: var(--font-flavor); }
+.gen-opt-sep { color: var(--color-border-glow); }
+.gen-opt-bonus { color: var(--color-arcane); font-family: var(--font-heading); font-weight: bold; }
+/* Chips pool */
+.pool-chips { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.pool-chip {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 52px; padding: var(--space-xs) var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.pool-chip:hover:not(.pool-chip--assigned) { border-color: var(--color-border-glow); }
+.pool-chip--selected { border-color: var(--color-gold); background: rgba(184,146,74,0.12); }
+.pool-chip--assigned { border-color: var(--color-arcane-dim); background: rgba(127,179,138,0.08); cursor: pointer; }
+.pool-chip-value { font-family: var(--font-heading); font-size: var(--fs-carac-code); font-weight: bold; color: var(--color-arcane); }
+.pool-chip--selected .pool-chip-value { color: var(--color-gold); }
+.pool-chip--assigned .pool-chip-value { color: var(--color-text-muted); }
+.pool-chip-tag { font-family: var(--font-heading); font-size: 10px; letter-spacing: 0.1em; color: var(--color-arcane); margin-top: 2px; }
+/* Budget achat */
+.buy-budget {
+  display: flex; align-items: baseline; gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.buy-budget--over { border-color: var(--color-crimson); }
+.buy-budget-label { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); letter-spacing: 0.1em; }
+.buy-budget-value { font-family: var(--font-display); font-size: var(--fs-xl); color: var(--color-arcane); }
+.buy-budget--over .buy-budget-value { color: var(--color-crimson); }
+.btn-roll--sm { padding: var(--space-xs) var(--space-sm); font-size: var(--fs-secondary); }
+/* Carac-input-wrap */
+.carac-input-wrap { display: flex; align-items: center; gap: 4px; }
+.carac-roll-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--fs-xl);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+.carac-roll-btn:hover { color: var(--color-gold); }
+/* Assignation pool sur les lignes */
+.carac-row--assignable { cursor: pointer; }
+.carac-row--assignable:hover { background: rgba(184,146,74,0.07) !important; }
+.carac-row--pool-assigned { background: rgba(127,179,138,0.06) !important; }
+
 /* ── CARACTÉRISTIQUES ────────────────────────────────────── */
 .carac-table { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
 .carac-header, .carac-row {
   display: grid;
-  grid-template-columns: 60px 1fr 90px 60px 60px;
+  grid-template-columns: 60px 1fr 110px 60px 60px;
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
@@ -918,6 +1978,177 @@ const backgroundFields = [
 .label-input { font-size: var(--fs-md); }
 .variable-row-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-sm) var(--space-xl); }
 
+/* ── ARMES ────────────────────────────────────────────────── */
+.weapons-table-wrap { overflow-x: auto; }
+.weapons-table {
+  min-width: 640px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.weapons-header,
+.weapons-row {
+  display: grid;
+  grid-template-columns: 1fr 70px 50px 50px 80px 80px 55px 65px 30px;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+.weapons-header {
+  background: var(--color-elevated);
+  font-family: var(--font-heading);
+  font-size: var(--fs-table-header);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+.weapons-row { border-bottom: 1px solid var(--color-border); }
+.weapons-row:last-child { border-bottom: none; }
+.weapons-row:nth-child(even) { background: var(--color-deep); }
+.weapons-row--melee { background: rgba(139,58,58,0.06); }
+.weapon-melee-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.08em;
+  color: var(--color-crimson);
+  font-style: italic;
+}
+.weapon-input {
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  text-align: center;
+  width: 100%; outline: none;
+  transition: border-color var(--transition-fast);
+}
+.weapon-input::-webkit-inner-spin-button { display: none; }
+.weapon-input:focus { border-color: var(--color-arcane-dim); }
+.weapon-input--name { text-align: left; color: var(--color-text-secondary); }
+.weapon-auto {
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.weapon-fixed {
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  color: var(--color-border-glow);
+  text-align: center;
+}
+.weapon-save-btn {
+  background: transparent; border: none;
+  font-size: 14px; cursor: pointer; opacity: 0.4;
+  transition: opacity var(--transition-fast);
+  padding: 0; line-height: 1;
+}
+.weapon-save-btn:hover:not(:disabled) { opacity: 1; }
+.weapon-save-btn:disabled { opacity: 0.15; cursor: not-allowed; }
+
+/* ── BIBLIOTHÈQUE D'ARMES ─────────────────────────────────── */
+.library-section { margin-top: var(--space-md); }
+.library-toggle {
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-family: var(--font-heading); font-size: var(--fs-secondary);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: transparent; border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-md); cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.library-toggle:hover { color: var(--color-gold); border-color: var(--color-gold); }
+.library-toggle-icon { font-size: var(--fs-secondary); }
+.library-count {
+  font-family: var(--font-heading); font-size: 11px;
+  color: var(--color-arcane);
+  background: rgba(127,179,138,0.15);
+  border-radius: 10px; padding: 1px 6px;
+}
+.library-panel {
+  margin-top: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.library-target-row {
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-elevated);
+  border-bottom: 1px solid var(--color-border);
+}
+.library-target-label { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); letter-spacing: 0.08em; }
+.library-slot-btns { display: flex; gap: 4px; }
+.library-slot-btn {
+  font-family: var(--font-heading); font-size: var(--fs-secondary);
+  color: var(--color-text-muted);
+  background: transparent; border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: 2px var(--space-sm);
+  cursor: pointer; transition: all var(--transition-fast);
+}
+.library-slot-btn:hover { color: var(--color-gold); border-color: var(--color-gold); }
+.library-slot-btn--active { color: var(--color-gold); border-color: var(--color-gold); background: rgba(184,146,74,0.1); }
+.library-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+.library-tab {
+  flex: 1; font-family: var(--font-heading); font-size: var(--fs-secondary);
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  padding: var(--space-sm) var(--space-md); cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.library-tab:hover { color: var(--color-text-secondary); }
+.library-tab--active { color: var(--color-gold); border-bottom-color: var(--color-gold); }
+.library-empty {
+  padding: var(--space-lg) var(--space-md);
+  text-align: center;
+  font-family: var(--font-flavor); font-style: italic;
+  font-size: var(--fs-secondary); color: var(--color-text-muted);
+}
+.library-list { max-height: 280px; overflow-y: auto; }
+.library-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+.library-item:last-child { border-bottom: none; }
+.library-item:nth-child(even) { background: var(--color-deep); }
+.library-item-info { display: flex; align-items: center; gap: var(--space-sm); flex: 1; min-width: 0; flex-wrap: wrap; }
+.library-item-name { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-secondary); }
+.library-item-meta {
+  font-family: var(--font-flavor); font-style: italic;
+  font-size: var(--fs-secondary); color: var(--color-text-muted);
+}
+.library-item-meta::before { content: '·'; margin-right: var(--space-xs); }
+.library-item-actions { display: flex; gap: var(--space-xs); flex-shrink: 0; }
+.btn-import {
+  font-family: var(--font-heading); font-size: var(--fs-secondary);
+  letter-spacing: 0.05em; color: var(--color-arcane);
+  background: transparent; border: 1px solid var(--color-arcane-dim);
+  border-radius: var(--radius-sm); padding: 2px var(--space-sm);
+  cursor: pointer; transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.btn-import:hover { background: rgba(127,179,138,0.1); }
+.btn-delete-arme {
+  font-size: var(--fs-secondary); color: var(--color-text-muted);
+  background: transparent; border: none; cursor: pointer;
+  transition: color var(--transition-fast); padding: 2px 4px;
+}
+.btn-delete-arme:hover { color: var(--color-crimson); }
+.rulebook-filters { display: flex; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); }
+.rulebook-search { flex: 1; }
+.rulebook-cat { width: 180px; }
+
 /* ── BACKGROUND ──────────────────────────────────────────── */
 .background-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
 
@@ -941,8 +2172,139 @@ const backgroundFields = [
   font-style: italic;
 }
 
+/* ── MODIFICATEURS D'ÂGE ────────────────────────────────── */
+.age-panel { border-color: var(--color-gold); }
+.age-badge {
+  font-family: var(--font-body);
+  font-size: var(--fs-secondary);
+  font-weight: normal;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  color: var(--color-gold);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-sm);
+  margin-left: var(--space-sm);
+  opacity: 0.8;
+}
+.age-rules { display: flex; flex-direction: column; gap: var(--space-md); }
+.age-rule {
+  display: flex; gap: var(--space-md); align-items: flex-start;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-secondary);
+  color: var(--color-text-secondary);
+}
+.age-rule--note { opacity: 0.65; }
+.age-rule--edu { align-items: flex-start; }
+.age-rule-glyph {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  font-weight: bold;
+  color: var(--color-gold);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 1em;
+  text-align: center;
+}
+.age-target {
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  color: var(--color-arcane);
+  margin-left: var(--space-sm);
+}
+.age-hint { font-style: italic; color: var(--color-text-muted); margin-left: var(--space-xs); }
+.age-edu { display: flex; flex-direction: column; gap: var(--space-sm); flex: 1; }
+.btn-roll {
+  align-self: flex-start;
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.1em;
+  color: var(--color-gold);
+  background: transparent;
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+}
+.btn-roll:hover:not(:disabled) { background: rgba(184,146,74,0.12); }
+.btn-roll:disabled { opacity: 0.35; cursor: not-allowed; }
+.edu-results { display: flex; flex-direction: column; gap: 4px; margin-top: var(--space-xs); }
+.edu-result {
+  display: grid;
+  grid-template-columns: 60px 40px 1fr 60px;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+}
+.edu-result--success { background: rgba(127,179,138,0.08); border: 1px solid rgba(127,179,138,0.2); }
+.edu-result--fail { background: var(--color-deep); border: 1px solid var(--color-border); opacity: 0.6; }
+.edu-result-label { color: var(--color-text-muted); }
+.edu-result-roll { font-size: var(--fs-carac-code); font-weight: bold; text-align: center; }
+.edu-result--success .edu-result-roll { color: var(--color-arcane); }
+.edu-result--fail .edu-result-roll { color: var(--color-text-muted); }
+.edu-result-vs { color: var(--color-text-muted); font-style: italic; font-family: var(--font-flavor); }
+.edu-result-outcome { font-weight: bold; text-align: right; }
+.edu-result--success .edu-result-outcome { color: var(--color-arcane); }
+.edu-result--fail .edu-result-outcome { color: var(--color-text-muted); }
+.edu-total {
+  margin-top: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--fs-secondary);
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
+}
+/* Transition d'apparition */
+.age-panel-enter-active { transition: opacity 0.3s, transform 0.3s; }
+.age-panel-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.age-panel-enter-from, .age-panel-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* ── CHANCE ──────────────────────────────────────────────── */
+.chance-section { }
+.chance-row { display: flex; }
+.chance-card {
+  display: flex; align-items: center; gap: var(--space-xl);
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-xl);
+}
+.chance-input-group { display: flex; align-items: center; }
+.chance-input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-arcane);
+  font-family: var(--font-heading);
+  font-size: 2rem; font-weight: bold;
+  text-align: center; width: 90px; outline: none;
+  transition: border-color var(--transition-fast);
+}
+.chance-input::-webkit-inner-spin-button { display: none; }
+.chance-input:focus { border-color: var(--color-arcane-dim); }
+
+.chance-roll-col { display: flex; flex-direction: column; gap: var(--space-sm); align-items: flex-start; }
+.chance-formula {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-text-muted);
+}
+.chance-youth-note { color: var(--color-gold); }
+
 /* ── SUBMIT ──────────────────────────────────────────────── */
-.form-actions { display: flex; justify-content: center; gap: var(--space-md); flex-wrap: wrap; }
+.form-actions {
+  display: flex; justify-content: center; gap: var(--space-md); flex-wrap: wrap;
+  position: sticky; bottom: 0; z-index: 10;
+  padding: var(--space-md) var(--space-xl);
+}
 .btn-save {
   font-family: var(--font-heading);
   font-size: var(--fs-btn); font-weight: bold;
@@ -953,10 +2315,13 @@ const backgroundFields = [
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-2xl);
   cursor: pointer; min-width: 200px;
+  opacity: 0.45;
+  transform: scale(0.88);
   transition: all var(--transition-fast);
 }
-.btn-save:hover:not(:disabled) { background: var(--color-arcane-glow); }
-.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.form-actions:not(.is-stuck) .btn-save { opacity: 1; transform: scale(1); }
+.btn-save:hover:not(:disabled) { background: var(--color-arcane-glow); opacity: 1; transform: scale(1); }
+.btn-save:disabled { opacity: 0.2; cursor: not-allowed; transform: scale(0.88); }
 .btn-generate {
   font-family: var(--font-heading);
   font-size: var(--fs-btn); font-weight: bold;
@@ -966,10 +2331,14 @@ const backgroundFields = [
   border: none; border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-2xl);
   cursor: pointer; min-width: 220px;
-  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
+  opacity: 0.45;
+  transform: scale(0.88);
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-.btn-generate:hover:not(:disabled) { opacity: 0.85; box-shadow: var(--shadow-glow); }
-.btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+.form-actions:not(.is-stuck) .btn-generate { opacity: 1; transform: scale(1); }
+.btn-generate:hover:not(:disabled) { opacity: 1; transform: scale(1); box-shadow: var(--shadow-glow); }
+.btn-generate:disabled { opacity: 0.2; cursor: not-allowed; transform: scale(0.88); }
+.bottom-sentinel { height: 1px; }
 .btn-sigil { display: inline-block; animation: pulse-sigil 1s ease-in-out infinite; font-size: var(--fs-xl); }
 @keyframes pulse-sigil { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
@@ -978,12 +2347,26 @@ const backgroundFields = [
   .page-wrapper { padding: var(--space-md); }
   .identity-grid { grid-template-columns: 1fr; }
   .derived-grid { grid-template-columns: repeat(4, 1fr); }
-  .carac-header, .carac-row { grid-template-columns: 50px 1fr 70px 50px 50px; }
+  .carac-header, .carac-row { grid-template-columns: 50px 1fr 85px 50px 50px; }
   .comp-grid { grid-template-columns: 1fr; }
   .comp-row { border-right: none; }
   .variable-grid { grid-template-columns: 1fr; }
   .variable-group--full { grid-column: span 1; }
   .variable-row-grid { grid-template-columns: 1fr; }
   .background-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .page-wrapper { padding: var(--space-sm); }
+  /* Table carac : scroll horizontal, description masquée */
+  .carac-table { overflow-x: auto; }
+  .carac-desc { display: none; }
+  .carac-header, .carac-row {
+    grid-template-columns: 52px 1fr 48px 48px;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+  }
+  /* Stats dérivées : 3 colonnes */
+  .derived-grid { grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); }
+  .derived-card { padding: var(--space-sm); }
 }
 </style>

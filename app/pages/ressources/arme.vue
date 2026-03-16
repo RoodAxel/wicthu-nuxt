@@ -20,6 +20,30 @@ const categoryDropdownRef = ref<HTMLElement | null>(null)
 
 const expandedId = ref<number | null>(null)
 
+// ── BIBLIOTHÈQUE ──────────────────────────────────────────────────────────────
+const user = useSupabaseUser()
+const savingId = ref<number | null>(null)
+const savedIds = ref(new Set<number>())
+
+async function saveToLibrary(weapon: WeaponWithSkill) {
+  savingId.value = weapon.id
+  try {
+    await $fetch('/api/arme-perso', {
+      method: 'POST',
+      body: {
+        nom: weapon.name,
+        deg: weapon.damage ?? null,
+        port: weapon.range ?? null,
+        cap: weapon.capacity ?? null,
+        pann: weapon.failure != null ? String(weapon.failure) : null,
+      }
+    })
+    savedIds.value.add(weapon.id)
+  } finally {
+    savingId.value = null
+  }
+}
+
 // ── PARSEUR DÉGÂTS ────────────────────────────────────────────────────────────
 // Règles :
 //   - Tout ce qui suit le 1er '/'  est ignoré (2d10/3m → 2d10, 1d6+Imp/2 → 1d6+Imp)
@@ -462,6 +486,18 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
                     </div>
                   </div>
                 </div>
+              </div>
+              <div v-if="user" class="detail-actions">
+                <button
+                  type="button"
+                  class="btn-save-library"
+                  :disabled="savingId === weapon.id || savedIds.has(weapon.id)"
+                  @click.stop="saveToLibrary(weapon)"
+                >
+                  <span v-if="savingId === weapon.id">…</span>
+                  <span v-else-if="savedIds.has(weapon.id)">✓ Dans la bibliothèque</span>
+                  <span v-else>💾 Sauvegarder dans ma bibliothèque</span>
+                </button>
               </div>
             </div>
           </Transition>
@@ -1061,6 +1097,37 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   font-size: var(--fs-md);
   color: var(--color-text-secondary);
   text-align: right;
+}
+
+/* ── DETAIL ACTIONS ──────────────────────────────────────── */
+.detail-actions {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-save-library {
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.1em;
+  color: var(--color-arcane);
+  background: transparent;
+  border: 1px solid var(--color-arcane-dim);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.btn-save-library:hover:not(:disabled) {
+  background: rgba(127,179,138,0.1);
+  border-color: var(--color-arcane);
+}
+.btn-save-library:disabled {
+  opacity: 0.6;
+  cursor: default;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
 }
 
 /* ── LEGEND ──────────────────────────────────────────────── */

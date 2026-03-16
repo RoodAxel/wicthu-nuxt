@@ -4,7 +4,7 @@ export default defineEventHandler(async () => {
   return prisma.arme.findMany({
     include: {
       competence: {
-        select: { id: true, name: true }
+        select: { id: true, name: true, baseValue: true }
       }
     },
     orderBy: [{ category: 'asc' }, { name: 'asc' }]
