@@ -436,7 +436,7 @@ const isStuck = ref(true)
 // Charge les données si mode édition
 onMounted(async () => {
   const observer = new IntersectionObserver(([entry]) => {
-    isStuck.value = !entry.isIntersecting
+    if (entry) isStuck.value = !entry.isIntersecting
   })
   if (bottomSentinel.value) observer.observe(bottomSentinel.value)
   onUnmounted(() => observer.disconnect())
@@ -576,6 +576,7 @@ function initQuickPool() {
 
 function selectPool(idx: number) {
   const entry = pool.value[idx]
+  if (!entry) return
   if (entry.assignedTo) {
     // Clic sur une valeur déjà assignée → désassigner
     form[entry.assignedTo] = ''
@@ -590,14 +591,14 @@ function assignPool(statKey: string) {
   // Désassigner si ce stat avait déjà une valeur pool
   const prev = pool.value.findIndex(p => p.assignedTo === statKey)
   if (prev >= 0) {
-    pool.value[prev].assignedTo = null
+    pool.value[prev]!.assignedTo = null
     if (prev === idx) {
       selectedPoolIdx.value = null
       return
     }
   }
-  pool.value[idx].assignedTo = statKey
-  form[statKey] = String(pool.value[idx].value)
+  pool.value[idx]!.assignedTo = statKey
+  form[statKey] = String(pool.value[idx]!.value)
   selectedPoolIdx.value = null
 }
 
@@ -1005,7 +1006,7 @@ const backgroundFields = [
               <span v-if="entry.assignedTo" class="pool-chip-tag">{{ entry.assignedTo.replace('_0', '') }}</span>
             </button>
           </div>
-          <p v-if="pool.length && selectedPoolIdx !== null" class="gen-hint">Cliquez une ligne du tableau pour assigner {{ pool[selectedPoolIdx].value }}.</p>
+          <p v-if="pool.length && selectedPoolIdx !== null" class="gen-hint">Cliquez une ligne du tableau pour assigner {{ pool[selectedPoolIdx]?.value }}.</p>
         </div>
 
         <!-- Panneau achat -->
@@ -1042,7 +1043,7 @@ const backgroundFields = [
               <span v-if="entry.assignedTo" class="pool-chip-tag">{{ entry.assignedTo.replace('_0', '') }}</span>
             </button>
           </div>
-          <p v-if="selectedPoolIdx !== null" class="gen-hint">Cliquez une ligne du tableau pour assigner {{ pool[selectedPoolIdx].value }}.</p>
+          <p v-if="selectedPoolIdx !== null" class="gen-hint">Cliquez une ligne du tableau pour assigner {{ pool[selectedPoolIdx]?.value }}.</p>
         </div>
 
         <!-- Tableau des caractéristiques -->
@@ -1335,7 +1336,7 @@ const backgroundFields = [
                   type="button"
                   class="library-slot-btn"
                   :class="{ 'library-slot-btn--active': importTargetSlot === s }"
-                  @click="importTargetSlot = s"
+                  @click="importTargetSlot = (s as 2|3|4|5)"
                 >ARM{{ s }}</button>
               </div>
             </div>
