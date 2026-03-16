@@ -5,42 +5,42 @@
 ```mermaid
 graph TB
     subgraph Internet["Internet"]
-        User["👤 Utilisateur\n(navigateur)"]
+        User["Utilisateur (navigateur)"]
     end
 
     subgraph DNS["DNS"]
-        Domain["wicthu.com\n(domaine custom)"]
+        Domain["wicthu.com"]
     end
 
     subgraph Vercel["Vercel (hébergement)"]
         direction TB
-        Edge["Edge Network\nCDN mondial"]
-        SSR["Serverless Functions\n(Nitro / Node.js)\nAPI + SSR"]
-        Static["Assets statiques\n(CSS, JS, images)"]
+        Edge["Edge Network CDN"]
+        SSR["Serverless Functions Nitro"]
+        Static["Assets statiques"]
     end
 
     subgraph Supabase["Supabase (BaaS — région EU)"]
         direction TB
-        SupaAuth["Auth Service\nJWT + email SMTP"]
-        SupaDB["PostgreSQL\n(via PgBouncer)"]
-        SupaStorage["Object Storage\nbucket : fiches"]
+        SupaAuth["Auth Service"]
+        SupaDB["PostgreSQL via PgBouncer"]
+        SupaStorage["Storage bucket fiches"]
     end
 
     subgraph External["Services externes"]
-        Gotenberg["Gotenberg Demo API\ndemo.gotenberg.dev\nChromium headless"]
+        Gotenberg["Gotenberg demo.gotenberg.dev"]
     end
 
     User -->|HTTPS| Domain
     Domain -->|CNAME| Edge
-    Edge -->|requêtes SSR / API| SSR
+    Edge -->|SSR / API| SSR
     Edge -->|assets| Static
 
-    SSR -->|Prisma / TCP SSL\n(PgBouncer port 6543)| SupaDB
-    SSR -->|supabase-js SDK\n(HTTPS)| SupaAuth
-    SSR -->|supabase-js SDK\n(HTTPS)| SupaStorage
-    SSR -->|HTTP POST multipart\n(HTTPS)| Gotenberg
+    SSR -->|Prisma TCP SSL port 6543| SupaDB
+    SSR -->|supabase-js HTTPS| SupaAuth
+    SSR -->|supabase-js HTTPS| SupaStorage
+    SSR -->|HTTP POST HTTPS| Gotenberg
 
-    User -->|supabase-js SDK\n(HTTPS)| SupaAuth
+    User -->|supabase-js HTTPS| SupaAuth
 ```
 
 ---

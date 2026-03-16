@@ -13,7 +13,7 @@ const CARAC = [
   { key: 'APP', label: 'APP' },
   { key: 'INT', label: 'INT' },
   { key: 'POU', label: 'POU' },
-  { key: 'EDU', label: 'EDU' },
+  { key: 'EDU', label: 'EDU' }
 ] as const
 
 const SKILLS = [
