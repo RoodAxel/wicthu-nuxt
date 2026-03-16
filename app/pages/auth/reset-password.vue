@@ -27,6 +27,7 @@ async function handleUpdate() {
     errorMsg.value = error.message
   } else {
     done.value = true
+    await supabase.auth.signOut()
     setTimeout(() => router.push('/auth/login'), 3000)
   }
 }
