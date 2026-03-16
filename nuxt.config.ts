@@ -6,6 +6,14 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase'
   ],
 
+  supabase: {
+    redirect: false,
+    redirectOptions: {
+      login: '/auth/login',
+      callback: '/auth/confirm'
+    }
+  },
+
   devtools: {
     enabled: true
   },
@@ -25,11 +33,7 @@ export default defineNuxtConfig({
     }
   },
 
-  routeRules: {
-    '/': { prerender: true }
-  },
-
-  compatibilityDate: '2025-01-15',
+compatibilityDate: '2025-01-15',
 
   nitro: {
     serverAssets: [{ baseName: 'pdfs', dir: './server/assets/pdfs' }]
