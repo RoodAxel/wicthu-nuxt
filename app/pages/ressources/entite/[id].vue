@@ -1,76 +1,5 @@
 <script setup lang="ts">
-type StatBlock = {
-  id: number
-  formeName: string | null
-  formeNote: string | null
-  sortOrder: number
-  forVal: string | null
-  forJet: string | null
-  conVal: string | null
-  conJet: string | null
-  taiVal: string | null
-  taiJet: string | null
-  dexVal: string | null
-  dexJet: string | null
-  intVal: string | null
-  intJet: string | null
-  pouVal: string | null
-  pouJet: string | null
-  appVal: string | null
-  appJet: string | null
-  eduVal: string | null
-  eduJet: string | null
-  pvMoyen: string | null
-  impactMoy: string | null
-  carrureMoy: string | null
-  pmMoyen: string | null
-  mouvement: string | null
-}
-
-type Pouvoir = {
-  id: number
-  name: string
-  description: string | null
-  sortOrder: number
-}
-
-type Attaque = {
-  id: number
-  name: string
-  valeur: string | null
-  degats: string | null
-  isManoeuvre: boolean
-  description: string | null
-  sortOrder: number
-}
-
-type Competence = {
-  id: number
-  name: string
-  valeur: string | null
-  sortOrder: number
-}
-
-type EntiteDetail = {
-  id: number
-  name: string
-  titre: string | null
-  categorie: string
-  citationTexte: string | null
-  citationSource: string | null
-  description: string | null
-  attaquesParRound: string | null
-  optionsCombatDesc: string | null
-  protection: string | null
-  perteSanteMentale: string | null
-  culteAdoration: string | null
-  autresParticularites: string | null
-  imageUrl: string | null
-  statBlocks: StatBlock[]
-  pouvoirs: Pouvoir[]
-  attaques: Attaque[]
-  competences: Competence[]
-}
+import type { EntiteDetail, StatBlock } from '~/types/entite'
 
 const CATEGORIE_LABELS: Record<string, string> = {
   CREATURE_MYTHE:       'Créature du Mythe',
@@ -237,9 +166,9 @@ useHead(() => ({
         </div>
       </section>
 
-      <!-- Pouvoirs spéciaux -->
+      <!-- Pouvoirs distinctif -->
       <section v-if="entite.pouvoirs.length > 0" class="detail-section">
-        <h2 class="section-title">Pouvoirs spéciaux</h2>
+        <h2 class="section-title">Pouvoirs distinctif</h2>
         <div class="pouvoirs-list">
           <div v-for="pouvoir in entite.pouvoirs" :key="pouvoir.id" class="pouvoir-item">
             <h3 class="pouvoir-name">{{ pouvoir.name }}</h3>

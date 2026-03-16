@@ -1,56 +1,44 @@
 <script setup lang="ts">
-type OuvrageMytheItem = {
-  id: number
-  titre: string
-  langue: string | null
-  date: string | null
-  auteur: string | null
-  sante_mental: string | null
-  gain_mythe_initial: number | null
-  gain_mythe_complet: number | null
-  mythe_cthulhu: number | null
-  semaine: number | null
-  _count: { ouvrage_sort: number }
-}
+import type { OuvrageMytheItem } from '~/types/ouvrage-mythe'
 
 const { data: ouvrages, status, error } = useFetch<OuvrageMytheItem[]>('/api/ouvrage-mythe')
 
 const search      = ref('')
-const sortTitre   = ref<'asc' | 'desc'>('asc')
-const sortAuteur  = ref<'asc' | 'desc' | null>(null)
-const sortMythe   = ref<'desc' | 'asc' | null>(null)
-const sortSanity  = ref<'desc' | 'asc' | null>(null)
-const sortSemaine = ref<'asc' | 'desc' | null>(null)
+const sortTitre     = ref<'asc' | 'desc'>('asc')
+const sortAuteur    = ref<'asc' | 'desc' | null>(null)
+const sortMythe     = ref<'desc' | 'asc' | null>(null)
+const sortSanity    = ref<'desc' | 'asc' | null>(null)
+const sortSortCount = ref<'asc' | 'desc' | null>(null)
 
 const titreIsActive = computed(() =>
-  sortAuteur.value === null && sortMythe.value === null && sortSanity.value === null && sortSemaine.value === null
+  sortAuteur.value === null && sortMythe.value === null && sortSanity.value === null && sortSortCount.value === null
 )
 
-const sortTitreIcon   = computed(() => sortTitre.value === 'asc' ? '↑' : '↓')
-const sortAuteurIcon  = computed(() => sortAuteur.value === 'asc' ? '↑' : sortAuteur.value === 'desc' ? '↓' : '↕')
-const sortMytheIcon   = computed(() => sortMythe.value === 'desc' ? '↓' : sortMythe.value === 'asc' ? '↑' : '↕')
-const sortSanityIcon  = computed(() => sortSanity.value === 'desc' ? '↓' : sortSanity.value === 'asc' ? '↑' : '↕')
-const sortSemaineIcon = computed(() => sortSemaine.value === 'asc' ? '↑' : sortSemaine.value === 'desc' ? '↓' : '↕')
+const sortTitreIcon     = computed(() => sortTitre.value === 'asc' ? '↑' : '↓')
+const sortAuteurIcon    = computed(() => sortAuteur.value === 'asc' ? '↑' : sortAuteur.value === 'desc' ? '↓' : '↕')
+const sortMytheIcon     = computed(() => sortMythe.value === 'desc' ? '↓' : sortMythe.value === 'asc' ? '↑' : '↕')
+const sortSanityIcon    = computed(() => sortSanity.value === 'desc' ? '↓' : sortSanity.value === 'asc' ? '↑' : '↕')
+const sortSortCountIcon = computed(() => sortSortCount.value === 'desc' ? '↓' : sortSortCount.value === 'asc' ? '↑' : '↕')
 
 function cycleSortTitre() {
-  sortAuteur.value = null; sortMythe.value = null; sortSanity.value = null; sortSemaine.value = null
+  sortAuteur.value = null; sortMythe.value = null; sortSanity.value = null; sortSortCount.value = null
   sortTitre.value = sortTitre.value === 'asc' ? 'desc' : 'asc'
 }
 function cycleSortAuteur() {
-  sortMythe.value = null; sortSanity.value = null; sortSemaine.value = null
+  sortMythe.value = null; sortSanity.value = null; sortSortCount.value = null
   sortAuteur.value = sortAuteur.value === null ? 'asc' : sortAuteur.value === 'asc' ? 'desc' : null
 }
 function cycleSortMythe() {
-  sortAuteur.value = null; sortSanity.value = null; sortSemaine.value = null
+  sortAuteur.value = null; sortSanity.value = null; sortSortCount.value = null
   sortMythe.value = sortMythe.value === null ? 'desc' : sortMythe.value === 'desc' ? 'asc' : null
 }
 function cycleSortSanity() {
-  sortAuteur.value = null; sortMythe.value = null; sortSemaine.value = null
+  sortAuteur.value = null; sortMythe.value = null; sortSortCount.value = null
   sortSanity.value = sortSanity.value === null ? 'desc' : sortSanity.value === 'desc' ? 'asc' : null
 }
-function cycleSortSemaine() {
+function cycleSortSortCount() {
   sortAuteur.value = null; sortMythe.value = null; sortSanity.value = null
-  sortSemaine.value = sortSemaine.value === null ? 'asc' : sortSemaine.value === 'asc' ? 'desc' : null
+  sortSortCount.value = sortSortCount.value === null ? 'desc' : sortSortCount.value === 'desc' ? 'asc' : null
 }
 
 function parseSanityMax(s: string | null): number | null {
@@ -86,13 +74,10 @@ const filtered = computed(() => {
       if (bv === null) return -1
       return sortSanity.value === 'desc' ? bv - av : av - bv
     })
-  } else if (sortSemaine.value) {
+  } else if (sortSortCount.value) {
     result = [...result].sort((a, b) => {
-      const av = a.semaine, bv = b.semaine
-      if (av === null && bv === null) return 0
-      if (av === null) return 1
-      if (bv === null) return -1
-      return sortSemaine.value === 'asc' ? av - bv : bv - av
+      const av = a._count.ouvrage_sort, bv = b._count.ouvrage_sort
+      return sortSortCount.value === 'desc' ? bv - av : av - bv
     })
   } else if (sortAuteur.value) {
     result = [...result].sort((a, b) => {
@@ -155,27 +140,27 @@ const filtered = computed(() => {
     </div>
 
     <div v-else class="list-container">
-      <div class="list-header-row">
-        <button class="col-sortable" :class="{ 'sort-active': titreIsActive }" @click="cycleSortTitre">
-          Titre <span class="sort-icon">{{ sortTitreIcon }}</span>
-        </button>
-        <button class="col-sortable" :class="{ 'sort-active': sortAuteur !== null }" @click="cycleSortAuteur">
-          Auteur <span class="sort-icon">{{ sortAuteurIcon }}</span>
-        </button>
-        <span class="col-lang">Langue</span>
-        <span class="col-date">Date</span>
-        <button class="col-sortable" :class="{ 'sort-active': sortSanity !== null }" @click="cycleSortSanity">
-          S.M. <span class="sort-icon">{{ sortSanityIcon }}</span>
-        </button>
-        <span class="col-gain">Gain</span>
-        <button class="col-sortable" :class="{ 'sort-active': sortMythe !== null }" @click="cycleSortMythe">
-          Mythe% <span class="sort-icon">{{ sortMytheIcon }}</span>
-        </button>
-        <button class="col-sortable" :class="{ 'sort-active': sortSemaine !== null }" @click="cycleSortSemaine">
-          Sem. <span class="sort-icon">{{ sortSemaineIcon }}</span>
-        </button>
-      </div>
       <div class="list-body">
+        <div class="list-header-row">
+          <button class="col-sortable" :class="{ 'sort-active': titreIsActive }" @click="cycleSortTitre">
+            Titre <span class="sort-icon">{{ sortTitreIcon }}</span>
+          </button>
+          <button class="col-sortable col-auteur" :class="{ 'sort-active': sortAuteur !== null }" @click="cycleSortAuteur">
+            Auteur <span class="sort-icon">{{ sortAuteurIcon }}</span>
+          </button>
+          <span class="col-lang">Langue</span>
+          <span class="col-date">Date</span>
+          <button class="col-sortable col-sm" :class="{ 'sort-active': sortSanity !== null }" @click="cycleSortSanity">
+            S.M. <span class="sort-icon">{{ sortSanityIcon }}</span>
+          </button>
+          <span class="col-gain">Gain</span>
+          <button class="col-sortable col-mythe" :class="{ 'sort-active': sortMythe !== null }" @click="cycleSortMythe">
+            Mythe% <span class="sort-icon">{{ sortMytheIcon }}</span>
+          </button>
+          <button class="col-sortable" :class="{ 'sort-active': sortSortCount !== null }" @click="cycleSortSortCount">
+            Sorts <span class="sort-icon">{{ sortSortCountIcon }}</span>
+          </button>
+        </div>
         <OuvrageMytheCard
           v-for="o in filtered"
           :key="o.id"
@@ -340,7 +325,7 @@ const filtered = computed(() => {
 }
 .list-header-row {
   display: grid;
-  grid-template-columns: 1fr 140px 80px 90px 70px 80px 60px 50px;
+  grid-template-columns: 1fr 160px 90px 100px 80px 80px 75px 70px;
   align-items: center;
   padding: var(--space-sm) var(--space-lg);
   gap: var(--space-md);
@@ -352,6 +337,9 @@ const filtered = computed(() => {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .col-lang, .col-date, .col-gain { color: var(--color-text-muted); }
 
@@ -377,7 +365,7 @@ const filtered = computed(() => {
 
 .list-body {
   max-height: 600px;
-  overflow-y: auto;
+  overflow-y: scroll;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
@@ -386,17 +374,29 @@ const filtered = computed(() => {
 
 /* OuvrageMytheCard grid must match header */
 :deep(.ouvrage-row) {
-  grid-template-columns: 1fr 140px 80px 90px 70px 80px 60px 50px;
+  grid-template-columns: 1fr 160px 90px 100px 80px 80px 75px 70px;
 }
 
 @media (max-width: 1024px) {
   .list-header-row,
-  :deep(.ouvrage-row) { grid-template-columns: 1fr 110px 70px 80px 60px 70px 50px 40px; }
+  :deep(.ouvrage-row) { grid-template-columns: 1fr 150px 80px 80px 75px 70px; }
+  .col-lang,  .col-date  { display: none; }
+  :deep(.col-langue), :deep(.col-date) { display: none; }
 }
+
+@media (max-width: 768px) {
+  .list-header-row,
+  :deep(.ouvrage-row) { grid-template-columns: 1fr 80px 80px 70px; }
+  .col-auteur, .col-mythe { display: none; }
+  :deep(.col-auteur), :deep(.col-mythe) { display: none; }
+}
+
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
-  .search-bar { display: block; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
-  .list-container { overflow-x: auto; }
+  .list-header-row,
+  :deep(.ouvrage-row) { grid-template-columns: 1fr 80px 70px; }
+  .col-sm { display: none; }
+  :deep(.col-sm) { display: none; }
 }
 </style>

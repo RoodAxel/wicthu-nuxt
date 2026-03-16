@@ -13,8 +13,9 @@ defineProps<{
   sortCount: number
 }>()
 
+const router = useRouter()
 function openDetail(id: number) {
-  window.open(`/ressources/ouvrage-mythe/${id}`, '_blank')
+  router.push(`/ressources/ouvrage-mythe/${id}`)
 }
 </script>
 
@@ -37,7 +38,7 @@ function openDetail(id: number) {
 <style scoped>
 .ouvrage-row {
   display: grid;
-  grid-template-columns: 1fr 160px 90px 100px 80px 80px 60px 70px;
+  grid-template-columns: 1fr 160px 90px 100px 80px 80px 75px 70px;
   align-items: center;
   padding: var(--space-sm) var(--space-lg);
   gap: var(--space-md);

@@ -1,25 +1,5 @@
 <script setup lang="ts">
-type OuvrageSortEntry = {
-  id: number
-  nom_dans_ouvrage: string | null
-  note: string | null
-  sort: { id: number; name: string }
-}
-
-type OuvrageMytheDetail = {
-  id: number
-  titre: string
-  langue: string | null
-  date: string | null
-  auteur: string | null
-  description: string | null
-  sante_mental: string | null
-  gain_mythe_initial: number | null
-  gain_mythe_complet: number | null
-  mythe_cthulhu: number | null
-  semaine: number | null
-  ouvrage_sort: OuvrageSortEntry[]
-}
+import type { OuvrageMytheDetail } from '~/types/ouvrage-mythe'
 
 const route = useRoute()
 const id = route.params.id as string
@@ -29,6 +9,18 @@ const { data: ouvrage, status, error } = await useFetch<OuvrageMytheDetail>(`/ap
 useHead(() => ({
   title: ouvrage.value ? `${ouvrage.value.titre} — Ouvrages du Mythe` : 'Ouvrage du Mythe',
 }))
+
+const searchSorts = ref('')
+
+const filteredSorts = computed(() => {
+  if (!ouvrage.value) return []
+  const q = normalizeStr(searchSorts.value.trim())
+  if (!q) return ouvrage.value.ouvrage_sort
+  return ouvrage.value.ouvrage_sort.filter(e =>
+    normalizeStr(e.sort.name).includes(q) ||
+    (e.nom_dans_ouvrage ? normalizeStr(e.nom_dans_ouvrage).includes(q) : false)
+  )
+})
 </script>
 
 <template>
@@ -93,21 +85,26 @@ useHead(() => ({
       <!-- Sorts list -->
       <section v-if="ouvrage.ouvrage_sort.length > 0" class="detail-section">
         <h2 class="section-title">Sorts contenus</h2>
-        <div class="sorts-list">
-          <div
-            v-for="entry in ouvrage.ouvrage_sort"
-            :key="entry.id"
-            class="sort-entry"
-            @click="window.open(`/ressources/sort/${entry.sort.id}`, '_blank')"
-          >
-            <div class="entry-main">
-              <span class="entry-canonical">{{ entry.sort.name }}</span>
-              <span v-if="entry.nom_dans_ouvrage && entry.nom_dans_ouvrage !== entry.sort.name" class="entry-alias">
-                « {{ entry.nom_dans_ouvrage }} »
-              </span>
-            </div>
-            <span v-if="entry.note" class="entry-note">{{ entry.note }}</span>
+
+        <div class="sorts-toolbar">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchSorts" type="text" class="search-input" placeholder="Rechercher un sort…">
           </div>
+          <span class="sorts-count">{{ filteredSorts.length }} / {{ ouvrage.ouvrage_sort.length }}</span>
+        </div>
+
+        <div class="sorts-list">
+          <a
+            v-for="entry in filteredSorts"
+            :key="entry.id"
+            :href="`/ressources/sort/${entry.sort.id}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="sort-entry"
+          >
+            {{ entry.sort.name }}
+          </a>
         </div>
       </section>
 
@@ -244,54 +241,66 @@ useHead(() => ({
   line-height: 1.8;
 }
 
+.sorts-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.search-bar { position: relative; }
+.search-icon {
+  position: absolute;
+  left: var(--space-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  font-size: var(--fs-secondary);
+}
+.search-input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-lg) var(--space-xs) 2.2rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-secondary);
+  width: 260px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
+.search-input:focus { border-color: var(--color-gold-dim); box-shadow: 0 0 0 2px rgba(184,146,74,0.12); }
+.sorts-count {
+  font-family: var(--font-heading);
+  font-size: var(--fs-table-header);
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
 .sorts-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
 }
 .sort-entry {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-lg);
-  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-row-name);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-arcane);
   transition: all var(--transition-fast);
-  flex-wrap: wrap;
+  display: block;
 }
 .sort-entry:hover {
   border-color: var(--color-arcane-dim);
   background: var(--color-elevated);
-}
-.entry-main {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-.entry-canonical {
-  font-family: var(--font-heading);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--color-arcane);
-}
-.entry-alias {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-base);
-  color: var(--color-text-muted);
-}
-.entry-note {
-  font-family: var(--font-heading);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  white-space: nowrap;
+  color: var(--color-text-primary);
 }
 
 .state-message {
@@ -325,6 +334,5 @@ useHead(() => ({
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .page-title { font-size: var(--fs-2xl); }
-  .sort-entry { flex-direction: column; align-items: flex-start; }
 }
 </style>

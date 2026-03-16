@@ -1,26 +1,5 @@
 <script setup lang="ts">
-type SortChild = {
-  id: number
-  name: string
-  cout: string | null
-  temps_incantation: string | null
-  description: string | null
-  version_approfondie: string | null
-  autre_name: string[] | null
-}
-
-type SortDetail = {
-  id: number
-  name: string
-  cout: string | null
-  temps_incantation: string | null
-  description: string | null
-  version_approfondie: string | null
-  autre_name: string[] | null
-  parentId: number | null
-  parent: { id: number; name: string } | null
-  children: SortChild[]
-}
+import type { SortDetail } from '~/types/sort'
 
 const route = useRoute()
 const id = route.params.id as string
@@ -30,6 +9,15 @@ const { data: sort, status, error } = await useFetch<SortDetail>(`/api/sort/${id
 useHead(() => ({
   title: sort.value ? `${sort.value.name} — Sorts` : 'Sort',
 }))
+
+const searchVariantes = ref('')
+
+const filteredChildren = computed(() => {
+  if (!sort.value) return []
+  const q = normalizeStr(searchVariantes.value.trim())
+  if (!q) return sort.value.children
+  return sort.value.children.filter(c => normalizeStr(c.name).includes(q))
+})
 </script>
 
 <template>
@@ -98,8 +86,17 @@ useHead(() => ({
       <!-- Children list -->
       <section v-if="sort.children.length > 0" class="detail-section">
         <h2 class="section-title">Variantes</h2>
+
+        <div class="variants-toolbar">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchVariantes" type="text" class="search-input" placeholder="Rechercher une variante…">
+          </div>
+          <span class="variants-count">{{ filteredChildren.length }} / {{ sort.children.length }}</span>
+        </div>
+
         <div class="children-list">
-          <div v-for="child in sort.children" :key="child.id" class="child-card" @click="$router.push(`/ressources/sort/${child.id}`)">
+          <div v-for="child in filteredChildren" :key="child.id" class="child-card" @click="$router.push(`/ressources/sort/${child.id}`)">
             <div class="child-header">
               <span class="child-name">{{ child.name }}</span>
               <div class="child-meta">
@@ -261,6 +258,43 @@ useHead(() => ({
   line-height: 1.8;
 }
 
+.variants-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.search-bar { position: relative; }
+.search-icon {
+  position: absolute;
+  left: var(--space-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  font-size: var(--fs-secondary);
+}
+.search-input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-lg) var(--space-xs) 2.2rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-secondary);
+  width: 260px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
+.search-input:focus { border-color: var(--color-arcane-dim); box-shadow: 0 0 0 2px rgba(127,179,138,0.12); }
+.variants-count {
+  font-family: var(--font-heading);
+  font-size: var(--fs-table-header);
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
 .children-list {
   display: flex;
   flex-direction: column;
@@ -280,8 +314,8 @@ useHead(() => ({
 }
 .child-header {
   display: flex;
-  align-items: center;
-  gap: var(--space-md);
+  align-items: baseline;
+  gap: var(--space-xs) var(--space-lg);
   margin-bottom: var(--space-xs);
   flex-wrap: wrap;
 }
@@ -291,11 +325,13 @@ useHead(() => ({
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--color-arcane);
-  flex: 1;
+  flex: 999 1 0;
+  min-width: min(100%, 220px);
 }
 .child-meta {
   display: flex;
   gap: var(--space-md);
+  flex-shrink: 0;
 }
 .child-cost {
   font-family: var(--font-heading);
