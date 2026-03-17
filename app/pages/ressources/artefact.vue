@@ -184,7 +184,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
         <button class="col-sortable" :class="{ 'sort-active': sortUseBy !== null }" @click="cycleSortUseBy">
           Utilisé par <span class="sort-icon">{{ sortUseByIcon }}</span>
         </button>
-        <span />
         <span class="col-chevron" />
       </div>
       <div class="list-body">
@@ -201,7 +200,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
           >
             <span class="col-name row-name">{{ artefact.name }}</span>
             <span class="col-use row-use">{{ artefact.use_by ?? '—' }}</span>
-            <span />
             <span class="col-chevron row-chevron" :class="{ 'is-open': expandedId === artefact.id }">›</span>
           </div>
           <Transition name="expand">
@@ -471,17 +469,14 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 
 /* ── LIST ────────────────────────────────────────────────── */
 .list-container {
-  display: grid;
-  grid-template-columns: auto auto 1fr 68px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 .list-header-row {
-  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: subgrid;
+  grid-template-columns: 1fr 200px 28px;
   background: var(--color-elevated);
   border-bottom: 1px solid var(--color-border);
 }
@@ -512,12 +507,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .sort-icon { font-size: 0.7rem; opacity: 0.7; }
 
 .list-body {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: subgrid;
   max-height: 600px;
   overflow-y: auto;
-  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
@@ -527,17 +518,14 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .list-body::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
 
 .list-item {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: subgrid;
+  display: block;
 }
 
 .list-item.is-expanded .list-row { background: var(--color-elevated) !important; }
 
 .list-row {
-  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: subgrid;
+  grid-template-columns: 1fr 200px 28px;
   align-items: center;
   cursor: pointer;
   transition: background var(--transition-fast);
@@ -579,7 +567,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .row-chevron.is-open { transform: rotate(90deg); color: var(--color-gold); }
 
 .row-description {
-  grid-column: 1 / -1;
   padding: var(--space-md) var(--space-xl);
   background: rgba(184, 146, 74, 0.05);
   border-top: 1px solid var(--color-gold-dim);

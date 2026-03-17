@@ -205,7 +205,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
           <button class="col-sortable sort-active" @click="cycleSortName">
             Article <span class="sort-icon">{{ sortNameIcon }}</span>
           </button>
-          <button class="col-sortable sort-active" @click="cycleSortCategory">
+          <button class="col-sortable col-category sort-active" @click="cycleSortCategory">
             Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
           </button>
           <button class="col-sortable" :class="{ 'sort-active': sortPrice !== null }" @click="cycleSortPrice">

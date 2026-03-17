@@ -383,5 +383,10 @@ const filteredChildren = computed(() => {
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .page-title { font-size: var(--fs-2xl); }
+  .variants-toolbar { flex-direction: column; align-items: stretch; }
+  .search-bar { width: 100%; }
+  .search-input { width: 100%; box-sizing: border-box; }
+  .child-meta { flex-shrink: 1; flex-wrap: wrap; }
+  .child-card { padding: var(--space-sm) var(--space-md); }
 }
 </style>

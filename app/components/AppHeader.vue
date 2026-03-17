@@ -337,6 +337,7 @@ async function confirmSignOut() {
 
 .group-chevron {
   font-size: 0.8rem;
+  font-family: system-ui, sans-serif;
   display: inline-block;
   transition: transform var(--transition-fast);
   line-height: 1;
