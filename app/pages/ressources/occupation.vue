@@ -266,6 +266,14 @@ function isFixedSkill(skill: OccupationSkill) {
               </div>
 
               <div v-else-if="detailCache[occ.id]" class="detail-content">
+                <div v-if="detailCache[occ.id]!.point_competence" class="detail-formula">
+                  <span class="detail-formula-label">Formule de points</span>
+                  <span class="detail-formula-value">{{ detailCache[occ.id]!.point_competence }}</span>
+                </div>
+                <div v-if="detailCache[occ.id]!.is_lovecraftian || detailCache[occ.id]!.is_modern" class="detail-type">
+                  <span v-if="detailCache[occ.id]!.is_lovecraftian" class="badge badge-lore">Lovecraft</span>
+                  <span v-if="detailCache[occ.id]!.is_modern" class="badge badge-modern">Moderne</span>
+                </div>
                 <div class="skills-grid">
 
                   <!-- Compétences fixes -->
@@ -613,6 +621,10 @@ function isFixedSkill(skill: OccupationSkill) {
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-gold);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .row-formula {
   font-family: var(--font-heading);
@@ -752,6 +764,43 @@ function isFixedSkill(skill: OccupationSkill) {
   border: 1px solid var(--color-border);
 }
 
+/* ── DETAIL FORMULA ──────────────────────────────────────── */
+.detail-formula {
+  display: none;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+.detail-formula-label {
+  font-family: var(--font-heading);
+  font-size: var(--fs-table-header);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.detail-formula-value {
+  font-family: var(--font-heading);
+  font-size: var(--fs-row-value);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 900px) {
+  .detail-formula { display: flex; }
+}
+.detail-type {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+@media (min-width: 769px) {
+  .detail-type { display: none; }
+}
+
 /* ── LEGEND ──────────────────────────────────────────────── */
 .legend {
   display: flex;
@@ -823,9 +872,8 @@ function isFixedSkill(skill: OccupationSkill) {
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
-  .list-header-row { display: none; }
-  .list-row { grid-template-columns: 1fr 28px; }
-  .row-credit { display: none; }
+  .list-header-row,
+  .list-row { grid-template-columns: 1fr 70px 28px; }
   .list-body { max-height: none; }
 }
 </style>

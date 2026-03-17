@@ -369,6 +369,7 @@ const filtered = computed(() => {
   z-index: 1;
 }
 .col-lang, .col-date, .col-gain { color: var(--color-text-muted); }
+.list-header-row .col-sortable:first-child { min-width: 0; }
 
 .col-sortable {
   display: inline-flex;
@@ -421,6 +422,8 @@ const filtered = computed(() => {
 
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
+  .toolbar { width: 100%; }
+  .search-bar { display: block; width: 100%; }
   .search-input { width: 100%; box-sizing: border-box; }
   .list-header-row,
   :deep(.ouvrage-row) { grid-template-columns: 1fr 80px 70px; }

@@ -56,6 +56,10 @@ function openDetail(id: number) {
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-gold);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .row-muted {

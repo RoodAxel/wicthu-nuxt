@@ -35,7 +35,7 @@ async function saveToLibrary(weapon: WeaponWithSkill) {
         deg: weapon.damage ?? null,
         port: weapon.range ?? null,
         cap: weapon.capacity ?? null,
-        pann: weapon.failure != null ? String(weapon.failure) : null,
+        pann: weapon.failure != null ? String(weapon.failure) : null
       }
     })
     savedIds.value.add(weapon.id)
@@ -385,7 +385,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
             Catégorie <span class="sort-icon">{{ sortCategoryIcon }}</span>
           </button>
           <span class="col-skill">Compétence</span>
-          <button class="col-header-btn" :class="{ 'sort-active': sortDamage !== null }" @click="cycleSortDamage">
+          <button class="col-header-btn col-damage" :class="{ 'sort-active': sortDamage !== null }" @click="cycleSortDamage">
             Dégâts <span class="sort-icon">{{ sortDamageIcon }}</span>
           </button>
           <span class="col-range">Portée</span>
@@ -420,6 +420,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 
           <Transition name="expand">
             <div v-if="expandedId === weapon.id" class="detail-panel" :class="index % 2 === 0 ? 'row-even' : 'row-odd'">
+              <p class="detail-full-name">{{ weapon.name }}</p>
               <div class="detail-grid">
                 <div class="detail-section">
                   <h3 class="detail-section-title">Combat</h3>
@@ -672,6 +673,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 .toolbar-sep {
   width: 1px;
@@ -999,6 +1001,10 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   font-weight: 600;
   letter-spacing: 0.03em;
   color: var(--color-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .row-muted {
   font-family: var(--font-flavor);
@@ -1069,7 +1075,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .detail-section-title {
   font-family: var(--font-heading);
-  font-size: var(--fs-2xs);
+  font-size: var(--fs-badge);
   font-weight: bold;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -1088,15 +1094,32 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .field-label {
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
+  font-weight: bold;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
 .field-value {
   font-family: var(--font-body);
-  font-size: var(--fs-md);
+  font-size: var(--fs-section-hint);
   color: var(--color-text-secondary);
   text-align: right;
+}
+
+/* ── DETAIL FULL NAME (mobile only) ─────────────────────── */
+.detail-full-name {
+  display: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+@media (max-width: 640px) {
+  .detail-full-name { display: block; }
 }
 
 /* ── DETAIL ACTIONS ──────────────────────────────────────── */
@@ -1187,22 +1210,28 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .expand-leave-to { opacity: 0; max-height: 0; }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
+
+/* Tablette : nom | catégorie | prix | → */
 @media (max-width: 768px) {
   .list-header-row,
-  .list-row { grid-template-columns: 1fr 100px 80px 28px; }
-  .col-category, .col-skill, .col-damage, .col-range, .col-price, .col-era { display: none; }
+  .list-row { grid-template-columns: 1fr 140px 110px 28px; }
+  .col-skill, .col-damage, .col-range, .col-era { display: none; }
   .detail-grid { grid-template-columns: 1fr; }
 }
+
+/* Mobile : nom | catégorie | → */
 @media (max-width: 640px) {
   .page-wrapper { padding: var(--space-md); }
   .flavor-quote p { font-size: var(--fs-base); }
   .stats-panel { grid-template-columns: repeat(3, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-md); }
-  .toolbar-sep { display: none; }
-  .toolbar-sep--push { display: none; }
+  .toolbar-sep, .toolbar-sep--push { display: none; }
   .search-row { flex-direction: column; }
   .search-field, .search-bar { width: 100%; }
   .search-input, .search-input--sm { width: 100%; box-sizing: border-box; }
+  .list-header-row,
+  .list-row { grid-template-columns: 1fr 120px 28px; }
+  .col-price { display: none; }
   .list-body { max-height: 480px; }
 }
 </style>

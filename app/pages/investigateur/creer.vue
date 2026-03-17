@@ -1949,7 +1949,8 @@ const backgroundFields = [
   border-bottom: 1px solid var(--color-border);
   border-right: 1px solid var(--color-border);
 }
-.comp-row:nth-child(even) { background: var(--color-deep); }
+.comp-row:nth-child(4n+2),
+.comp-row:nth-child(4n+3) { background: var(--color-deep); }
 .comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }
 .comp-base { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); text-align: right; }
 .comp-input {
@@ -2351,10 +2352,23 @@ const backgroundFields = [
   .carac-header, .carac-row { grid-template-columns: 50px 1fr 85px 50px 50px; }
   .comp-grid { grid-template-columns: 1fr; }
   .comp-row { border-right: none; }
+  .comp-row:nth-child(4n+2),
+  .comp-row:nth-child(4n+3) { background: unset; }
+  .comp-row:nth-child(even) { background: var(--color-deep); }
   .variable-grid { grid-template-columns: 1fr; }
   .variable-group--full { grid-column: span 1; }
   .variable-row-grid { grid-template-columns: 1fr; }
   .background-grid { grid-template-columns: 1fr; }
+  .chance-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .chance-roll-col { align-items: stretch; }
+  .btn-roll { width: 100%; text-align: center; }
 }
 @media (max-width: 480px) {
   .page-wrapper { padding: var(--space-sm); }
