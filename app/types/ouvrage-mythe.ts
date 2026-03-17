@@ -16,7 +16,7 @@ export type OuvrageSortEntry = {
   id: number
   nom_dans_ouvrage: string | null
   note: string | null
-  sort: { id: number, name: string }
+  sort: { id: number, name: string } | null
 }
 
 export type OuvrageMytheDetail = {

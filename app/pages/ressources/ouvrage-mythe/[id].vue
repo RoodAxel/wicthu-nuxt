@@ -14,12 +14,14 @@ const searchSorts = ref('')
 
 const filteredSorts = computed(() => {
   if (!ouvrage.value) return []
+  const entries = ouvrage.value.ouvrage_sort
   const q = normalizeStr(searchSorts.value.trim())
-  if (!q) return ouvrage.value.ouvrage_sort
-  return ouvrage.value.ouvrage_sort.filter(e =>
-    normalizeStr(e.sort.name).includes(q)
-    || (e.nom_dans_ouvrage ? normalizeStr(e.nom_dans_ouvrage).includes(q) : false)
-  )
+  if (!q) return entries
+  return entries.filter((e) => {
+    const nameMatch = e.sort ? normalizeStr(e.sort.name).includes(q) : false
+    const aliasMatch = e.nom_dans_ouvrage ? normalizeStr(e.nom_dans_ouvrage).includes(q) : false
+    return nameMatch || aliasMatch
+  })
 })
 </script>
 
@@ -95,16 +97,27 @@ const filteredSorts = computed(() => {
         </div>
 
         <div class="sorts-list">
-          <a
-            v-for="entry in filteredSorts"
-            :key="entry.id"
-            :href="`/ressources/sort/${entry.sort.id}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="sort-entry"
-          >
-            {{ entry.sort.name }}
-          </a>
+          <template v-for="entry in filteredSorts" :key="entry.id">
+            <a
+              v-if="entry.sort !== null"
+              :href="`/ressources/sort/${entry.sort.id}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="sort-entry"
+            >
+              {{ entry.nom_dans_ouvrage || entry.sort.name }}
+              <span v-if="entry.nom_dans_ouvrage && entry.nom_dans_ouvrage !== entry.sort.name" class="sort-alias">
+                ({{ entry.sort.name }})
+              </span>
+            </a>
+            <span
+              v-else
+              class="sort-entry sort-entry--orphan"
+              title="Sort non référencé dans la base de données"
+            >
+              {{ entry.nom_dans_ouvrage || '(sort inconnu)' }}
+            </span>
+          </template>
         </div>
       </section>
 
@@ -301,6 +314,23 @@ const filteredSorts = computed(() => {
   border-color: var(--color-arcane-dim);
   background: var(--color-elevated);
   color: var(--color-text-primary);
+}
+.sort-entry--orphan {
+  cursor: default;
+  opacity: 0.45;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.sort-entry--orphan:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+.sort-alias {
+  font-weight: 400;
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  margin-left: var(--space-xs);
 }
 
 .state-message {
