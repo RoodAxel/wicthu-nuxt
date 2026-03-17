@@ -45,11 +45,6 @@ async function saveToLibrary(weapon: WeaponWithSkill) {
 }
 
 // ── PARSEUR DÉGÂTS ────────────────────────────────────────────────────────────
-// Règles :
-//   - Tout ce qui suit le 1er '/'  est ignoré (2d10/3m → 2d10, 1d6+Imp/2 → 1d6+Imp)
-//   - Chaque terme NdM contribue N×M au total (2d6+1d8 → 12+8)
-//   - Un bonus '+K' numérique en fin d'expression est ajouté (1d8+3 → 11)
-//   - Un '+string' non numérique est ignoré (1d8+Imp → 8)
 function parseDamageValue(dmg: string | null): number | null {
   if (!dmg) return null
   const s = (dmg.split('/')[0] ?? '').trim()
