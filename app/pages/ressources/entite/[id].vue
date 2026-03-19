@@ -25,7 +25,7 @@ const id = route.params.id as string
 const { data: entite, status, error } = await useFetch<EntiteDetail>(`/api/entite/${id}`)
 
 useHead(() => ({
-  title: entite.value ? `${entite.value.name} — Bestiaire` : 'Entité'
+  title: entite.value ? `${entite.value.name} — Entité` : 'Entité'
 }))
 </script>
 
@@ -34,18 +34,18 @@ useHead(() => ({
 
     <div v-if="status === 'pending'" class="state-message">
       <span class="state-sigil">۞</span>
-      <p>Consultation du bestiaire…</p>
+      <p>Consultation du entité…</p>
     </div>
 
     <div v-else-if="error || !entite" class="state-message state-error">
       <p>Entité introuvable ou erreur de chargement.</p>
-      <NuxtLink to="/ressources/entite" class="back-link">← Retour au bestiaire</NuxtLink>
+      <NuxtLink to="/ressources/entite" class="back-link">← Retour au entité</NuxtLink>
     </div>
 
     <template v-else>
       <!-- Breadcrumb -->
       <div class="breadcrumb">
-        <NuxtLink to="/ressources/entite" class="breadcrumb-link">Bestiaire</NuxtLink>
+        <NuxtLink to="/ressources/entite" class="breadcrumb-link">Entité</NuxtLink>
         <span class="breadcrumb-sep">›</span>
         <span class="breadcrumb-current">{{ entite.name }}</span>
       </div>

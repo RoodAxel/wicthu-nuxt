@@ -90,7 +90,7 @@ const selectedCategoryNames = computed(() =>
   <main class="page-wrapper">
 
     <div class="page-header">
-      <h1 class="page-title">Bestiaire</h1>
+      <h1 class="page-title">Entité</h1>
       <p class="page-subtitle">Créatures, divinités et horreurs de l'Appel de Cthulhu</p>
     </div>
 
@@ -158,7 +158,7 @@ const selectedCategoryNames = computed(() =>
     </div>
 
     <div v-else-if="error" class="state-message state-error">
-      <p>Le bestiaire refuse de s'ouvrir : {{ error.message }}</p>
+      <p>Les entités refuse de se montrer : {{ error.message }}</p>
     </div>
 
     <div v-else-if="filtered.length === 0" class="state-message">
