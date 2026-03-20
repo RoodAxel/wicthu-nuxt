@@ -25,7 +25,6 @@ graph TB
     subgraph Supabase["Supabase (BaaS)"]
         SupaAuth["Auth\n(JWT, email/password)"]
         SupaDB["PostgreSQL\n(base de données)"]
-        SupaStorage["Storage\n(bucket fiches)"]
     end
 
     Gotenberg["Gotenberg API\n(demo.gotenberg.dev)\nConversion HTML → PDF"]
@@ -38,7 +37,6 @@ graph TB
     API -->|Prisma queries| SupaDB
     API -->|serverSupabaseUser| SupaAuth
     API -->|HTTP POST multipart| Gotenberg
-    API -->|upload / signedUrl| SupaStorage
 
     Prisma --> SupaDB
 ```
