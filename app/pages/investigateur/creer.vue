@@ -59,22 +59,227 @@ const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
   'Trouver Objet Caché': ['TOC_0']
 }
 
-const highlightedKeys = computed((): Set<string> => {
-  const keys = new Set<string>(['CRE_0'])
+// ── Spécialité → clé principale du formulaire (pour les spéc. avec slot fixe) ──
+const SPEC_TO_KEY: Record<string, string> = {
+  'Corps à corps': 'CR1_0',
+  'Armes de poing': 'CD1_0',
+  'Fusils': 'CD2_0',
+}
+
+// ── Catégorie → slots variables (valueKey, labelKey) ─────────────────────────
+const CAT_TO_VAR: Record<string, { slots: string[]; labels: string[] }> = {
+  'Arts et métiers':  { slots: ['AR1_0','AR2_0','AR3_0'], labels: ['AR1_label','AR2_label','AR3_label'] },
+  'Combat à distance':{ slots: ['CD3_0','CD4_0'],         labels: ['CD3_label','CD4_label'] },
+  'Combat rapproché': { slots: ['CR2_0','CR3_0'],         labels: ['CR2_label','CR3_label'] },
+  'Langues':          { slots: ['LG1_0','LG2_0','LG3_0'], labels: ['LG1_label','LG2_label','LG3_label'] },
+  'Pilotage':         { slots: ['PL1_0'],                  labels: ['PL1_label'] },
+  'Sciences':         { slots: ['SC1_0','SC2_0','SC3_0'], labels: ['SC1_label','SC2_label','SC3_label'] },
+  'Survie':           { slots: [],                         labels: [] },
+}
+
+// ── État des sélections ────────────────────────────────────────────────────────
+const choiceSelections    = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST
+const freeSpecSelections  = ref<Record<number, string>>({})   // FREE_SPEC: idx → specName
+const freeChoiceSelections= ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → names
+// Sous-sélection lorsqu'une option CHOICE_FROM_LIST est une catégorie : `${i}_${slot}` → specName
+const catSubSelections    = ref<Record<string, string>>({})
+
+// ── Pickers unifiés (tout type sauf FIXED) ────────────────────────────────────
+type PickerBase = { i: number }
+type FixedSpecPicker   = PickerBase & { type: 'FIXED_SPEC'; label: string }
+type FreeSpecPicker    = PickerBase & { type: 'FREE_SPEC';  catName: string; children: { id: number; name: string }[] }
+type ChoiceListPicker  = PickerBase & { type: 'CHOICE_FROM_LIST'; count: number; note: string | null; options: OccupationSkill['options'] }
+type FreeChoicePicker  = PickerBase & { type: 'FREE_CHOICE'; count: number; note: string | null }
+type OccPicker = FixedSpecPicker | FreeSpecPicker | ChoiceListPicker | FreeChoicePicker
+
+const occSkillPickers = computed((): OccPicker[] => {
+  if (!occupationDetail.value) return []
+  return occupationDetail.value.skills.flatMap((skill, i): OccPicker[] => {
+    if (skill.type === 'FIXED') return []
+    if (skill.type === 'FIXED_SPEC')
+      return [{ i, type: 'FIXED_SPEC', label: `${skill.specName ?? '?'} (${skill.competence?.name ?? ''})` }]
+    if (skill.type === 'FREE_SPEC')
+      return [{ i, type: 'FREE_SPEC', catName: skill.competence?.name ?? '?', children: skill.competence?.children ?? [] }]
+    if (skill.type === 'CHOICE_FROM_LIST')
+      return [{ i, type: 'CHOICE_FROM_LIST', count: skill.choiceCount ?? 1, note: skill.note, options: skill.options }]
+    if (skill.type === 'FREE_CHOICE')
+      return [{ i, type: 'FREE_CHOICE', count: skill.choiceCount ?? 1, note: skill.note }]
+    return []
+  })
+})
+
+// Options pour FREE_CHOICE : compétences non-catégorie du formulaire principal
+const freeChoiceOptions = computed(() =>
+  competences.filter(c => !CATEGORY_KEYS.has(c.key)).map(c => c.label)
+)
+
+// ── Calcul des clés dorées et vertes ──────────────────────────────────────────
+
+// FIXED_SPEC → clés grille principale
+const fixedSpecKeys = computed((): Set<string> => {
+  const keys = new Set<string>()
   if (!occupationDetail.value) return keys
   for (const skill of occupationDetail.value.skills) {
-    const names: string[] = []
-    if (['FIXED', 'FIXED_SPEC', 'FREE_SPEC'].includes(skill.type) && skill.competence)
-      names.push(skill.competence.name)
-    else if (skill.type === 'CHOICE_FROM_LIST')
-      skill.options.forEach(o => names.push(o.competence.name))
-    names.forEach(n => (SKILL_TO_FORM_KEYS[n] ?? []).forEach(k => keys.add(k)))
+    if (skill.type === 'FIXED_SPEC' && skill.specName) {
+      const k = SPEC_TO_KEY[skill.specName]
+      if (k) keys.add(k)
+    }
   }
   return keys
 })
 
-function isGroupHighlighted(...keys: string[]) {
-  return keys.some(k => highlightedKeys.value.has(k))
+// FREE_SPEC → clés grille principale (spec choisie par joueur)
+const freeSpecMainKeys = computed((): Set<string> => {
+  const keys = new Set<string>()
+  if (!occupationDetail.value) return keys
+  occupationDetail.value.skills.forEach((skill, i) => {
+    if (skill.type !== 'FREE_SPEC') return
+    const k = SPEC_TO_KEY[freeSpecSelections.value[i] ?? '']
+    if (k) keys.add(k)
+  })
+  return keys
+})
+
+// CHOICE_FROM_LIST → clés grille principale des options choisies
+const selectedChoiceKeys = computed((): Set<string> => {
+  const keys = new Set<string>()
+  if (!occupationDetail.value) return keys
+  occupationDetail.value.skills.forEach((skill, i) => {
+    if (skill.type !== 'CHOICE_FROM_LIST') return
+    ;(choiceSelections.value[i] ?? []).filter(Boolean).forEach((name, slot) => {
+      const opt = skill.options.find(o => o.competence.name === name)
+      if (opt?.competence.isCategory) {
+        // Option catégorie : utiliser la sous-sélection
+        const sub = catSubSelections.value[`${i}_${slot}`]
+        if (sub) { const k = SPEC_TO_KEY[sub]; if (k) keys.add(k) }
+      } else {
+        ;(SKILL_TO_FORM_KEYS[name] ?? []).forEach(k => keys.add(k))
+      }
+    })
+  })
+  return keys
+})
+
+// FREE_CHOICE → clés grille principale
+const freeChoiceMainKeys = computed((): Set<string> => {
+  const keys = new Set<string>()
+  if (!occupationDetail.value) return keys
+  occupationDetail.value.skills.forEach((skill, i) => {
+    if (skill.type !== 'FREE_CHOICE') return
+    ;(freeChoiceSelections.value[i] ?? []).filter(Boolean).forEach(name =>
+      (SKILL_TO_FORM_KEYS[name] ?? []).slice(0, 1).forEach(k => keys.add(k))
+    )
+  })
+  return keys
+})
+
+// Slots variables assignés par l'occupation (FIXED_SPEC, FREE_SPEC, sous-sélections catégories)
+const occupationVarSlots = computed((): Record<string, { spec: string; locked: boolean }> => {
+  const result: Record<string, { spec: string; locked: boolean }> = {}
+  if (!occupationDetail.value) return result
+  const used: Record<string, number> = {}
+  const assign = (catName: string, spec: string, locked: boolean) => {
+    const catVar = CAT_TO_VAR[catName]
+    if (!catVar) return
+    const idx = used[catName] ?? 0
+    if (idx >= catVar.labels.length) return
+    result[catVar.labels[idx]] = { spec, locked }
+    used[catName] = idx + 1
+  }
+  for (const [i, skill] of occupationDetail.value.skills.entries()) {
+    if (skill.type === 'FIXED_SPEC' && skill.specName && skill.competence && !SPEC_TO_KEY[skill.specName])
+      assign(skill.competence.name, skill.specName, true)
+    if (skill.type === 'FREE_SPEC' && skill.competence) {
+      const chosen = freeSpecSelections.value[i]
+      if (chosen && !SPEC_TO_KEY[chosen]) assign(skill.competence.name, chosen, false)
+    }
+    if (skill.type === 'CHOICE_FROM_LIST') {
+      ;(choiceSelections.value[i] ?? []).filter(Boolean).forEach((name, slot) => {
+        const opt = skill.options.find(o => o.competence.name === name)
+        if (!opt?.competence.isCategory) return
+        const sub = catSubSelections.value[`${i}_${slot}`]
+        if (sub && !SPEC_TO_KEY[sub]) assign(name, sub, false)
+      })
+    }
+  }
+  return result
+})
+
+// Synchronise les labels des slots variables
+watch(occupationVarSlots, (slots) => {
+  for (const [labelKey, { spec }] of Object.entries(slots)) {
+    if (!form[labelKey]) form[labelKey] = spec
+  }
+}, { deep: true })
+
+// fixedKeys : or = FIXED + FIXED_SPEC + selections FREE_SPEC/CHOICE/FREE_CHOICE + slots variables
+const fixedKeys = computed((): Set<string> => {
+  const keys = new Set<string>(['CRE_0'])
+  if (!occupationDetail.value) return keys
+  for (const skill of occupationDetail.value.skills)
+    if (skill.type === 'FIXED' && skill.competence)
+      (SKILL_TO_FORM_KEYS[skill.competence.name] ?? []).forEach(k => keys.add(k))
+  fixedSpecKeys.value.forEach(k => keys.add(k))
+  freeSpecMainKeys.value.forEach(k => keys.add(k))
+  selectedChoiceKeys.value.forEach(k => keys.add(k))
+  freeChoiceMainKeys.value.forEach(k => keys.add(k))
+  // Slots variables → leurs clés valeur passent en or
+  for (const labelKey of Object.keys(occupationVarSlots.value)) {
+    const valueKey = labelKey.replace('_label', '_0')
+    keys.add(valueKey)
+  }
+  return keys
+})
+
+// choiceKeys : vert = options CHOICE_FROM_LIST non sélectionnées (non-catégorie)
+const choiceKeys = computed((): Set<string> => {
+  const keys = new Set<string>()
+  if (!occupationDetail.value) return keys
+  for (const picker of occSkillPickers.value) {
+    if (picker.type !== 'CHOICE_FROM_LIST') continue
+    const selected = new Set((choiceSelections.value[picker.i] ?? []).filter(Boolean))
+    for (const opt of picker.options) {
+      if (!opt.competence.isCategory && !selected.has(opt.competence.name))
+        (SKILL_TO_FORM_KEYS[opt.competence.name] ?? []).forEach(k => keys.add(k))
+    }
+  }
+  fixedKeys.value.forEach(k => keys.delete(k))
+  return keys
+})
+
+const highlightedKeys = computed((): Set<string> => new Set([...fixedKeys.value, ...choiceKeys.value]))
+
+function isGroupHighlighted(...keys: string[]) { return keys.some(k => fixedKeys.value.has(k)) }
+function isGroupChoice(...keys: string[]) {
+  return !isGroupHighlighted(...keys) && keys.some(k => choiceKeys.value.has(k))
+}
+
+// ── Fonctions de mise à jour ───────────────────────────────────────────────────
+function updateChoice(idx: number, slot: number, value: string) {
+  const picker = occSkillPickers.value.find(p => p.i === idx && p.type === 'CHOICE_FROM_LIST') as ChoiceListPicker | undefined
+  const count = picker?.count ?? 1
+  const current = [...(choiceSelections.value[idx] ?? Array(count).fill(''))]
+  while (current.length < count) current.push('')
+  current[slot] = value
+  // Effacer la sous-sélection si l'option principale change
+  const catKey = `${idx}_${slot}`
+  if (catSubSelections.value[catKey]) {
+    const next = { ...catSubSelections.value }; delete next[catKey]
+    catSubSelections.value = next
+  }
+  choiceSelections.value = { ...choiceSelections.value, [idx]: current }
+}
+function updateCatSub(idx: number, slot: number, value: string) {
+  catSubSelections.value = { ...catSubSelections.value, [`${idx}_${slot}`]: value }
+}
+function updateFreeSpec(idx: number, value: string) {
+  freeSpecSelections.value = { ...freeSpecSelections.value, [idx]: value }
+}
+function updateFreeChoice(idx: number, slot: number, value: string, count: number) {
+  const current = [...(freeChoiceSelections.value[idx] ?? Array(count).fill(''))]
+  while (current.length < count) current.push('')
+  current[slot] = value
+  freeChoiceSelections.value = { ...freeChoiceSelections.value, [idx]: current }
 }
 
 const route = useRoute()
@@ -123,16 +328,19 @@ const form = reactive<Record<string, string>>({
   CP4_label: '', CP4_0: '', CP5_label: '', CP5_0: '',
   // Armes
   Arm1_ORD: '', Arm1_MAJ: '', Arm1_EXT: '', Arm1_PORT: 'Allonge', Arm1_CAP: '', Arm1_PANN: '',
-  ARM2: '', Arm2_ORD: '', Arm2_MAJ: '', Arm2_EXT: '', Arm2_DEG: '', Arm2_PORT: '', Arm2_CAP: '', Arm2_PANN: '',
-  ARM3: '', Arm3_ORD: '', Arm3_MAJ: '', Arm3_EXT: '', Arm3_DEG: '', Arm3_PORT: '', Arm3_CAP: '', Arm3_PANN: '',
-  ARM4: '', Arm4_ORD: '', Arm4_MAJ: '', Arm4_EXT: '', Arm4_DEG: '', Arm4_PORT: '', Arm4_CAP: '', Arm4_PANN: '',
-  ARM5: '', Arm5_ORD: '', Arm5_MAJ: '', Arm5_EXT: '', Arm5_DEG: '', Arm5_PORT: '', Arm5_CAP: '', Arm5_PANN: '',
+  ARM2: '', Arm2_ORD: '', Arm2_MAJ: '', Arm2_EXT: '', Arm2_DEG: '', Arm2_PORT: '', Arm2_CAD: '', Arm2_CAP: '', Arm2_PANN: '',
+  ARM3: '', Arm3_ORD: '', Arm3_MAJ: '', Arm3_EXT: '', Arm3_DEG: '', Arm3_PORT: '', Arm3_CAD: '', Arm3_CAP: '', Arm3_PANN: '',
+  ARM4: '', Arm4_ORD: '', Arm4_MAJ: '', Arm4_EXT: '', Arm4_DEG: '', Arm4_PORT: '', Arm4_CAD: '', Arm4_CAP: '', Arm4_PANN: '',
+  ARM5: '', Arm5_ORD: '', Arm5_MAJ: '', Arm5_EXT: '', Arm5_DEG: '', Arm5_PORT: '', Arm5_CAD: '', Arm5_CAP: '', Arm5_PANN: '',
   // Background
   Description: '', ideologieEtCroyance: '', traits: '',
   personnesImportantes: '', sequellesCicatrices: '', lieuxSignificatifs: '',
   phobiesManies: '', 'bienPrécieux': '', ouvragesOccultes: '', rencontresEntites: '',
   // Finances
-  capital: '', depencesCourantes: '', 'Espèces': ''
+  capital: '', depencesCourantes: '', 'Espèces': '',
+  // Équipement
+  EQUIP1: '', EQUIP2: '', EQUIP3: '', EQUIP4: '', EQUIP5: '', EQUIP6: '',
+  EQUIP7: '', EQUIP8: '', EQUIP9: '', EQUIP10: '', EQUIP11: '', EQUIP12: ''
 })
 
 function n(val: string | undefined) {
@@ -187,6 +395,33 @@ const mvt = computed(() => {
   if (forVal < tai && dex < tai) return '7'
   if (forVal > tai && dex > tai) return '9'
   return '8'
+})
+
+// ── RICHESSE DÉRIVÉE DU CRÉDIT ───────────────────────────────────────────────
+
+function fmtMoney(v: number): string {
+  return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' $'
+}
+
+const creditWealth = computed(() => {
+  const cr = n(form['CRE_0'])
+  if (cr === 0 && !form['CRE_0']) return null
+  const modern = occupationDetail.value?.is_modern ?? false
+  if (modern) {
+    if (cr <= 0)  return { tranche: 'Indigent',    especes: '10 $',                capital: 'Aucun',                           depenses: '10 $' }
+    if (cr <= 9)  return { tranche: 'Pauvre',      especes: fmtMoney(cr * 20),     capital: fmtMoney(cr * 200),                depenses: '40 $' }
+    if (cr <= 49) return { tranche: 'Moyen',       especes: fmtMoney(cr * 40),     capital: fmtMoney(cr * 1000),               depenses: '200 $' }
+    if (cr <= 89) return { tranche: 'Aisé',        especes: fmtMoney(cr * 100),    capital: fmtMoney(cr * 10000),              depenses: '1 000 $' }
+    if (cr <= 98) return { tranche: 'Riche',       especes: fmtMoney(cr * 400),    capital: fmtMoney(cr * 40000),              depenses: '5 000 $' }
+    return { tranche: 'Richissime', especes: '1 000 000 $', capital: '100 000 000 $ ou plus', depenses: '100 000 $' }
+  } else {
+    if (cr <= 0)  return { tranche: 'Indigent',    especes: '0,50 $',              capital: 'Aucun',                           depenses: '0,50 $' }
+    if (cr <= 9)  return { tranche: 'Pauvre',      especes: fmtMoney(cr),          capital: fmtMoney(cr * 10),                 depenses: '2 $' }
+    if (cr <= 49) return { tranche: 'Moyen',       especes: fmtMoney(cr * 2),      capital: fmtMoney(cr * 50),                 depenses: '10 $' }
+    if (cr <= 89) return { tranche: 'Aisé',        especes: fmtMoney(cr * 5),      capital: fmtMoney(cr * 500),                depenses: '50 $' }
+    if (cr <= 98) return { tranche: 'Riche',       especes: fmtMoney(cr * 20),     capital: fmtMoney(cr * 2000),               depenses: '250 $' }
+    return { tranche: 'Richissime', especes: '50 000 $', capital: '5 000 000 $ ou plus', depenses: '5 000 $' }
+  }
 })
 
 // ── ÂGE & MODIFICATEURS ──────────────────────────────────────────────────────
@@ -259,6 +494,10 @@ const customOccupation = ref(false)
 // ── WATCHERS OCCUPATION (après form) ─────────────────────────────────────────
 
 watch(selectedOccupationId, async (id) => {
+  choiceSelections.value = {}
+  freeSpecSelections.value = {}
+  freeChoiceSelections.value = {}
+  catSubSelections.value = {}
   if (!id) {
     occupationDetail.value = null
     return
@@ -289,6 +528,11 @@ watch(customOccupation, (custom) => {
 
 // Synchronise les dérivées calculées dans form pour l'envoi
 watchEffect(() => {
+  if (creditWealth.value) {
+    form['Espèces'] = creditWealth.value.especes
+    form['capital'] = creditWealth.value.capital
+    form['depencesCourantes'] = creditWealth.value.depenses
+  }
   form['pv_max'] = pv_max.value
   form['pm_max'] = pm_max.value
   form['sm_initial'] = sm_initial.value
@@ -307,7 +551,7 @@ watchEffect(() => {
 // ── BIBLIOTHÈQUE D'ARMES ─────────────────────────────────────────────────────
 
 interface ArmePerso { id: number, nom: string, deg: string | null, port: string | null, cap: string | null, pann: string | null }
-interface ArmeRulebook { id: number, name: string, category: string, damage: string | null, range: string | null, capacity: string | null, failure: number | null, competence: { name: string, baseValue: number | null } }
+interface ArmeRulebook { id: number, name: string, category: string, damage: string | null, range: string | null, cadence: string | null, capacity: string | null, failure: number | null, competence: { name: string, baseValue: number | null } }
 
 const showLibrary = ref(false)
 const libraryTab = ref<'perso' | 'rulebook'>('perso')
@@ -343,7 +587,7 @@ function getCompBase(labelKey: string): string {
   const label = form[labelKey]
   if (!label) return '0'
   const comp = uniqueWeaponCompetences.value.find(c => c.name === label)
-  return comp?.baseValue != null ? String(comp.baseValue) : '0'
+  return comp?.baseValue == null ? '0' : String(comp.baseValue)
 }
 
 // Mapping compétence fixe → clé de formulaire + valeur de base
@@ -388,6 +632,16 @@ async function saveWeaponToLibrary(slot: number) {
   await refreshArmePerso()
 }
 
+function clearWeaponSlot(slot: number) {
+  form[`ARM${slot}`] = ''
+  form[`Arm${slot}_ORD`] = ''
+  form[`Arm${slot}_DEG`] = ''
+  form[`Arm${slot}_PORT`] = ''
+  form[`Arm${slot}_CAD`] = ''
+  form[`Arm${slot}_CAP`] = ''
+  form[`Arm${slot}_PANN`] = ''
+}
+
 async function deleteArmePerso(id: number) {
   await $fetch(`/api/arme-perso/${id}`, { method: 'DELETE' })
   await refreshArmePerso()
@@ -407,9 +661,10 @@ function importRulebookToSlot(slot: number, arme: ArmeRulebook) {
     deg: arme.damage,
     port: arme.range,
     cap: arme.capacity,
-    pann: arme.failure != null ? String(arme.failure) : null
+    pann: arme.failure == null ? null : String(arme.failure)
   })
   form[`Arm${slot}_ORD`] = resolveOrd(arme)
+  form[`Arm${slot}_CAD`] = arme.cadence ?? ''
 }
 
 // Auto-résolution ORD réactive pour les armes reconnues dans le catalogue (ARM2–5)
@@ -485,6 +740,33 @@ function generateRandomName() {
   form['Nom'] = generateName()
 }
 
+const portraitDataUrl = ref<string | null>(null)
+
+function handlePortraitFile(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    const img = new Image()
+    img.onload = () => {
+      const maxW = 400, maxH = 400
+      let w = img.width, h = img.height
+      if (w > maxW || h > maxH) {
+        const ratio = Math.min(maxW / w, maxH / h)
+        w = Math.round(w * ratio)
+        h = Math.round(h * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      portraitDataUrl.value = canvas.toDataURL('image/jpeg', 0.85)
+    }
+    img.src = ev.target!.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
 async function generatePdf() {
   error.value = null
   savedSuccess.value = false
@@ -498,7 +780,7 @@ async function generatePdf() {
     // Génération du PDF
     const { url } = await $fetch<{ url: string }>('/api/investigateur/generate-pdf', {
       method: 'POST',
-      body: form
+      body: { ...form, portrait: portraitDataUrl.value ?? undefined }
     })
     window.open(url, '_blank')
   } catch (e: unknown) {
@@ -613,6 +895,15 @@ watch(genMethod, (m) => {
   option2Bonus.value = 0
 })
 
+// Clés catégories parentes dans la grille : non éditables, points dans les spécialités
+const CATEGORY_KEYS = new Set([
+  'ART_0',  // Arts et métiers → AR1, AR2, AR3
+  'SCI_0',  // Sciences → SC1, SC2, SC3
+  'PIL_0',  // Pilotage → PL1
+  'SUR_0',  // Survie
+  'LAG_0',  // Langue maternelle → auto EDU
+])
+
 const competences = [
   { key: 'ANT_0', label: 'Anthropologie', base: 1 },
   { key: 'ARC_0', label: 'Archéologie', base: 1 },
@@ -703,20 +994,20 @@ function parseOccPoints(formula: string | null): number {
   const terms = formula.split('+').map(t => t.trim())
   for (const term of terms) {
     if (term.startsWith('(')) {
-      const inner = term.replace(/[()]/g, '')
+      const inner = term.replaceAll(/[()]/g, '')
       const options = inner.split(/\s+ou\s+/i)
       const vals = options.map((opt) => {
         const m = opt.trim().match(/^([A-ZÉÈÀÂ]+)\s*x\s*(\d+)$/i)
         if (!m) return 0
         const key = CARAC_KEY[m[1]!.toUpperCase()] ?? ''
-        return n(form[key]) * parseInt(m[2]!)
+        return n(form[key]) * Number.parseInt(m[2]!)
       })
       total += Math.max(0, ...vals)
     } else {
       const m = term.match(/^([A-ZÉÈÀÂ]+)\s*x\s*(\d+)$/i)
       if (!m) continue
       const key = CARAC_KEY[m[1]!.toUpperCase()] ?? ''
-      total += n(form[key]) * parseInt(m[2]!)
+      total += n(form[key]) * Number.parseInt(m[2]!)
     }
   }
   return total
@@ -849,6 +1140,20 @@ const backgroundFields = [
           <div class="field-group col-2">
             <label class="field-label" for="LieuNaissance">Lieu de naissance</label>
             <input id="LieuNaissance" v-model="form['Lieu de naissance']" class="field-input" type="text">
+          </div>
+          <div class="field-group col-full portrait-group">
+            <label class="field-label">Portrait <span class="field-hint">(affiché dans le PDF)</span></label>
+            <div class="portrait-upload">
+              <label class="portrait-dropzone" :class="{ 'portrait-dropzone--filled': portraitDataUrl }">
+                <img v-if="portraitDataUrl" :src="portraitDataUrl" class="portrait-preview" alt="Portrait">
+                <span v-else class="portrait-placeholder">
+                  <span class="portrait-icon">⊞</span>
+                  <span>Choisir une image</span>
+                </span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" class="portrait-input" @change="handlePortraitFile">
+              </label>
+              <button v-if="portraitDataUrl" type="button" class="portrait-clear" @click="portraitDataUrl = null">✕ Retirer</button>
+            </div>
           </div>
         </div>
       </section>
@@ -1175,7 +1480,7 @@ const backgroundFields = [
               <template v-else>{{ occPointsRemaining }} restants</template>
             </span>
           </div>
-          <div v-if="intPointsTotal > 0" class="occ-points-tracker occ-points-tracker--int" :class="{ 'occ-points-over': intPointsRemaining < 0 }">
+          <div v-if="occupationDetail" class="occ-points-tracker occ-points-tracker--int" :class="{ 'occ-points-over': intPointsRemaining < 0 }">
             <span class="occ-points-label">Intérêt personnel</span>
             <span class="occ-points-formula">INT × 2</span>
             <span class="occ-points-sep">·</span>
@@ -1185,12 +1490,51 @@ const backgroundFields = [
             </span>
           </div>
         </div>
-        <p v-if="occupationDetail" class="highlight-hint">Les compétences <span class="highlight-sample">surlignées</span> sont recommandées par votre occupation.</p>
+        <p v-if="occupationDetail" class="highlight-hint">
+          Compétences <span class="highlight-sample highlight-sample--fixed">obligatoires</span>
+          ou <span class="highlight-sample highlight-sample--choice">disponibles au choix</span> de votre occupation.
+        </p>
+        <div v-if="occSkillPickers.some(p => p.type === 'CHOICE_FROM_LIST' && (p as any).note?.includes('social'))" class="choice-picker">
+          <div
+            v-for="picker in occSkillPickers.filter(p => p.type === 'CHOICE_FROM_LIST' && (p as any).note?.includes('social'))"
+            :key="picker.i"
+            class="choice-group choice-group--choice-from-list"
+          >
+            <span class="choice-label">{{ `Choisissez ${(picker as any).count} compétence sociale :` }}</span>
+            <div class="choice-slots">
+              <div v-for="slot in (picker as any).count" :key="slot" class="choice-slot-group">
+                <select
+                  class="field-select choice-select"
+                  :value="(choiceSelections[picker.i] ?? [])[slot - 1] ?? ''"
+                  @change="updateChoice(picker.i, slot - 1, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option value="">— Choisir —</option>
+                  <option
+                    v-for="opt in (picker as any).options"
+                    :key="opt.competence.id"
+                    :value="opt.competence.name"
+                    :disabled="(choiceSelections[picker.i] ?? []).some((v: string, j: number) => j !== slot - 1 && v === opt.competence.name)"
+                  >{{ opt.competence.name }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="comp-grid">
-          <div v-for="c in competences" :key="c.key" class="comp-row" :class="{ 'comp-highlighted': highlightedKeys.has(c.key) }">
+          <div
+            v-for="c in competences"
+            :key="c.key"
+            class="comp-row"
+            :class="{
+              'comp-highlighted': fixedKeys.has(c.key),
+              'comp-choice': choiceKeys.has(c.key),
+              'comp-category': CATEGORY_KEYS.has(c.key)
+            }"
+          >
             <span class="comp-name">{{ c.label }}</span>
             <span class="comp-base">{{ getSkillBase(c.key) }}%</span>
-            <input v-model="form[c.key]" class="comp-input" type="number" min="0" max="100" :placeholder="String(getSkillBase(c.key))">
+            <span v-if="CATEGORY_KEYS.has(c.key)" class="comp-category-badge">—</span>
+            <input v-else v-model="form[c.key]" class="comp-input" type="number" min="0" max="100" :placeholder="String(getSkillBase(c.key))">
           </div>
         </div>
       </section>
@@ -1199,14 +1543,14 @@ const backgroundFields = [
       <section class="form-section">
         <h2 class="section-title">Combat, Art, Langues, Sciences & Compétences personnelles</h2>
         <div class="variable-grid">
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('ART_0', 'AR1_0', 'AR2_0', 'AR3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('ART_0', 'AR1_0', 'AR2_0', 'AR3_0'), 'variable-group--choice': isGroupChoice('ART_0', 'AR1_0', 'AR2_0', 'AR3_0') }">
             <h3 class="variable-subtitle">Art et métier</h3>
             <div v-for="i in [1, 2, 3]" :key="`ar${i}`" class="variable-row">
-              <input v-model="form[`AR${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…">
+              <input v-model="form[`AR${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…" :readonly="occupationVarSlots[`AR${i}_label`]?.locked" :class="{ 'input-locked': occupationVarSlots[`AR${i}_label`]?.locked }">
               <input v-model="form[`AR${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CD1_0', 'CD2_0', 'CD3_0', 'CD4_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CD1_0', 'CD2_0', 'CD3_0', 'CD4_0'), 'variable-group--choice': isGroupChoice('CD1_0', 'CD2_0', 'CD3_0', 'CD4_0') }">
             <h3 class="variable-subtitle">Combat à distance (custom)</h3>
             <div v-for="i in [3, 4]" :key="`cd${i}`" class="variable-row">
               <select v-model="form[`CD${i}_label`]" class="field-select label-select">
@@ -1216,7 +1560,7 @@ const backgroundFields = [
               <input v-model="form[`CD${i}_0`]" class="comp-input" type="number" min="0" max="100" :placeholder="getCompBase(`CD${i}_label`)">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CR1_0', 'CR2_0', 'CR3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('CR1_0', 'CR2_0', 'CR3_0'), 'variable-group--choice': isGroupChoice('CR1_0', 'CR2_0', 'CR3_0') }">
             <h3 class="variable-subtitle">Combat rapproché (custom)</h3>
             <div v-for="i in [2, 3]" :key="`cr${i}`" class="variable-row">
               <select v-model="form[`CR${i}_label`]" class="field-select label-select">
@@ -1226,24 +1570,24 @@ const backgroundFields = [
               <input v-model="form[`CR${i}_0`]" class="comp-input" type="number" min="0" max="100" :placeholder="getCompBase(`CR${i}_label`)">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('LG1_0', 'LG2_0', 'LG3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('LG1_0', 'LG2_0', 'LG3_0'), 'variable-group--choice': isGroupChoice('LG1_0', 'LG2_0', 'LG3_0') }">
             <h3 class="variable-subtitle">Langues étrangères</h3>
             <div v-for="i in [1, 2, 3]" :key="`lg${i}`" class="variable-row">
-              <input v-model="form[`LG${i}_label`]" class="field-input label-input" type="text" placeholder="Langue…">
+              <input v-model="form[`LG${i}_label`]" class="field-input label-input" type="text" placeholder="Langue…" :readonly="occupationVarSlots[`LG${i}_label`]?.locked" :class="{ 'input-locked': occupationVarSlots[`LG${i}_label`]?.locked }">
               <input v-model="form[`LG${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('PIL_0', 'PL1_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('PIL_0', 'PL1_0'), 'variable-group--choice': isGroupChoice('PIL_0', 'PL1_0') }">
             <h3 class="variable-subtitle">Pilotage (custom)</h3>
             <div class="variable-row">
-              <input v-model="form['PL1_label']" class="field-input label-input" type="text" placeholder="Véhicule…">
+              <input v-model="form['PL1_label']" class="field-input label-input" type="text" placeholder="Véhicule…" :readonly="occupationVarSlots['PL1_label']?.locked" :class="{ 'input-locked': occupationVarSlots['PL1_label']?.locked }">
               <input v-model="form['PL1_0']" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
-          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('SCI_0', 'SC1_0', 'SC2_0', 'SC3_0') }">
+          <div class="variable-group" :class="{ 'variable-group--highlighted': isGroupHighlighted('SCI_0', 'SC1_0', 'SC2_0', 'SC3_0'), 'variable-group--choice': isGroupChoice('SCI_0', 'SC1_0', 'SC2_0', 'SC3_0') }">
             <h3 class="variable-subtitle">Sciences</h3>
             <div v-for="i in [1, 2, 3]" :key="`sc${i}`" class="variable-row">
-              <input v-model="form[`SC${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…">
+              <input v-model="form[`SC${i}_label`]" class="field-input label-input" type="text" placeholder="Spécialité…" :readonly="occupationVarSlots[`SC${i}_label`]?.locked" :class="{ 'input-locked': occupationVarSlots[`SC${i}_label`]?.locked }">
               <input v-model="form[`SC${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
             </div>
           </div>
@@ -1273,6 +1617,7 @@ const backgroundFields = [
               <span class="col-center">Ext.</span>
               <span class="col-center">Dégâts</span>
               <span class="col-center">Portée</span>
+              <span class="col-center">Cad.</span>
               <span class="col-center">Cap.</span>
               <span class="col-center">Panne</span>
               <span />
@@ -1286,6 +1631,7 @@ const backgroundFields = [
               <span class="weapon-auto">{{ form['Arm1_EXT'] || '—' }}</span>
               <span class="weapon-fixed">—</span>
               <input v-model="form['Arm1_PORT']" class="weapon-input" type="text" placeholder="Allonge">
+              <span class="weapon-fixed">—</span>
               <span class="weapon-fixed">—</span>
               <span class="weapon-fixed">—</span>
               <span />
@@ -1303,15 +1649,25 @@ const backgroundFields = [
               <span class="weapon-auto">{{ form[`Arm${i}_EXT`] || '—' }}</span>
               <input v-model="form[`Arm${i}_DEG`]" class="weapon-input" type="text" placeholder="—">
               <input v-model="form[`Arm${i}_PORT`]" class="weapon-input" type="text" placeholder="—">
+              <input v-model="form[`Arm${i}_CAD`]" class="weapon-input" type="text" placeholder="—">
               <input v-model="form[`Arm${i}_CAP`]" class="weapon-input" type="text" placeholder="—">
               <input v-model="form[`Arm${i}_PANN`]" class="weapon-input" type="text" placeholder="—">
-              <button
-                type="button"
-                class="weapon-save-btn"
-                :disabled="!form[`ARM${i}`]"
-                :title="form[`ARM${i}`] ? `Sauvegarder « ${form[`ARM${i}`]} » dans la bibliothèque` : 'Saisir un nom d\'arme d\'abord'"
-                @click="saveWeaponToLibrary(i)"
-              >💾</button>
+              <span class="weapon-actions">
+                <button
+                  type="button"
+                  class="weapon-save-btn"
+                  :disabled="!form[`ARM${i}`]"
+                  :title="form[`ARM${i}`] ? `Sauvegarder « ${form[`ARM${i}`]} » dans la bibliothèque` : 'Saisir un nom d\'arme d\'abord'"
+                  @click="saveWeaponToLibrary(i)"
+                >💾</button>
+                <button
+                  type="button"
+                  class="weapon-clear-btn"
+                  :disabled="!form[`ARM${i}`]"
+                  title="Vider cette ligne"
+                  @click="clearWeaponSlot(i)"
+                >✕</button>
+              </span>
             </div>
 
           </div>
@@ -1431,10 +1787,26 @@ const backgroundFields = [
         </div>
       </section>
 
+      <!-- ── ÉQUIPEMENT ───────────────────────────────────────── -->
+      <section class="form-section">
+        <h2 class="section-title">Équipement</h2>
+        <div class="equip-grid">
+          <div v-for="i in 12" :key="i" class="field-group">
+            <label class="field-label" :for="`EQUIP${i}`">{{ i }}</label>
+            <input :id="`EQUIP${i}`" v-model="form[`EQUIP${i}`]" class="field-input" type="text" placeholder="Objet…">
+          </div>
+        </div>
+      </section>
+
       <!-- ── ERROR & SUBMIT ─────────────────────────────────── -->
       <div v-if="error" class="form-error">{{ error }}</div>
 
       <div v-if="savedSuccess" class="form-success">Fiche sauvegardée avec succès.</div>
+
+      <p class="pdf-credit">
+        La fiche PDF est basée sur la
+        <a href="https://www.orbe.be/aide-de-jeux/l-appel-de-cthulhu-v7-fiche-dynamique" target="_blank" rel="noopener noreferrer">fiche dynamique d'Orbe.be</a>.
+      </p>
 
       <div ref="bottomSentinel" class="bottom-sentinel" />
       <div class="form-actions" :class="{ 'is-stuck': isStuck }">
@@ -1556,7 +1928,61 @@ const backgroundFields = [
   gap: var(--space-md);
 }
 .col-2 { grid-column: span 1; }
+.col-full { grid-column: 1 / -1; }
 .field-group { display: flex; flex-direction: column; gap: var(--space-xs); }
+.field-hint { font-size: var(--fs-secondary); color: var(--color-text-muted); font-weight: normal; }
+
+/* ── PORTRAIT ────────────────────────────────────────────── */
+.portrait-upload { display: flex; align-items: flex-start; gap: var(--space-sm); }
+.portrait-dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-elevated);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+.portrait-dropzone:hover { border-color: var(--color-gold); }
+.portrait-dropzone--filled { border-style: solid; border-color: var(--color-border-glow); }
+.portrait-preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+.portrait-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-muted);
+  font-size: var(--fs-secondary);
+  font-family: var(--font-flavor);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-sm);
+}
+.portrait-icon { font-size: 1.6rem; line-height: 1; }
+.portrait-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.portrait-clear {
+  background: none;
+  border: 1px solid var(--color-crimson-dim, #5a2a2a);
+  color: var(--color-crimson-light, #c06060);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--fs-secondary);
+  cursor: pointer;
+  align-self: flex-end;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+.portrait-clear:hover { border-color: var(--color-crimson); color: var(--color-crimson); }
 .field-label-row {
   display: flex;
   align-items: center;
@@ -1770,22 +2196,121 @@ const backgroundFields = [
   margin-bottom: var(--space-md);
 }
 .highlight-sample {
-  color: var(--color-gold);
-  background: rgba(184, 146, 74, 0.08);
   padding: 0 4px;
   border-radius: 2px;
+}
+.highlight-sample--fixed {
+  color: var(--color-gold);
+  background: rgba(184, 146, 74, 0.08);
+}
+.highlight-sample--choice {
+  color: var(--color-arcane);
+  background: rgba(127, 179, 138, 0.08);
 }
 .comp-highlighted {
   background: rgba(184, 146, 74, 0.07) !important;
   border-left: 2px solid var(--color-gold);
 }
 .comp-highlighted .comp-name { color: var(--color-gold); }
+.comp-choice {
+  background: rgba(127, 179, 138, 0.06) !important;
+  border-left: 2px solid var(--color-arcane);
+}
+.comp-choice .comp-name { color: var(--color-arcane); }
+.comp-category {
+  cursor: default;
+  border-left: 2px solid var(--color-border);
+}
+.comp-category-badge {
+  color: var(--color-text-muted);
+  text-align: right;
+  font-size: var(--fs-secondary);
+}
 .variable-group--highlighted {
   outline: 1px solid rgba(184, 146, 74, 0.35);
   outline-offset: 4px;
   border-radius: var(--radius-sm);
 }
 .variable-group--highlighted .variable-subtitle { color: var(--color-gold); }
+.variable-group--choice {
+  outline: 1px solid rgba(127, 179, 138, 0.3);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+.variable-group--choice .variable-subtitle { color: var(--color-arcane); }
+
+/* ── CHOICE PICKER ───────────────────────────────────────── */
+.choice-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+.choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(127, 179, 138, 0.05);
+  border-left: 2px solid var(--color-arcane);
+  border-radius: var(--radius-sm);
+}
+.choice-label {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-arcane);
+}
+.choice-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+.choice-slot-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 160px;
+  max-width: 260px;
+}
+.choice-select {
+  width: 100%;
+}
+.choice-select--sub {
+  border-color: var(--color-arcane-dim);
+  font-style: italic;
+}
+.choice-label--fixed {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.choice-badge-fixed {
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  border: 1px solid rgba(184,146,74,0.4);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+.choice-group--fixed-spec {
+  border-left-color: var(--color-gold);
+  background: rgba(184,146,74,0.04);
+}
+.choice-group--free-choice {
+  border-left-color: var(--color-text-muted);
+}
+.input-locked {
+  opacity: 0.7;
+  cursor: default;
+  background: rgba(184,146,74,0.04) !important;
+  color: var(--color-gold) !important;
+  border-color: rgba(184,146,74,0.3) !important;
+}
 
 /* ── GÉNÉRATION DES CARACTÉRISTIQUES ─────────────────────── */
 .gen-methods {
@@ -1937,6 +2462,16 @@ const backgroundFields = [
 .derived-value--text { font-size: var(--fs-xl); }
 .derived-formula { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-secondary); color: var(--color-text-muted); }
 
+/* ── RICHESSE ────────────────────────────────────────────── */
+.wealth-tranche {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-body);
+  color: var(--color-gold);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* ── COMPÉTENCES ─────────────────────────────────────────── */
 .comp-grid {
   display: grid; grid-template-columns: repeat(2, 1fr);
@@ -2051,6 +2586,15 @@ const backgroundFields = [
 }
 .weapon-save-btn:hover:not(:disabled) { opacity: 1; }
 .weapon-save-btn:disabled { opacity: 0.15; cursor: not-allowed; }
+.weapon-actions { display: flex; gap: 4px; align-items: center; }
+.weapon-clear-btn {
+  background: transparent; border: none;
+  font-size: 11px; cursor: pointer; opacity: 0.3;
+  transition: opacity var(--transition-fast);
+  padding: 0; line-height: 1; color: var(--color-crimson);
+}
+.weapon-clear-btn:hover:not(:disabled) { opacity: 1; }
+.weapon-clear-btn:disabled { opacity: 0.1; cursor: not-allowed; }
 
 /* ── BIBLIOTHÈQUE D'ARMES ─────────────────────────────────── */
 .library-section { margin-top: var(--space-md); }
@@ -2154,13 +2698,34 @@ const backgroundFields = [
 /* ── BACKGROUND ──────────────────────────────────────────── */
 .background-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
 
+/* ── ÉQUIPEMENT ──────────────────────────────────────────── */
+.equip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm) var(--space-md); }
+
+/* ── PDF CREDIT ──────────────────────────────────────────── */
+.pdf-credit {
+  text-align: center;
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+}
+.pdf-credit a {
+  color: var(--color-gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pdf-credit a:hover {
+  color: var(--color-gold-light, #d4a96a);
+}
+
 /* ── ERROR / SUCCESS ─────────────────────────────────────── */
 .form-error {
   background: rgba(139, 58, 58, 0.12);
   border: 1px solid var(--color-crimson-dim);
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
-  color: #c47070;
+  color: var(--color-crimson-light);
   font-family: var(--font-flavor);
   font-style: italic;
 }
@@ -2268,7 +2833,6 @@ const backgroundFields = [
 .age-panel-enter-from, .age-panel-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* ── CHANCE ──────────────────────────────────────────────── */
-.chance-section { }
 .chance-row { display: flex; }
 .chance-card {
   display: flex; align-items: center; gap: var(--space-xl);
