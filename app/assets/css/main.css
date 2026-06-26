@@ -22,8 +22,9 @@
   --color-arcane:      #7fb38a;
   --color-arcane-dim:  #3d6647;
   --color-arcane-glow: rgba(127, 179, 138, 0.15);
-  --color-crimson:     #8b3a3a;
-  --color-crimson-dim: #5c2020;
+  --color-crimson:       #8b3a3a;
+  --color-crimson-dim:   #5c2020;
+  --color-crimson-light: #e08888;
   --color-gold:        #b8924a;
   --color-gold-dim:    #7a5e28;
   --color-fog:         #4a5568;

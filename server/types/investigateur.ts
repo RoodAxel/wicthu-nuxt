@@ -62,6 +62,8 @@ export interface CharacterFormData {
   capital: string
   depencesCourantes: string
   'Espèces': string
+  // Portrait (data URL base64, non persisté en DB)
+  portrait?: string
   // Index signature pour les champs dynamiques (compétences variables, etc.)
-  [key: string]: string
+  [key: string]: string | undefined
 }
