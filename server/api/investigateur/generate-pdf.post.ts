@@ -17,10 +17,10 @@ function fifth(val: unknown) {
 
 function sanitize(s: string): string {
   return s
-    .replace(/\u2212/g, '-')   // signe moins mathématique → trait d'union
-    .replace(/\u00a0/g, ' ')   // espace insécable → espace
-    .replace(/\u2013/g, '-')   // tiret demi-cadratin → trait d'union
-    .replace(/\u2014/g, '-')   // tiret cadratin → trait d'union
+    .replace(/\u2212/g, '-') // signe moins mathématique → trait d'union
+    .replace(/\u00a0/g, ' ') // espace insécable → espace
+    .replace(/\u2013/g, '-') // tiret demi-cadratin → trait d'union
+    .replace(/\u2014/g, '-') // tiret cadratin → trait d'union
 }
 
 function setField(form: ReturnType<PDFDocument['getForm']>, name: string, value: unknown) {
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
   const backgroundSplit: Record<string, number> = {
     Description: 35, ideologieEtCroyance: 30, traits: 40, personnesImportantes: 30,
     sequellesCicatrices: 30, lieuxSignificatifs: 34, phobiesManies: 33,
-    'bienPrécieux': 36, ouvragesOccultes: 20, rencontresEntites: 20,
+    'bienPrécieux': 36, ouvragesOccultes: 20, rencontresEntites: 20
   }
   for (const [key, split] of Object.entries(backgroundSplit)) {
     const val = sanitize(str(body[key]))
@@ -198,7 +198,7 @@ export default defineEventHandler(async (event) => {
         x: zoneX + (zoneW - drawW) / 2,
         y: zoneY + (zoneH - drawH) / 2,
         width: drawW,
-        height: drawH,
+        height: drawH
       })
     } catch { /* portrait invalide — ignoré */ }
   }

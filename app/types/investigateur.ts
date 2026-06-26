@@ -8,8 +8,8 @@ export type OccupationListItem = {
   is_modern: boolean
 }
 
-type ChildComp = { id: number; name: string }
-type CompetenceRef = { id: number; name: string; isCategory: boolean | null; children: ChildComp[] }
+type ChildComp = { id: number, name: string }
+type CompetenceRef = { id: number, name: string, isCategory: boolean | null, children: ChildComp[] }
 
 export type OccupationSkill = {
   type: 'FIXED' | 'FIXED_SPEC' | 'FREE_SPEC' | 'CHOICE_FROM_LIST' | 'FREE_CHOICE'

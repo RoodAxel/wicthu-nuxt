@@ -14,6 +14,6 @@ export default withNuxt({
     'vue/html-indent': 'off',
     'vue/max-attributes-per-line': 'off',
     'vue/singleline-html-element-content-newline': 'off',
-    'vue/multiline-html-element-content-newline': 'off',
+    'vue/multiline-html-element-content-newline': 'off'
   }
 })
