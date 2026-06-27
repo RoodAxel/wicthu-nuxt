@@ -63,33 +63,33 @@ const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
 const SPEC_TO_KEY: Record<string, string> = {
   'Corps à corps': 'CR1_0',
   'Armes de poing': 'CD1_0',
-  'Fusils': 'CD2_0',
+  'Fusils': 'CD2_0'
 }
 
 // ── Catégorie → slots variables (valueKey, labelKey) ─────────────────────────
-const CAT_TO_VAR: Record<string, { slots: string[]; labels: string[] }> = {
-  'Arts et métiers':  { slots: ['AR1_0','AR2_0','AR3_0'], labels: ['AR1_label','AR2_label','AR3_label'] },
-  'Combat à distance':{ slots: ['CD3_0','CD4_0'],         labels: ['CD3_label','CD4_label'] },
-  'Combat rapproché': { slots: ['CR2_0','CR3_0'],         labels: ['CR2_label','CR3_label'] },
-  'Langues':          { slots: ['LG1_0','LG2_0','LG3_0'], labels: ['LG1_label','LG2_label','LG3_label'] },
-  'Pilotage':         { slots: ['PL1_0'],                  labels: ['PL1_label'] },
-  'Sciences':         { slots: ['SC1_0','SC2_0','SC3_0'], labels: ['SC1_label','SC2_label','SC3_label'] },
-  'Survie':           { slots: [],                         labels: [] },
+const CAT_TO_VAR: Record<string, { slots: string[], labels: string[] }> = {
+  'Arts et métiers': { slots: ['AR1_0', 'AR2_0', 'AR3_0'], labels: ['AR1_label', 'AR2_label', 'AR3_label'] },
+  'Combat à distance': { slots: ['CD3_0', 'CD4_0'], labels: ['CD3_label', 'CD4_label'] },
+  'Combat rapproché': { slots: ['CR2_0', 'CR3_0'], labels: ['CR2_label', 'CR3_label'] },
+  'Langues': { slots: ['LG1_0', 'LG2_0', 'LG3_0'], labels: ['LG1_label', 'LG2_label', 'LG3_label'] },
+  'Pilotage': { slots: ['PL1_0'], labels: ['PL1_label'] },
+  'Sciences': { slots: ['SC1_0', 'SC2_0', 'SC3_0'], labels: ['SC1_label', 'SC2_label', 'SC3_label'] },
+  'Survie': { slots: [], labels: [] }
 }
 
 // ── État des sélections ────────────────────────────────────────────────────────
-const choiceSelections    = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST
-const freeSpecSelections  = ref<Record<number, string>>({})   // FREE_SPEC: idx → specName
-const freeChoiceSelections= ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → names
+const choiceSelections = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST
+const freeSpecSelections = ref<Record<number, string>>({}) // FREE_SPEC: idx → specName
+const freeChoiceSelections = ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → names
 // Sous-sélection lorsqu'une option CHOICE_FROM_LIST est une catégorie : `${i}_${slot}` → specName
-const catSubSelections    = ref<Record<string, string>>({})
+const catSubSelections = ref<Record<string, string>>({})
 
 // ── Pickers unifiés (tout type sauf FIXED) ────────────────────────────────────
 type PickerBase = { i: number }
-type FixedSpecPicker   = PickerBase & { type: 'FIXED_SPEC'; label: string }
-type FreeSpecPicker    = PickerBase & { type: 'FREE_SPEC';  catName: string; children: { id: number; name: string }[] }
-type ChoiceListPicker  = PickerBase & { type: 'CHOICE_FROM_LIST'; count: number; note: string | null; options: OccupationSkill['options'] }
-type FreeChoicePicker  = PickerBase & { type: 'FREE_CHOICE'; count: number; note: string | null }
+type FixedSpecPicker = PickerBase & { type: 'FIXED_SPEC', label: string }
+type FreeSpecPicker = PickerBase & { type: 'FREE_SPEC', catName: string, children: { id: number, name: string }[] }
+type ChoiceListPicker = PickerBase & { type: 'CHOICE_FROM_LIST', count: number, note: string | null, options: OccupationSkill['options'] }
+type FreeChoicePicker = PickerBase & { type: 'FREE_CHOICE', count: number, note: string | null }
 type OccPicker = FixedSpecPicker | FreeSpecPicker | ChoiceListPicker | FreeChoicePicker
 
 const occSkillPickers = computed((): OccPicker[] => {
@@ -107,11 +107,6 @@ const occSkillPickers = computed((): OccPicker[] => {
     return []
   })
 })
-
-// Options pour FREE_CHOICE : compétences non-catégorie du formulaire principal
-const freeChoiceOptions = computed(() =>
-  competences.filter(c => !CATEGORY_KEYS.has(c.key)).map(c => c.label)
-)
 
 // ── Calcul des clés dorées et vertes ──────────────────────────────────────────
 
@@ -151,7 +146,10 @@ const selectedChoiceKeys = computed((): Set<string> => {
       if (opt?.competence.isCategory) {
         // Option catégorie : utiliser la sous-sélection
         const sub = catSubSelections.value[`${i}_${slot}`]
-        if (sub) { const k = SPEC_TO_KEY[sub]; if (k) keys.add(k) }
+        if (sub) {
+          const k = SPEC_TO_KEY[sub]
+          if (k) keys.add(k)
+        }
       } else {
         ;(SKILL_TO_FORM_KEYS[name] ?? []).forEach(k => keys.add(k))
       }
@@ -174,8 +172,8 @@ const freeChoiceMainKeys = computed((): Set<string> => {
 })
 
 // Slots variables assignés par l'occupation (FIXED_SPEC, FREE_SPEC, sous-sélections catégories)
-const occupationVarSlots = computed((): Record<string, { spec: string; locked: boolean }> => {
-  const result: Record<string, { spec: string; locked: boolean }> = {}
+const occupationVarSlots = computed((): Record<string, { spec: string, locked: boolean }> => {
+  const result: Record<string, { spec: string, locked: boolean }> = {}
   if (!occupationDetail.value) return result
   const used: Record<string, number> = {}
   const assign = (catName: string, spec: string, locked: boolean) => {
@@ -249,7 +247,9 @@ const choiceKeys = computed((): Set<string> => {
 
 const highlightedKeys = computed((): Set<string> => new Set([...fixedKeys.value, ...choiceKeys.value]))
 
-function isGroupHighlighted(...keys: string[]) { return keys.some(k => fixedKeys.value.has(k)) }
+function isGroupHighlighted(...keys: string[]) {
+  return keys.some(k => fixedKeys.value.has(k))
+}
 function isGroupChoice(...keys: string[]) {
   return !isGroupHighlighted(...keys) && keys.some(k => choiceKeys.value.has(k))
 }
@@ -264,22 +264,10 @@ function updateChoice(idx: number, slot: number, value: string) {
   // Effacer la sous-sélection si l'option principale change
   const catKey = `${idx}_${slot}`
   if (catSubSelections.value[catKey]) {
-    const next = { ...catSubSelections.value }; delete next[catKey]
+    const { [catKey]: _omit, ...next } = catSubSelections.value
     catSubSelections.value = next
   }
   choiceSelections.value = { ...choiceSelections.value, [idx]: current }
-}
-function updateCatSub(idx: number, slot: number, value: string) {
-  catSubSelections.value = { ...catSubSelections.value, [`${idx}_${slot}`]: value }
-}
-function updateFreeSpec(idx: number, value: string) {
-  freeSpecSelections.value = { ...freeSpecSelections.value, [idx]: value }
-}
-function updateFreeChoice(idx: number, slot: number, value: string, count: number) {
-  const current = [...(freeChoiceSelections.value[idx] ?? Array(count).fill(''))]
-  while (current.length < count) current.push('')
-  current[slot] = value
-  freeChoiceSelections.value = { ...freeChoiceSelections.value, [idx]: current }
 }
 
 const route = useRoute()
@@ -408,18 +396,18 @@ const creditWealth = computed(() => {
   if (cr === 0 && !form['CRE_0']) return null
   const modern = occupationDetail.value?.is_modern ?? false
   if (modern) {
-    if (cr <= 0)  return { tranche: 'Indigent',    especes: '10 $',                capital: 'Aucun',                           depenses: '10 $' }
-    if (cr <= 9)  return { tranche: 'Pauvre',      especes: fmtMoney(cr * 20),     capital: fmtMoney(cr * 200),                depenses: '40 $' }
-    if (cr <= 49) return { tranche: 'Moyen',       especes: fmtMoney(cr * 40),     capital: fmtMoney(cr * 1000),               depenses: '200 $' }
-    if (cr <= 89) return { tranche: 'Aisé',        especes: fmtMoney(cr * 100),    capital: fmtMoney(cr * 10000),              depenses: '1 000 $' }
-    if (cr <= 98) return { tranche: 'Riche',       especes: fmtMoney(cr * 400),    capital: fmtMoney(cr * 40000),              depenses: '5 000 $' }
+    if (cr <= 0) return { tranche: 'Indigent', especes: '10 $', capital: 'Aucun', depenses: '10 $' }
+    if (cr <= 9) return { tranche: 'Pauvre', especes: fmtMoney(cr * 20), capital: fmtMoney(cr * 200), depenses: '40 $' }
+    if (cr <= 49) return { tranche: 'Moyen', especes: fmtMoney(cr * 40), capital: fmtMoney(cr * 1000), depenses: '200 $' }
+    if (cr <= 89) return { tranche: 'Aisé', especes: fmtMoney(cr * 100), capital: fmtMoney(cr * 10000), depenses: '1 000 $' }
+    if (cr <= 98) return { tranche: 'Riche', especes: fmtMoney(cr * 400), capital: fmtMoney(cr * 40000), depenses: '5 000 $' }
     return { tranche: 'Richissime', especes: '1 000 000 $', capital: '100 000 000 $ ou plus', depenses: '100 000 $' }
   } else {
-    if (cr <= 0)  return { tranche: 'Indigent',    especes: '0,50 $',              capital: 'Aucun',                           depenses: '0,50 $' }
-    if (cr <= 9)  return { tranche: 'Pauvre',      especes: fmtMoney(cr),          capital: fmtMoney(cr * 10),                 depenses: '2 $' }
-    if (cr <= 49) return { tranche: 'Moyen',       especes: fmtMoney(cr * 2),      capital: fmtMoney(cr * 50),                 depenses: '10 $' }
-    if (cr <= 89) return { tranche: 'Aisé',        especes: fmtMoney(cr * 5),      capital: fmtMoney(cr * 500),                depenses: '50 $' }
-    if (cr <= 98) return { tranche: 'Riche',       especes: fmtMoney(cr * 20),     capital: fmtMoney(cr * 2000),               depenses: '250 $' }
+    if (cr <= 0) return { tranche: 'Indigent', especes: '0,50 $', capital: 'Aucun', depenses: '0,50 $' }
+    if (cr <= 9) return { tranche: 'Pauvre', especes: fmtMoney(cr), capital: fmtMoney(cr * 10), depenses: '2 $' }
+    if (cr <= 49) return { tranche: 'Moyen', especes: fmtMoney(cr * 2), capital: fmtMoney(cr * 50), depenses: '10 $' }
+    if (cr <= 89) return { tranche: 'Aisé', especes: fmtMoney(cr * 5), capital: fmtMoney(cr * 500), depenses: '50 $' }
+    if (cr <= 98) return { tranche: 'Riche', especes: fmtMoney(cr * 20), capital: fmtMoney(cr * 2000), depenses: '250 $' }
     return { tranche: 'Richissime', especes: '50 000 $', capital: '5 000 000 $ ou plus', depenses: '5 000 $' }
   }
 })
@@ -897,11 +885,11 @@ watch(genMethod, (m) => {
 
 // Clés catégories parentes dans la grille : non éditables, points dans les spécialités
 const CATEGORY_KEYS = new Set([
-  'ART_0',  // Arts et métiers → AR1, AR2, AR3
-  'SCI_0',  // Sciences → SC1, SC2, SC3
-  'PIL_0',  // Pilotage → PL1
-  'SUR_0',  // Survie
-  'LAG_0',  // Langue maternelle → auto EDU
+  'ART_0', // Arts et métiers → AR1, AR2, AR3
+  'SCI_0', // Sciences → SC1, SC2, SC3
+  'PIL_0', // Pilotage → PL1
+  'SUR_0', // Survie
+  'LAG_0' // Langue maternelle → auto EDU
 ])
 
 const competences = [

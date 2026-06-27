@@ -6,24 +6,15 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase'
   ],
 
-  supabase: {
-    redirect: false,
-    redirectOptions: {
-      login: '/auth/login',
-      callback: '/auth/confirm'
-    }
-  },
-
   devtools: {
     enabled: true
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/resource-list.css'],
 
   runtimeConfig: {
     // Variables privées (server only)
     databaseUrl: process.env.DATABASE_URL,
-    pdfcoApiKey: process.env.PDFCO_API_KEY,
     supabaseServiceKey: process.env.SUPABASE_SECRET_KEY,
     // Variables publiques
     public: {
@@ -33,11 +24,7 @@ export default defineNuxtConfig({
     }
   },
 
-compatibilityDate: '2025-01-15',
-
-  nitro: {
-    serverAssets: [{ baseName: 'pdfs', dir: './server/assets/pdfs' }]
-  },
+  compatibilityDate: '2025-01-15',
 
   typescript: {
     strict: true
@@ -49,6 +36,14 @@ compatibilityDate: '2025-01-15',
         commaDangle: 'never',
         braceStyle: '1tbs'
       }
+    }
+  },
+
+  supabase: {
+    redirect: false,
+    redirectOptions: {
+      login: '/auth/login',
+      callback: '/auth/confirm'
     }
   }
 })

@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user?.sub) throw createError({ statusCode: 401, statusMessage: 'Non authentifié' })
 
-  const body = await readBody<{ nom: string; deg?: string; port?: string; cap?: string; pann?: string }>(event)
+  const body = await readBody<{ nom: string, deg?: string, port?: string, cap?: string, pann?: string }>(event)
   if (!body?.nom?.trim()) throw createError({ statusCode: 400, statusMessage: 'Nom requis' })
 
   return prisma.armePerso.create({
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
       deg: body.deg || null,
       port: body.port || null,
       cap: body.cap || null,
-      pann: body.pann || null,
+      pann: body.pann || null
     }
   })
 })
