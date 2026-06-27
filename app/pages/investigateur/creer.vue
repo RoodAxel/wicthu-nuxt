@@ -6,45 +6,32 @@ import { n, half, fifth } from '~/utils/investigateur/format'
 
 definePageMeta({ middleware: 'auth' })
 
-// État central de la fiche : le `form` réactif partagé + les stats dérivées
-const { form, pv_max, pm_max, sm_initial, impact, carrure, mvt } = useCharacterForm()
+// Contexte de création : instancie tous les composables métier autour du même
+// `form` réactif et le fournit aux sous-composants de section (provide/inject).
+const ctx = useCharacterCreation()
+provide(CharacterCreationKey, ctx)
 
-// Moteur occupation : sélection, mise en évidence des compétences, budget de points
+// Ré-exposé au template (les noms disparaîtront au fur et à mesure que les
+// sections seront extraites en sous-composants qui injectent le contexte).
 const {
+  form, pv_max, pm_max, sm_initial, impact, carrure, mvt,
   occupationList, selectedOccupationId, occupationDetail, customOccupation,
   choiceSelections, occSkillPickers, updateChoice,
   fixedKeys, choiceKeys, occupationVarSlots, isGroupHighlighted, isGroupChoice,
   getSkillBase,
   occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,
-  intPointsTotal, intPointsSpent, intPointsRemaining
-} = useOccupations(form)
-
-// Richesse dérivée du crédit (synchronisée dans `form` via un watchEffect interne)
-useCreditWealth(form, occupationDetail)
-
-// Modificateurs d'âge + tirage de la Chance
-const { ageCategory, eduTestResults, rollEduTests, totalEduBonus, rollChance } = useAgeModifiers(form)
-
-// Génération des caractéristiques (classique / libre / achat / accélérée)
-const {
+  intPointsTotal, intPointsSpent, intPointsRemaining,
+  ageCategory, eduTestResults, rollEduTests, totalEduBonus, rollChance,
   genMethod, rollOneStat, rollAllClassic, lowStatsCount, option2Bonus, rollOption2,
   pool, selectedPoolIdx, isPoolMode, selectPool, assignPool, initFreePool, initQuickPool,
-  clearCaracStats, buyBudget
-} = useCharacteristicsGen(form)
-
-// Bibliothèque d'armes (perso + catalogue)
-const {
+  clearCaracStats, buyBudget,
   showLibrary, libraryTab, rulebookSearch, rulebookCategory, importTargetSlot,
   armePersoList, rulebookCategories, filteredRulebook, uniqueWeaponCompetences,
   getCompBase, saveWeaponToLibrary, clearWeaponSlot, deleteArmePerso,
-  importArmeToSlot, importRulebookToSlot
-} = useWeaponLibrary(form)
-
-// Sauvegarde / export PDF / portrait / nom aléatoire (+ chargement en mode édition)
-const {
+  importArmeToSlot, importRulebookToSlot,
   editId, isLoading, isSaving, error, savedSuccess, portraitDataUrl,
   handlePortraitFile, saveCharacter, generatePdf, generateRandomName
-} = useCharacterPersistence(form)
+} = ctx
 
 // ── Détection sticky de la barre d'actions ───────────────────────────────────
 const bottomSentinel = ref<HTMLElement | null>(null)
