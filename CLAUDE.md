@@ -14,12 +14,27 @@ Design system « Arkham Codex » piloté par `app/assets/css/main.css` (variable
 Beaucoup de fichiers ont grossi. Objectif : extraire des composants / composables réutilisables,
 réduire la duplication, gagner en lisibilité — **sans changer le comportement**.
 
-- [ ] **`app/pages/investigateur/creer.vue` (2951 lignes) — le gros morceau.**
-  - Découper en sous-composants par étape/section de la fiche (identité, caractéristiques,
-    compétences, équipement, etc.).
-  - Sortir la logique métier (calculs de stats, génération aléatoire, validation, état du
-    formulaire) dans des composables (`app/composables/`).
-  - Identifier les blocs `<template>` répétés → composants réutilisables.
+- [x] **`app/pages/investigateur/creer.vue` (2951 lignes) — le gros morceau.** — ✅ FAIT.
+  **2951 → 261 lignes** (orchestrateur mince). Refacto incrémental en 5 phases (lint/typecheck/build
+  vérifiés à chaque étape, comportement inchangé) :
+  - **Constantes & types** : `app/utils/investigateur/constants.ts` + `format.ts`, types complétés
+    dans `app/types/investigateur.ts`.
+  - **Logique métier en composables** (`app/composables/`) : `useCharacterForm`, `useOccupations`,
+    `useCreditWealth`, `useAgeModifiers`, `useCharacteristicsGen`, `useWeaponLibrary`,
+    `useCharacterPersistence`, agrégés par `useCharacterCreation` (instancie tout autour du `form`
+    réactif partagé).
+  - **Contexte provide/inject** : `CharacterCreationKey` + `injectCharacterCreation()` (évite le
+    prop-drilling ET `vue/no-mutating-props`).
+  - **Sous-composants par section** : `app/components/investigateur/*` (11 composants :
+    Identity, AgeModifiers, Characteristics, DerivedStats, Chance, Skills, VariableSkills, Weapons,
+    Background, Finances, Equipment). Chacun injecte le contexte, template-only.
+  - **CSS commun** : `app/assets/css/investigateur-form.css`, namespacé sous `.character-form`
+    (même pattern que `resource-list.css`), enregistré dans `nuxt.config.ts`. Le chrome de page
+    (header, citation) + la barre d'actions restent scopés dans `creer.vue`.
+  - ⚠️ **À vérifier visuellement / en runtime** (compilation OK, exécution non testée) : création
+    neuve **et** édition (`?edit=`), les 4 méthodes de génération, mise en évidence occupation +
+    compteurs de points, modificateurs d'âge + tests d'ÉDU + Chance, bibliothèque d'armes, portrait,
+    **sauvegarde + export PDF**, et le responsive.
 - [x] **Mutualiser les pages `app/pages/ressources/*`** — ✅ FAIT. Les 9 pages partagent
   désormais :
   - `app/components/ResourceListLayout.vue` — chrome commun (header, citation, panneau stats,
