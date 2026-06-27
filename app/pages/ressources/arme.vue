@@ -14,11 +14,15 @@ const searchPrice = ref('')
 const eraFilter = ref<'all' | 'classique' | 'moderne'>('all')
 const filterExplosive = ref(false)
 
-const selectedCategories = ref<Set<string>>(new Set())
-const categoryDropdownOpen = ref(false)
-const categoryDropdownRef = ref<HTMLElement | null>(null)
+const {
+  selected: selectedCategories,
+  open: categoryDropdownOpen,
+  triggerRef: categoryDropdownRef,
+  toggle: toggleCategory,
+  remove: removeCategory
+} = useMultiSelectFilter<string>()
 
-const expandedId = ref<number | null>(null)
+const { expandedId, toggleExpand: toggleRow } = useExpandableRows()
 
 // ── BIBLIOTHÈQUE ──────────────────────────────────────────────────────────────
 const user = useSupabaseUser()
@@ -76,6 +80,9 @@ const alphaIsActive = computed(() =>
 )
 const sortCategoryIcon = computed(() => sortCategory.value === 'asc' ? '↑' : '↓')
 const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
+const sortDamageIcon = computed(() => sortDamage.value === 'desc' ? '↓' : sortDamage.value === 'asc' ? '↑' : '↕')
+const sortClassicPriceIcon = computed(() => sortClassicPrice.value === 'desc' ? '↓' : sortClassicPrice.value === 'asc' ? '↑' : '↕')
+const sortModernPriceIcon = computed(() => sortModernPrice.value === 'desc' ? '↓' : sortModernPrice.value === 'asc' ? '↑' : '↕')
 
 function cycleSortCategory() {
   sortDamage.value = null
@@ -89,23 +96,16 @@ function cycleSortName() {
   sortModernPrice.value = null
   sortName.value = sortName.value === 'asc' ? 'desc' : 'asc'
 }
-
-const sortDamageIcon = computed(() => sortDamage.value === 'desc' ? '↓' : sortDamage.value === 'asc' ? '↑' : '↕')
-const sortClassicPriceIcon = computed(() => sortClassicPrice.value === 'desc' ? '↓' : sortClassicPrice.value === 'asc' ? '↑' : '↕')
-const sortModernPriceIcon = computed(() => sortModernPrice.value === 'desc' ? '↓' : sortModernPrice.value === 'asc' ? '↑' : '↕')
-
 function cycleSortDamage() {
   sortClassicPrice.value = null
   sortModernPrice.value = null
   sortDamage.value = sortDamage.value === null ? 'desc' : sortDamage.value === 'desc' ? 'asc' : null
 }
-
 function cycleSortClassicPrice() {
   sortDamage.value = null
   sortModernPrice.value = null
   sortClassicPrice.value = sortClassicPrice.value === null ? 'desc' : sortClassicPrice.value === 'desc' ? 'asc' : null
 }
-
 function cycleSortModernPrice() {
   sortDamage.value = null
   sortClassicPrice.value = null
@@ -121,19 +121,6 @@ const categories = computed(() => {
 const selectedCategoryNames = computed(() =>
   categories.value.filter(c => selectedCategories.value.has(c))
 )
-
-function toggleCategory(cat: string) {
-  const next = new Set(selectedCategories.value)
-  if (next.has(cat)) next.delete(cat)
-  else next.add(cat)
-  selectedCategories.value = next
-}
-
-function removeCategory(cat: string) {
-  const next = new Set(selectedCategories.value)
-  next.delete(cat)
-  selectedCategories.value = next
-}
 
 // ── FILTERED + SORTED ─────────────────────────────────────────────────────────
 const filtered = computed(() => {
@@ -197,180 +184,139 @@ const filtered = computed(() => {
   return result
 })
 
-const stats = computed(() => ({
-  total: weapons.value?.length ?? 0,
-  categories: categories.value.length,
-  classic: weapons.value?.filter(w => w.epoque.includes('classique')).length ?? 0,
-  modern: weapons.value?.filter(w => w.epoque.includes('moderne')).length ?? 0
-}))
-
-function toggleRow(id: number) {
-  expandedId.value = expandedId.value === id ? null : id
-}
-
-function handleClickOutside(e: MouseEvent) {
-  if (categoryDropdownRef.value && !categoryDropdownRef.value.contains(e.target as Node)) {
-    categoryDropdownOpen.value = false
-  }
-}
-
-onMounted(() => document.addEventListener('mousedown', handleClickOutside))
-onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
+const stats = computed(() => [
+  { number: weapons.value?.length ?? 0, label: 'Armes' },
+  { number: categories.value.length, label: 'Catégories' },
+  { number: weapons.value?.filter(w => w.epoque.includes('classique')).length ?? 0, label: 'Classiques' },
+  { number: weapons.value?.filter(w => w.epoque.includes('moderne')).length ?? 0, label: 'Modernes' },
+  { number: filtered.value.length, label: 'Résultats', highlight: true }
+])
 </script>
 
 <template>
-  <main class="page-wrapper">
-
-    <div class="page-header">
-      <h1 class="page-title">Armes</h1>
-      <p class="page-subtitle">Arsenal des investigateurs et équipements de combat</p>
-    </div>
-
-    <blockquote class="flavor-quote">
-      <p>Dans les ruelles sombres d'Arkham comme dans les jungles d'Afrique, l'acier reste la dernière réponse aux horreurs que la raison refuse d'admettre.</p>
-      <cite>— Registre du Commissariat d'Arkham, 1923</cite>
-    </blockquote>
-
-    <div class="stats-panel">
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.total }}</span>
-        <span class="stat-label">Armes</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.categories }}</span>
-        <span class="stat-label">Catégories</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.classic }}</span>
-        <span class="stat-label">Classiques</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.modern }}</span>
-        <span class="stat-label">Modernes</span>
-      </div>
-      <div class="stat-card stat-card-results">
-        <span class="stat-number stat-number-results">{{ filtered.length }}</span>
-        <span class="stat-label">Résultats</span>
-      </div>
-    </div>
-
-    <div class="toolbar">
-      <!-- Époque -->
-      <div class="filter-block">
-        <span class="filter-block-label">Époque</span>
-        <div class="filter-block-controls">
-          <button class="tag" :class="{ active: eraFilter === 'all' }" @click="eraFilter = 'all'">Toutes</button>
-          <button class="tag" :class="{ active: eraFilter === 'classique' }" @click="eraFilter = 'classique'">Classique</button>
-          <button class="tag modern-tag" :class="{ active: eraFilter === 'moderne' }" @click="eraFilter = 'moderne'">Moderne</button>
+  <ResourceListLayout
+    title="Armes"
+    subtitle="Arsenal des investigateurs et équipements de combat"
+    quote="Dans les ruelles sombres d'Arkham comme dans les jungles d'Afrique, l'acier reste la dernière réponse aux horreurs que la raison refuse d'admettre."
+    cite="— Registre du Commissariat d'Arkham, 1923"
+    accent="crimson"
+    max-width="1200px"
+    :stats-cols="5"
+    :stats-cols-mobile="3"
+    stats-max-width="none"
+    :status="status"
+    :error="error"
+    :result-count="filtered.length"
+    :stats="stats"
+    loading-text="Consultation du catalogue…"
+    empty-text="Aucune arme ne correspond à votre requête."
+  >
+    <template #subtoolbar>
+      <div class="weapon-toolbar">
+        <!-- Époque -->
+        <div class="filter-block">
+          <span class="filter-block-label">Époque</span>
+          <div class="filter-block-controls">
+            <button class="tag" :class="{ active: eraFilter === 'all' }" @click="eraFilter = 'all'">Toutes</button>
+            <button class="tag" :class="{ active: eraFilter === 'classique' }" @click="eraFilter = 'classique'">Classique</button>
+            <button class="tag modern-tag" :class="{ active: eraFilter === 'moderne' }" @click="eraFilter = 'moderne'">Moderne</button>
+          </div>
         </div>
-      </div>
 
-      <div class="toolbar-sep" />
+        <div class="toolbar-sep" />
 
-      <!-- Catégories -->
-      <div class="filter-block">
-        <span class="filter-block-label">Catégories</span>
-        <div class="filter-block-controls">
-          <div ref="categoryDropdownRef" class="dropdown-wrapper">
-            <button
-              class="tag"
-              :class="{ active: selectedCategories.size > 0 }"
-              @click="categoryDropdownOpen = !categoryDropdownOpen"
-            >
-              Filtrer <span class="dropdown-caret">{{ categoryDropdownOpen ? '▲' : '▼' }}</span>
-            </button>
-            <div v-if="categoryDropdownOpen" class="dropdown-menu">
+        <!-- Catégories -->
+        <div class="filter-block">
+          <span class="filter-block-label">Catégories</span>
+          <div class="filter-block-controls">
+            <div ref="categoryDropdownRef" class="dropdown-wrapper">
               <button
-                v-for="cat in categories"
-                :key="cat"
-                class="dropdown-item"
-                :class="{ selected: selectedCategories.has(cat) }"
-                @click="toggleCategory(cat)"
+                class="tag"
+                :class="{ active: selectedCategories.size > 0 }"
+                @click="categoryDropdownOpen = !categoryDropdownOpen"
               >
-                <span class="dropdown-check">{{ selectedCategories.has(cat) ? '✓' : '' }}</span>
-                {{ cat }}
+                Filtrer <span class="dropdown-caret">{{ categoryDropdownOpen ? '▲' : '▼' }}</span>
               </button>
+              <div v-if="categoryDropdownOpen" class="dropdown-menu">
+                <button
+                  v-for="cat in categories"
+                  :key="cat"
+                  class="dropdown-item"
+                  :class="{ selected: selectedCategories.has(cat) }"
+                  @click="toggleCategory(cat)"
+                >
+                  <span class="dropdown-check">{{ selectedCategories.has(cat) ? '✓' : '' }}</span>
+                  {{ cat }}
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div class="toolbar-sep" />
+
+        <!-- Spécial -->
+        <div class="filter-block">
+          <span class="filter-block-label">Spécial</span>
+          <div class="filter-block-controls">
+            <label class="checkbox-filter">
+              <input v-model="filterExplosive" type="checkbox" class="checkbox-input">
+              <span class="checkbox-label">(E) Empalement</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="toolbar-sep toolbar-sep--push" />
+
+        <!-- Tris prix -->
+        <div class="filter-block">
+          <span class="filter-block-label">Prix</span>
+          <div class="filter-block-controls">
+            <button class="tag sort-tag" :class="{ active: sortClassicPrice !== null }" @click="cycleSortClassicPrice">
+              Classique <span class="sort-icon">{{ sortClassicPriceIcon }}</span>
+            </button>
+            <button class="tag sort-tag modern-sort-tag" :class="{ active: sortModernPrice !== null }" @click="cycleSortModernPrice">
+              Moderne <span class="sort-icon">{{ sortModernPriceIcon }}</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="toolbar-sep" />
-
-      <!-- Spécial -->
-      <div class="filter-block">
-        <span class="filter-block-label">Spécial</span>
-        <div class="filter-block-controls">
-          <label class="checkbox-filter">
-            <input v-model="filterExplosive" type="checkbox" class="checkbox-input">
-            <span class="checkbox-label">(E) Empalement</span>
-          </label>
-        </div>
+      <!-- Catégories actives -->
+      <div v-if="selectedCategoryNames.length > 0" class="active-filters">
+        <span v-for="cat in selectedCategoryNames" :key="cat" class="active-category-filter">
+          <span class="active-category-label">{{ cat }}</span>
+          <button class="active-category-clear" :aria-label="`Retirer ${cat}`" @click="removeCategory(cat)">✕</button>
+        </span>
       </div>
 
-      <div class="toolbar-sep toolbar-sep--push" />
-
-      <!-- Tris prix -->
-      <div class="filter-block">
-        <span class="filter-block-label">Prix</span>
-        <div class="filter-block-controls">
-          <button class="tag sort-tag" :class="{ active: sortClassicPrice !== null }" @click="cycleSortClassicPrice">
-            Classique <span class="sort-icon">{{ sortClassicPriceIcon }}</span>
-          </button>
-          <button class="tag sort-tag modern-sort-tag" :class="{ active: sortModernPrice !== null }" @click="cycleSortModernPrice">
-            Moderne <span class="sort-icon">{{ sortModernPriceIcon }}</span>
-          </button>
+      <!-- Ligne de recherche -->
+      <div class="search-row">
+        <div class="search-field">
+          <label class="search-label">Arme</label>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchName" type="text" class="search-input" placeholder="Nom…">
+          </div>
+        </div>
+        <div class="search-field">
+          <label class="search-label">Compétence</label>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchSkill" type="text" class="search-input" placeholder="ex : Corps à corps…">
+          </div>
+        </div>
+        <div class="search-field">
+          <label class="search-label">Prix</label>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchPrice" type="text" class="search-input search-input--sm" placeholder="ex : 25…">
+          </div>
         </div>
       </div>
-    </div>
+    </template>
 
-    <!-- Catégories actives -->
-    <div v-if="selectedCategoryNames.length > 0" class="active-filters">
-      <span v-for="cat in selectedCategoryNames" :key="cat" class="active-category-filter">
-        <span class="active-category-label">{{ cat }}</span>
-        <button class="active-category-clear" :aria-label="`Retirer ${cat}`" @click="removeCategory(cat)">✕</button>
-      </span>
-    </div>
-
-    <!-- Ligne de recherche -->
-    <div class="search-row">
-      <div class="search-field">
-        <label class="search-label">Arme</label>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input v-model="searchName" type="text" class="search-input" placeholder="Nom…">
-        </div>
-      </div>
-      <div class="search-field">
-        <label class="search-label">Compétence</label>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input v-model="searchSkill" type="text" class="search-input" placeholder="ex : Corps à corps…">
-        </div>
-      </div>
-      <div class="search-field">
-        <label class="search-label">Prix</label>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input v-model="searchPrice" type="text" class="search-input search-input--sm" placeholder="ex : 25…">
-        </div>
-      </div>
-    </div>
-
-    <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">۞</span>
-      <p>Consultation du catalogue…</p>
-    </div>
-
-    <div v-else-if="error" class="state-message state-error">
-      <p>Les archives refusent de répondre : {{ error.message }}</p>
-    </div>
-
-    <div v-else-if="filtered.length === 0" class="state-message">
-      <p>Aucune arme ne correspond à votre requête.</p>
-    </div>
-
-    <div v-else class="table-outer">
+    <div class="table-outer">
       <div class="list-body">
         <div class="list-header-row">
           <button class="col-header-btn" :class="{ 'sort-active': alphaIsActive }" @click="cycleSortName">
@@ -501,147 +447,49 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
       </div>
     </div>
 
-    <!-- Légende -->
-    <div class="legend">
-      <span class="legend-title">Légende</span>
-      <div class="legend-item">
-        <span class="era-badge era-classique">C</span>
-        <span class="legend-desc">Classique — arme disponible à l'époque classique (années 1920)</span>
+    <template #footer>
+      <div class="legend">
+        <span class="legend-title">Légende</span>
+        <div class="legend-item">
+          <span class="era-badge era-classique">C</span>
+          <span class="legend-desc">Classique — arme disponible à l'époque classique (années 1920)</span>
+        </div>
+        <div class="legend-item">
+          <span class="era-badge era-moderne">M</span>
+          <span class="legend-desc">Moderne — arme disponible à l'époque moderne</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-token token-rare">Rare</span>
+          <span class="legend-desc">Arme obsolète, illégale ou recherchée par les collectionneurs — difficile à trouver</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-token token-damage">(E)</span>
+          <span class="legend-desc">Empalement — en cas de coup critique, en plus des dégâts maximum, rajoute un lancer des dés de dégâts</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-token token-damage">Etourd.</span>
+          <span class="legend-desc">Étourdissement — la cible ne peut plus agir pendant 1d6 tours (ou à la discrétion du gardien)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-token token-damage">Feu</span>
+          <span class="legend-desc">La cible doit réussir un test de Chance ou prendre feu</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-token token-neutral">Cadence 1(3)</span>
+          <span class="legend-desc">La valeur entre parenthèses représente le nombre maximum de tirs possibles en un seul round</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-token token-failure">Panne</span>
+          <span class="legend-desc">Si le jet d'attaque est supérieur ou égal à ce seuil, le tir ne part pas et l'arme risque l'enrayement</span>
+        </div>
       </div>
-      <div class="legend-item">
-        <span class="era-badge era-moderne">M</span>
-        <span class="legend-desc">Moderne — arme disponible à l'époque moderne</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-token token-rare">Rare</span>
-        <span class="legend-desc">Arme obsolète, illégale ou recherchée par les collectionneurs — difficile à trouver</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-token token-damage">(E)</span>
-        <span class="legend-desc">Empalement — en cas de coup critique, en plus des dégâts maximum, rajoute un lancer des dés de dégâts</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-token token-damage">Etourd.</span>
-        <span class="legend-desc">Étourdissement — la cible ne peut plus agir pendant 1d6 tours (ou à la discrétion du gardien)</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-token token-damage">Feu</span>
-        <span class="legend-desc">La cible doit réussir un test de Chance ou prendre feu</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-token token-neutral">Cadence 1(3)</span>
-        <span class="legend-desc">La valeur entre parenthèses représente le nombre maximum de tirs possibles en un seul round</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-token token-failure">Panne</span>
-        <span class="legend-desc">Si le jet d'attaque est supérieur ou égal à ce seuil, le tir ne part pas et l'arme risque l'enrayement</span>
-      </div>
-    </div>
-
-  </main>
+    </template>
+  </ResourceListLayout>
 </template>
 
 <style scoped>
-.page-wrapper {
-  padding: var(--space-xl);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* ── PAGE HEADER ─────────────────────────────────────────── */
-.page-header {
-  margin-bottom: var(--space-xl);
-  padding-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--color-border);
-  position: relative;
-}
-.page-header::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0;
-  width: 80px; height: 1px;
-  background: var(--color-crimson);
-}
-.page-title {
-  font-family: var(--font-heading);
-  font-size: var(--fs-2xl);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-xs);
-}
-.page-subtitle {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  color: var(--color-text-secondary);
-  font-size: var(--fs-lg);
-}
-
-/* ── FLAVOR QUOTE ────────────────────────────────────────── */
-.flavor-quote {
-  background: var(--color-void);
-  border-left: 2px solid var(--color-crimson-dim);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-.flavor-quote p {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-xl);
-  color: var(--color-text-secondary);
-  line-height: 1.8;
-}
-.flavor-quote cite {
-  display: block;
-  margin-top: var(--space-sm);
-  font-family: var(--font-heading);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-/* ── STATS PANEL ─────────────────────────────────────────── */
-.stats-panel {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
-}
-
-.stat-card-results {
-  border-color: var(--color-arcane-dim);
-}
-.stat-number-results {
-  color: var(--color-text-primary);
-}
-.stat-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  text-align: center;
-}
-.stat-number {
-  font-family: var(--font-display);
-  font-size: var(--fs-2xl);
-  color: var(--color-crimson);
-  display: block;
-  line-height: 1;
-  margin-bottom: var(--space-xs);
-}
-.stat-label {
-  font-family: var(--font-heading);
-  font-size: var(--fs-2xs);
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-/* ── TOOLBAR ─────────────────────────────────────────────── */
-.toolbar {
+/* ══ TOOLBAR (carte de filtres) ══════════════════════════════ */
+.weapon-toolbar {
   display: flex;
   align-items: flex-end;
   gap: var(--space-md);
@@ -652,11 +500,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
 }
-.filter-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
+.filter-block { display: flex; flex-direction: column; gap: var(--space-xs); }
 .filter-block-label {
   font-family: var(--font-heading);
   font-size: var(--fs-2xs);
@@ -664,12 +508,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
-.filter-block-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
+.filter-block-controls { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
 .toolbar-sep {
   width: 1px;
   height: 36px;
@@ -680,8 +519,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .toolbar-sep--push { margin-left: auto; visibility: hidden; }
 
-/* ── TAGS ────────────────────────────────────────────────── */
-.tag {
+/* Tags (dans la toolbar) */
+.weapon-toolbar .tag {
   font-family: var(--font-heading);
   font-size: var(--fs-md);
   letter-spacing: 0.12em;
@@ -697,11 +536,23 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   align-items: center;
   gap: var(--space-xs);
 }
-.tag:hover { border-color: var(--color-crimson-dim); color: #c47070; }
-.tag.active { background: var(--color-crimson-dim); border-color: var(--color-crimson); color: #c47070; }
-.tag.modern-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
-.tag.modern-tag:hover { border-color: var(--color-arcane); }
+.weapon-toolbar .tag:hover { border-color: var(--color-crimson-dim); color: #c47070; }
+.weapon-toolbar .tag.active { background: var(--color-crimson-dim); border-color: var(--color-crimson); color: #c47070; }
+.weapon-toolbar .tag.modern-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
+.weapon-toolbar .tag.modern-tag:hover { border-color: var(--color-arcane); }
+.weapon-toolbar .tag.modern-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
 
+.weapon-toolbar .sort-tag { border-color: var(--color-gold-dim); color: var(--color-gold); }
+.weapon-toolbar .sort-tag:hover { border-color: var(--color-gold); }
+.weapon-toolbar .sort-tag.active { background: var(--color-gold-dim); border-color: var(--color-gold); color: var(--color-gold); }
+.weapon-toolbar .sort-tag.modern-sort-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
+.weapon-toolbar .sort-tag.modern-sort-tag:hover { border-color: var(--color-arcane); }
+.weapon-toolbar .sort-tag.modern-sort-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
+
+.weapon-toolbar .dropdown-item.selected { color: #c47070; }
+.weapon-toolbar .dropdown-check { color: #c47070; }
+
+/* Checkbox (E) */
 .checkbox-filter {
   display: inline-flex;
   align-items: center;
@@ -714,13 +565,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   transition: all var(--transition-fast);
   user-select: none;
 }
-.checkbox-filter:hover {
-  border-color: var(--color-crimson-dim);
-}
-.checkbox-filter:has(.checkbox-input:checked) {
-  background: var(--color-crimson-dim);
-  border-color: var(--color-crimson);
-}
+.checkbox-filter:hover { border-color: var(--color-crimson-dim); }
+.checkbox-filter:has(.checkbox-input:checked) { background: var(--color-crimson-dim); border-color: var(--color-crimson); }
 .checkbox-input {
   appearance: none;
   -webkit-appearance: none;
@@ -734,10 +580,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   position: relative;
   transition: all var(--transition-fast);
 }
-.checkbox-input:checked {
-  background: var(--color-crimson);
-  border-color: var(--color-crimson);
-}
+.checkbox-input:checked { background: var(--color-crimson); border-color: var(--color-crimson); }
 .checkbox-input:checked::after {
   content: '';
   position: absolute;
@@ -757,60 +600,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   transition: color var(--transition-fast);
 }
 .checkbox-filter:has(.checkbox-input:checked) .checkbox-label { color: #c47070; }
-.tag.modern-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
 
-.sort-tag { border-color: var(--color-gold-dim); color: var(--color-gold); }
-.sort-tag:hover { border-color: var(--color-gold); }
-.sort-tag.active { background: var(--color-gold-dim); border-color: var(--color-gold); color: var(--color-gold); }
-.sort-tag.modern-sort-tag { border-color: var(--color-arcane-dim); color: var(--color-arcane); }
-.sort-tag.modern-sort-tag:hover { border-color: var(--color-arcane); }
-.sort-tag.modern-sort-tag.active { background: var(--color-arcane-dim); border-color: var(--color-arcane); color: var(--color-arcane); }
-
-.sort-icon { font-size: 0.7rem; opacity: 0.8; }
-
-/* ── DROPDOWN ────────────────────────────────────────────── */
-.dropdown-caret { font-size: 0.5rem; opacity: 0.6; }
-.dropdown-wrapper { position: relative; }
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 50;
-  background: var(--color-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  min-width: 200px;
-  max-height: 280px;
-  overflow-y: auto;
-  box-shadow: var(--shadow-deep);
-}
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  font-family: var(--font-heading);
-  font-size: var(--fs-md);
-  letter-spacing: 0.08em;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
-}
-.dropdown-item:hover { background: var(--color-surface); color: var(--color-text-primary); }
-.dropdown-item.selected { color: #c47070; }
-.dropdown-check { width: 14px; font-size: 0.7rem; color: #c47070; flex-shrink: 0; }
-
-/* ── ACTIVE FILTERS ──────────────────────────────────────── */
-.active-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
-}
+/* ══ FILTRES ACTIFS ══════════════════════════════════════════ */
 .active-category-filter {
   display: inline-flex;
   align-items: center;
@@ -844,18 +635,9 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .active-category-clear:hover { background: var(--color-crimson-dim); }
 
-/* ── SEARCH ROW ──────────────────────────────────────────── */
-.search-row {
-  display: flex;
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
-  flex-wrap: wrap;
-}
-.search-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
+/* ══ RECHERCHE ═══════════════════════════════════════════════ */
+.search-row { display: flex; gap: var(--space-md); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.search-field { display: flex; flex-direction: column; gap: var(--space-xs); }
 .search-label {
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
@@ -863,75 +645,27 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
-.search-bar { position: relative; }
-.search-icon {
-  position: absolute;
-  left: var(--space-sm);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-muted);
-  font-size: var(--fs-md);
-  pointer-events: none;
-}
-.search-input {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  font-size: var(--fs-lg);
-  width: 220px;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  outline: none;
-}
-.search-input--sm { width: 140px; }
-.search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
-.search-input:focus {
+.search-row .search-input { width: 220px; }
+.search-row .search-input--sm { width: 140px; }
+.search-row .search-input:focus {
   border-color: var(--color-crimson-dim);
   box-shadow: 0 0 0 2px rgba(139, 58, 58, 0.15);
 }
 
-/* ── STATE MESSAGES ──────────────────────────────────────── */
-.state-message {
-  text-align: center;
-  padding: var(--space-2xl);
-  color: var(--color-text-muted);
-  font-family: var(--font-flavor);
-}
-.state-sigil {
-  display: block;
-  font-size: var(--fs-4xl);
-  margin-bottom: var(--space-md);
-  color: var(--color-crimson);
-  animation: pulse-sigil 2s ease-in-out infinite;
-}
-@keyframes pulse-sigil { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-.state-error { color: var(--color-crimson); }
-
-/* ── TABLE ───────────────────────────────────────────────── */
+/* ══ TABLE ═══════════════════════════════════════════════════ */
 .table-outer {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-.list-header-row,
-.list-row {
-  display: grid;
+.table-outer .list-header-row,
+.table-outer .list-row {
   grid-template-columns: 1fr 140px 160px 90px 100px 120px 70px 28px;
   align-items: center;
-  padding: var(--space-sm) var(--space-lg);
   gap: var(--space-md);
 }
-.list-header-row {
-  background: var(--color-elevated);
-  border-bottom: 1px solid var(--color-border);
-  font-family: var(--font-heading);
+.table-outer .list-header-row {
   font-size: var(--fs-sm);
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -954,29 +688,12 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .col-header-btn:hover { color: var(--color-gold); }
 .col-header-btn.sort-active { color: var(--color-gold); }
-.sort-icon { font-size: 0.7rem; opacity: 0.7; }
 
-.list-body {
-  max-height: 640px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-.list-body::-webkit-scrollbar { width: 6px; }
-.list-body::-webkit-scrollbar-track { background: transparent; }
-.list-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
-.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-crimson-dim); }
-.list-row {
-  transition: background var(--transition-fast);
-  cursor: pointer;
-  user-select: none;
-}
-.row-even { background: var(--color-surface); }
-.row-odd  { background: var(--color-deep); }
-.list-row:hover { background: var(--color-elevated); }
-.list-row.row-expanded { border-bottom: 1px solid var(--color-border); }
+.table-outer .list-body { max-height: 640px; }
+.table-outer .list-body::-webkit-scrollbar-thumb:hover { background: var(--color-crimson-dim); }
+.table-outer .list-row { cursor: pointer; user-select: none; }
+.table-outer .list-row.row-expanded { border-bottom: 1px solid var(--color-border); }
 
-/* ── CHEVRON ─────────────────────────────────────────────── */
 .chevron {
   font-family: var(--font-heading);
   font-size: var(--fs-lg);
@@ -989,12 +706,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 }
 .chevron.open { transform: rotate(90deg); color: var(--color-crimson); }
 
-/* ── CELL STYLES ─────────────────────────────────────────── */
-.row-name {
-  font-family: var(--font-heading);
-  font-size: var(--fs-md);
-  font-weight: 600;
-  letter-spacing: 0.03em;
+/* Cellules */
+.table-outer .row-name {
   color: var(--color-text-primary);
   min-width: 0;
   overflow: hidden;
@@ -1025,13 +738,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   font-weight: 600;
   color: var(--color-crimson);
 }
-.row-failure {
-  font-family: var(--font-heading);
-  font-size: var(--fs-md);
-  color: var(--color-gold);
-}
+.row-failure { font-family: var(--font-heading); font-size: var(--fs-md); color: var(--color-gold); }
 
-/* ── PRICE ───────────────────────────────────────────────── */
 .col-price {
   display: flex;
   align-items: center;
@@ -1043,7 +751,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 .price-sep { color: var(--color-text-muted); }
 .price-modern { color: var(--color-arcane); }
 
-/* ── ERA BADGES ──────────────────────────────────────────── */
 .col-era { display: flex; gap: 4px; flex-wrap: wrap; }
 .era-list { display: flex; gap: 6px; flex-wrap: wrap; }
 .era-badge {
@@ -1054,20 +761,16 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   padding: 2px 5px;
   border-radius: var(--radius-sm);
 }
-.era-classique { background: rgba(184,146,74,0.12); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
-.era-moderne   { background: rgba(127,179,138,0.12); color: var(--color-arcane); border: 1px solid var(--color-arcane-dim); }
+.era-classique { background: rgba(184, 146, 74, 0.12); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
+.era-moderne { background: rgba(127, 179, 138, 0.12); color: var(--color-arcane); border: 1px solid var(--color-arcane-dim); }
 
-/* ── DETAIL PANEL ────────────────────────────────────────── */
+/* ══ PANNEAU DE DÉTAIL ═══════════════════════════════════════ */
 .detail-panel {
   border-bottom: 1px solid var(--color-border);
   padding: var(--space-lg) var(--space-xl);
   border-top: 1px solid var(--color-border-glow);
 }
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-xl);
-}
+.detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); }
 .detail-section-title {
   font-family: var(--font-heading);
   font-size: var(--fs-badge);
@@ -1080,12 +783,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   border-bottom: 1px solid var(--color-border);
 }
 .detail-fields { display: flex; flex-direction: column; gap: var(--space-sm); }
-.detail-field {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-sm);
-}
+.detail-field { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-sm); }
 .field-label {
   font-family: var(--font-heading);
   font-size: var(--fs-sm);
@@ -1100,8 +798,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   color: var(--color-text-secondary);
   text-align: right;
 }
-
-/* ── DETAIL FULL NAME (mobile only) ─────────────────────── */
 .detail-full-name {
   display: none;
   font-family: var(--font-heading);
@@ -1113,11 +809,6 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   padding-bottom: var(--space-sm);
   border-bottom: 1px solid var(--color-border);
 }
-@media (max-width: 640px) {
-  .detail-full-name { display: block; }
-}
-
-/* ── DETAIL ACTIONS ──────────────────────────────────────── */
 .detail-actions {
   margin-top: var(--space-md);
   padding-top: var(--space-md);
@@ -1137,48 +828,10 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.btn-save-library:hover:not(:disabled) {
-  background: rgba(127,179,138,0.1);
-  border-color: var(--color-arcane);
-}
-.btn-save-library:disabled {
-  opacity: 0.6;
-  cursor: default;
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
-}
+.btn-save-library:hover:not(:disabled) { background: rgba(127, 179, 138, 0.1); border-color: var(--color-arcane); }
+.btn-save-library:disabled { opacity: 0.6; cursor: default; color: var(--color-text-muted); border-color: var(--color-border); }
 
-/* ── LEGEND ──────────────────────────────────────────────── */
-.legend {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-void);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-.legend-title {
-  font-family: var(--font-heading);
-  font-size: var(--fs-badge);
-  font-weight: bold;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-.legend-desc {
-  font-family: var(--font-flavor);
-  font-size: var(--fs-section-hint);
-  color: var(--color-text-muted);
-  line-height: 1.5;
-}
+/* ══ LÉGENDE (jetons spécifiques armes) ══════════════════════ */
 .legend-token {
   font-family: var(--font-heading);
   font-size: var(--fs-row-value);
@@ -1189,44 +842,29 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
   white-space: nowrap;
   flex-shrink: 0;
 }
-.token-rare    { background: rgba(139,58,58,0.15); color: #c47070; border: 1px solid var(--color-crimson-dim); }
-.token-damage  { background: rgba(139,58,58,0.1);  color: var(--color-crimson); border: 1px solid var(--color-crimson-dim); }
-.token-failure { background: rgba(184,146,74,0.12); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
+.token-rare { background: rgba(139, 58, 58, 0.15); color: #c47070; border: 1px solid var(--color-crimson-dim); }
+.token-damage { background: rgba(139, 58, 58, 0.1); color: var(--color-crimson); border: 1px solid var(--color-crimson-dim); }
+.token-failure { background: rgba(184, 146, 74, 0.12); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
 .token-neutral { background: var(--color-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
 
-/* ── EXPAND TRANSITION ───────────────────────────────────── */
-.expand-enter-active,
-.expand-leave-active {
-  transition: opacity 0.2s ease, max-height 0.25s ease;
-  max-height: 300px;
-  overflow: hidden;
-}
-.expand-enter-from,
-.expand-leave-to { opacity: 0; max-height: 0; }
-
-/* ── RESPONSIVE ──────────────────────────────────────────── */
-
-/* Tablette : nom | catégorie | prix | → */
+/* ══ RESPONSIVE ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .list-header-row,
-  .list-row { grid-template-columns: 1fr 140px 110px 28px; }
+  .table-outer .list-header-row,
+  .table-outer .list-row { grid-template-columns: 1fr 140px 110px 28px; }
   .col-skill, .col-damage, .col-range, .col-era { display: none; }
   .detail-grid { grid-template-columns: 1fr; }
 }
-
-/* Mobile : nom | catégorie | → */
 @media (max-width: 640px) {
-  .page-wrapper { padding: var(--space-md); }
-  .flavor-quote p { font-size: var(--fs-base); }
-  .stats-panel { grid-template-columns: repeat(3, 1fr); }
-  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-md); }
+  .weapon-toolbar { flex-direction: column; align-items: stretch; gap: var(--space-md); }
   .toolbar-sep, .toolbar-sep--push { display: none; }
   .search-row { flex-direction: column; }
   .search-field, .search-bar { width: 100%; }
-  .search-input, .search-input--sm { width: 100%; box-sizing: border-box; }
-  .list-header-row,
-  .list-row { grid-template-columns: 1fr 120px 28px; }
+  .search-row .search-input,
+  .search-row .search-input--sm { width: 100%; box-sizing: border-box; }
+  .table-outer .list-header-row,
+  .table-outer .list-row { grid-template-columns: 1fr 120px 28px; }
   .col-price { display: none; }
-  .list-body { max-height: 480px; }
+  .table-outer .list-body { max-height: 480px; }
+  .detail-full-name { display: block; }
 }
 </style>

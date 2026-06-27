@@ -101,11 +101,12 @@ function cycleSortCredit() {
   sortCredit.value = sortCredit.value === null ? 'desc' : sortCredit.value === 'desc' ? 'asc' : null
 }
 
-const stats = computed(() => ({
-  total: occupations.value?.length ?? 0,
-  lovecraftian: occupations.value?.filter(o => o.is_lovecraftian).length ?? 0,
-  modern: occupations.value?.filter(o => o.is_modern).length ?? 0
-}))
+const stats = computed(() => [
+  { number: occupations.value?.length ?? 0, label: 'Occupations' },
+  { number: occupations.value?.filter(o => o.is_lovecraftian).length ?? 0, label: 'Lovecraftiennes' },
+  { number: occupations.value?.filter(o => o.is_modern).length ?? 0, label: 'Modernes' },
+  { number: filtered.value.length, label: 'Résultats', highlight: true }
+])
 
 // ── ACTIONS ──────────────────────────────────────────────────────────────────
 
@@ -150,83 +151,58 @@ function isFixedSkill(skill: OccupationSkill) {
 </script>
 
 <template>
-  <main class="page-wrapper">
-
-    <div class="page-header">
-      <h1 class="page-title">Occupations</h1>
-      <p class="page-subtitle">Métiers et parcours des investigateurs de Providence</p>
-    </div>
-
-    <blockquote class="flavor-quote">
-      <p>Ce que vous étiez avant de croiser l'indicible définit comment vous survivrez — ou pérerez — face à lui.</p>
-      <cite>— Manuel de l'Investigateur, Arkham 1923</cite>
-    </blockquote>
-
-    <div class="stats-panel">
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.total }}</span>
-        <span class="stat-label">Occupations</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.lovecraftian }}</span>
-        <span class="stat-label">Lovecraftiennes</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-number">{{ stats.modern }}</span>
-        <span class="stat-label">Modernes</span>
-      </div>
-      <div class="stat-card stat-card-results">
-        <span class="stat-number stat-number-results">{{ filtered.length }}</span>
-        <span class="stat-label">Résultats</span>
-      </div>
-    </div>
-
-    <div class="toolbar">
+  <ResourceListLayout
+    title="Occupations"
+    subtitle="Métiers et parcours des investigateurs de Providence"
+    quote="Ce que vous étiez avant de croiser l'indicible définit comment vous survivrez — ou pérerez — face à lui."
+    cite="— Manuel de l'Investigateur, Arkham 1923"
+    accent="gold"
+    max-width="1200px"
+    :stats-cols="4"
+    :stats-cols-mobile="2"
+    stats-max-width="640px"
+    :status="status"
+    :error="error"
+    :result-count="filtered.length"
+    :stats="stats"
+    loading-text="Consultation des archives…"
+    empty-text="Aucune occupation ne correspond à votre requête."
+  >
+    <template #toolbar>
       <div class="filters">
         <button class="tag" :class="{ active: activeFilter === 'all' }" @click="activeFilter = 'all'">Toutes</button>
         <button class="tag" :class="{ active: activeFilter === 'lovecraftian' }" @click="activeFilter = 'lovecraftian'">Lovecraftiennes</button>
         <button class="tag" :class="{ active: activeFilter === 'modern' }" @click="activeFilter = 'modern'">Modernes</button>
       </div>
-    </div>
+    </template>
 
-    <div class="search-row">
-      <div class="search-field">
-        <label class="search-label">Occupation</label>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input v-model="searchName" type="text" class="search-input" placeholder="Nom…">
+    <template #subtoolbar>
+      <div class="search-row">
+        <div class="search-field">
+          <label class="search-label">Occupation</label>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchName" type="text" class="search-input" placeholder="Nom…">
+          </div>
+        </div>
+        <div class="search-field">
+          <label class="search-label">Formule de points</label>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchFormula" type="text" class="search-input" placeholder="ex : DEX, INT…">
+          </div>
+        </div>
+        <div class="search-field">
+          <label class="search-label">Crédit</label>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input v-model="searchCredit" type="text" inputmode="numeric" pattern="[0-9]*" class="search-input search-input--credit" placeholder="ex : 30">
+          </div>
         </div>
       </div>
-      <div class="search-field">
-        <label class="search-label">Formule de points</label>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input v-model="searchFormula" type="text" class="search-input" placeholder="ex : DEX, INT…">
-        </div>
-      </div>
-      <div class="search-field">
-        <label class="search-label">Crédit</label>
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input v-model="searchCredit" type="text" inputmode="numeric" pattern="[0-9]*" class="search-input search-input--credit" placeholder="ex : 30">
-        </div>
-      </div>
-    </div>
+    </template>
 
-    <div v-if="status === 'pending'" class="state-message">
-      <span class="state-sigil">۞</span>
-      <p>Consultation des archives…</p>
-    </div>
-
-    <div v-else-if="error" class="state-message state-error">
-      <p>Les archives refusent de répondre : {{ error.message }}</p>
-    </div>
-
-    <div v-else-if="filtered.length === 0" class="state-message">
-      <p>Aucune occupation ne correspond à votre requête.</p>
-    </div>
-
-    <div v-else class="list-container">
+    <div class="list-container">
       <div class="list-body">
         <div class="list-header-row">
           <button class="col-sortable sort-active" @click="cycleSortName">
@@ -324,148 +300,24 @@ function isFixedSkill(skill: OccupationSkill) {
       </div>
     </div>
 
-    <!-- Légende des badges -->
-    <div class="legend">
-      <span class="legend-title">Légende</span>
-      <div class="legend-item">
-        <span class="badge badge-lore">Lovecraft</span>
-        <span class="legend-desc">occupation importante dans les récits du maître de Providence.</span>
+    <template #footer>
+      <div class="legend">
+        <span class="legend-title">Légende</span>
+        <div class="legend-item">
+          <span class="badge badge-lore">Lovecraft</span>
+          <span class="legend-desc">occupation importante dans les récits du maître de Providence.</span>
+        </div>
+        <div class="legend-item">
+          <span class="badge badge-modern">Moderne</span>
+          <span class="legend-desc">Disponible uniquement à l'époque moderne</span>
+        </div>
       </div>
-      <div class="legend-item">
-        <span class="badge badge-modern">Moderne</span>
-        <span class="legend-desc">Disponible uniquement à l'époque moderne</span>
-      </div>
-    </div>
-
-  </main>
+    </template>
+  </ResourceListLayout>
 </template>
 
 <style scoped>
-.page-wrapper {
-  padding: var(--space-xl);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* ── PAGE HEADER ─────────────────────────────────────────── */
-.page-header {
-  margin-bottom: var(--space-xl);
-  padding-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--color-border);
-  position: relative;
-}
-.page-header::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0;
-  width: 80px; height: 1px;
-  background: var(--color-gold);
-}
-.page-title {
-  font-family: var(--font-heading);
-  font-size: var(--fs-page-title);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-xs);
-}
-.page-subtitle {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  color: var(--color-text-secondary);
-  font-size: var(--fs-page-subtitle);
-}
-
-/* ── FLAVOR QUOTE ────────────────────────────────────────── */
-.flavor-quote {
-  background: var(--color-void);
-  border-left: 2px solid var(--color-gold-dim);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-xl);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-.flavor-quote p {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-flavor-quote);
-  color: var(--color-text-secondary);
-  line-height: 1.8;
-}
-.flavor-quote cite {
-  display: block;
-  margin-top: var(--space-sm);
-  font-family: var(--font-heading);
-  font-size: var(--fs-section-title);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-/* ── STATS ───────────────────────────────────────────────── */
-.stats-panel {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
-  max-width: 640px;
-}
-
-.stat-card-results {
-  border-color: var(--color-arcane-dim);
-}
-.stat-number-results {
-  color: var(--color-text-primary);
-}
-.stat-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  text-align: center;
-}
-.stat-number {
-  font-family: var(--font-display);
-  font-size: var(--fs-stat-number);
-  color: var(--color-gold);
-  display: block;
-  line-height: 1;
-  margin-bottom: var(--space-xs);
-}
-.stat-label {
-  font-family: var(--font-heading);
-  font-size: var(--fs-stat-label);
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-/* ── TOOLBAR ─────────────────────────────────────────────── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  margin-bottom: var(--space-md);
-  flex-wrap: wrap;
-}
-.filters { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
-.tag {
-  font-family: var(--font-heading);
-  font-size: var(--fs-badge);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  background: transparent;
-}
-.tag:hover { border-color: var(--color-gold-dim); color: var(--color-gold); }
-.tag.active { background: var(--color-gold-dim); border-color: var(--color-gold); color: var(--color-gold); }
-
-/* ── SEARCH ROW ──────────────────────────────────────────── */
+/* ── RECHERCHE MULTI-CHAMPS ───────────────────────────────── */
 .search-row {
   display: flex;
   gap: var(--space-md);
@@ -484,124 +336,24 @@ function isFixedSkill(skill: OccupationSkill) {
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
-.search-bar { position: relative; }
-.search-icon {
-  position: absolute;
-  left: var(--space-sm); top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-muted);
-  font-size: var(--fs-secondary);
-  pointer-events: none;
-}
-.search-input {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-lg) var(--space-sm) 2.5rem;
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  font-size: var(--fs-field-input);
-  width: 240px;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  outline: none;
-}
+.search-input { width: 240px; font-size: var(--fs-field-input); }
 .search-input--credit { width: 120px; }
 .search-input::-webkit-inner-spin-button,
 .search-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-.search-input[type=number] { -moz-appearance: textfield; }
-.search-input::placeholder { color: var(--color-text-muted); font-style: italic; }
-.search-input:focus { border-color: var(--color-gold-dim); box-shadow: 0 0 0 2px rgba(184,146,74,0.15); }
 
-/* ── SORT ────────────────────────────────────────────────── */
-.col-sortable {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  background: transparent;
-  border: none;
-  font-family: var(--font-heading);
-  font-size: var(--fs-table-header);
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  padding: 0;
-  transition: color var(--transition-fast);
-}
-.col-sortable:hover { color: var(--color-gold); }
-.col-sortable.sort-active { color: var(--color-gold); }
-.sort-icon { font-size: 0.7rem; opacity: 0.7; }
-
-/* ── STATE ───────────────────────────────────────────────── */
-.state-message {
-  text-align: center;
-  padding: var(--space-2xl);
-  color: var(--color-text-muted);
-  font-family: var(--font-flavor);
-}
-.state-sigil {
-  display: block;
-  font-size: var(--fs-sigil);
-  margin-bottom: var(--space-md);
-  color: var(--color-gold);
-  animation: pulse-sigil 2s ease-in-out infinite;
-}
-@keyframes pulse-sigil { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-.state-error { color: var(--color-crimson); }
-
-/* ── LIST ────────────────────────────────────────────────── */
-.list-container {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.list-header-row,
-.list-row {
-  display: grid;
-  grid-template-columns: 1fr 260px 80px 120px 28px;
-  align-items: center;
-  padding: var(--space-sm) var(--space-lg);
-  gap: var(--space-md);
-}
-
-.list-header-row {
-  background: var(--color-elevated);
-  border-bottom: 1px solid var(--color-border);
-  font-family: var(--font-heading);
-  font-size: var(--fs-table-header);
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
+/* ── TABLE ───────────────────────────────────────────────── */
+.list-container { --list-cols: 1fr 260px 80px 120px 28px; }
+.list-container .list-body { max-height: 640px; }
+.list-container .list-header-row {
   position: sticky;
   top: 0;
   z-index: 1;
 }
-
-.list-body {
-  max-height: 640px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-.list-body::-webkit-scrollbar { width: 6px; }
-.list-body::-webkit-scrollbar-track { background: transparent; }
-.list-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
-.list-body::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
-
-.list-row {
-  transition: background var(--transition-fast);
-  cursor: pointer;
-  user-select: none;
-}
-.row-even { background: var(--color-surface); }
-.row-odd  { background: var(--color-deep); }
-.list-row:hover { background: var(--color-elevated); }
+.list-container .list-header-row,
+.list-container .list-row { align-items: center; gap: var(--space-md); }
+.list-row { cursor: pointer; user-select: none; }
 .list-row.row-expanded { border-bottom: 1px solid var(--color-border); }
 
-/* ── CHEVRON ─────────────────────────────────────────────── */
 .chevron {
   font-size: var(--fs-row-value);
   color: var(--color-text-muted);
@@ -614,13 +366,7 @@ function isFixedSkill(skill: OccupationSkill) {
 }
 .chevron.open { transform: rotate(90deg); color: var(--color-gold); }
 
-/* ── CELL STYLES ─────────────────────────────────────────── */
 .row-name {
-  font-family: var(--font-heading);
-  font-size: var(--fs-row-name);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--color-gold);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -648,31 +394,22 @@ function isFixedSkill(skill: OccupationSkill) {
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
-.badge-lore   { background: rgba(184,146,74,0.15); color: var(--color-gold);   border: 1px solid var(--color-gold-dim); }
-.badge-modern { background: rgba(127,179,138,0.15); color: var(--color-arcane); border: 1px solid var(--color-arcane-dim); }
+.badge-lore { background: rgba(184, 146, 74, 0.15); color: var(--color-gold); border: 1px solid var(--color-gold-dim); }
+.badge-modern { background: rgba(127, 179, 138, 0.15); color: var(--color-arcane); border: 1px solid var(--color-arcane-dim); }
 
-/* ── DETAIL PANEL ────────────────────────────────────────── */
+/* ── PANNEAU DE DÉTAIL ───────────────────────────────────── */
 .detail-panel {
   border-top: 1px solid var(--color-gold-dim);
   padding: var(--space-lg) var(--space-xl);
 }
-
-.detail-loading {
-  text-align: center;
-  padding: var(--space-lg);
-}
+.detail-loading { text-align: center; padding: var(--space-lg); }
 .detail-sigil {
   font-size: var(--fs-sigil);
   color: var(--color-gold);
   animation: pulse-sigil 1.5s ease-in-out infinite;
 }
 
-.skills-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-xl);
-}
-
+.skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
 .skills-section-title {
   font-family: var(--font-heading);
   font-size: var(--fs-section-title);
@@ -684,31 +421,11 @@ function isFixedSkill(skill: OccupationSkill) {
   padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--color-border);
 }
+.skills-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-xs); }
 
-.skills-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-/* Compétence fixe */
-.skill-fixed {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.skill-dot {
-  width: 4px; height: 4px;
-  border-radius: 50%;
-  background: var(--color-gold-dim);
-  flex-shrink: 0;
-}
-.skill-name {
-  font-family: var(--font-heading);
-  font-size: var(--fs-row-name);
-  color: var(--color-text-primary);
-}
+.skill-fixed { display: flex; align-items: center; gap: var(--space-sm); }
+.skill-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--color-gold-dim); flex-shrink: 0; }
+.skill-name { font-family: var(--font-heading); font-size: var(--fs-row-name); color: var(--color-text-primary); }
 .skill-tag {
   font-family: var(--font-heading);
   font-size: var(--fs-micro);
@@ -717,41 +434,21 @@ function isFixedSkill(skill: OccupationSkill) {
   padding: 1px 5px;
   border-radius: var(--radius-sm);
 }
-.tag-free { background: rgba(74,85,104,0.3); color: var(--color-fog); border: 1px solid var(--color-fog); }
+.tag-free { background: rgba(74, 85, 104, 0.3); color: var(--color-fog); border: 1px solid var(--color-fog); }
 
-/* Compétence à choisir */
 .skill-choice {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
   padding: var(--space-sm);
-  background: rgba(184,146,74,0.04);
+  background: rgba(184, 146, 74, 0.04);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
-.skill-choice-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-.skill-count {
-  font-family: var(--font-heading);
-  font-size: var(--fs-row-value);
-  font-weight: 600;
-  color: var(--color-gold);
-}
-.skill-note {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-secondary);
-  color: var(--color-text-muted);
-}
-.skill-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
+.skill-choice-header { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.skill-count { font-family: var(--font-heading); font-size: var(--fs-row-value); font-weight: 600; color: var(--color-gold); }
+.skill-note { font-family: var(--font-flavor); font-style: italic; font-size: var(--fs-secondary); color: var(--color-text-muted); }
+.skill-options { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 .skill-pill {
   font-family: var(--font-heading);
   font-size: var(--fs-micro);
@@ -759,12 +456,11 @@ function isFixedSkill(skill: OccupationSkill) {
   text-transform: uppercase;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  background: rgba(184,146,74,0.1);
+  background: rgba(184, 146, 74, 0.1);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
 }
 
-/* ── DETAIL FORMULA ──────────────────────────────────────── */
 .detail-formula {
   display: none;
   align-items: center;
@@ -787,9 +483,6 @@ function isFixedSkill(skill: OccupationSkill) {
   color: var(--color-text-secondary);
   letter-spacing: 0.02em;
 }
-@media (max-width: 900px) {
-  .detail-formula { display: flex; }
-}
 .detail-type {
   display: flex;
   gap: var(--space-xs);
@@ -801,38 +494,6 @@ function isFixedSkill(skill: OccupationSkill) {
   .detail-type { display: none; }
 }
 
-/* ── LEGEND ──────────────────────────────────────────────── */
-.legend {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-void);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-.legend-title {
-  font-family: var(--font-heading);
-  font-size: var(--fs-badge);
-  font-weight: bold;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-.legend-desc {
-  font-family: var(--font-flavor);
-  font-size: var(--fs-section-hint);
-  color: var(--color-text-muted);
-  line-height: 1.5;
-}
-
 /* ── TRANSITION ──────────────────────────────────────────── */
 .expand-enter-active,
 .expand-leave-active {
@@ -841,39 +502,26 @@ function isFixedSkill(skill: OccupationSkill) {
   overflow: hidden;
 }
 .expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
+.expand-leave-to { opacity: 0; max-height: 0; }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
-
-/* Tablette large : masquer la colonne formule */
 @media (max-width: 900px) {
-  .list-header-row,
-  .list-row { grid-template-columns: 1fr 80px 100px 28px; }
+  .list-container { --list-cols: 1fr 80px 100px 28px; }
   .col-formula, .row-formula { display: none; }
+  .detail-formula { display: flex; }
 }
-
-/* Tablette : réorganiser stats, recherche, détail et masquer la colonne Type */
 @media (max-width: 768px) {
-  .stats-panel { grid-template-columns: repeat(2, 1fr); max-width: 100%; }
   .search-row { flex-direction: column; }
   .search-field { width: 100%; }
   .search-bar { width: 100%; }
-  .search-input, .search-input--credit { width: 100%; box-sizing: border-box; }
+  .search-input,
+  .search-input--credit { width: 100%; box-sizing: border-box; }
   .skills-grid { grid-template-columns: 1fr; }
-  .list-header-row,
-  .list-row { grid-template-columns: 1fr 80px 28px; }
+  .list-container { --list-cols: 1fr 80px 28px; }
   .col-type { display: none; }
 }
-
-/* Mobile */
 @media (max-width: 640px) {
-  .page-wrapper { padding: var(--space-md); }
-  .toolbar { flex-direction: column; align-items: stretch; gap: var(--space-sm); }
-  .list-header-row,
-  .list-row { grid-template-columns: 1fr 70px 28px; }
-  .list-body { max-height: none; }
+  .list-container { --list-cols: 1fr 70px 28px; }
+  .list-container .list-body { max-height: none; }
 }
 </style>

@@ -20,11 +20,18 @@ réduire la duplication, gagner en lisibilité — **sans changer le comportemen
   - Sortir la logique métier (calculs de stats, génération aléatoire, validation, état du
     formulaire) dans des composables (`app/composables/`).
   - Identifier les blocs `<template>` répétés → composants réutilisables.
-- [ ] **Mutualiser les pages `app/pages/ressources/*`** — elles partagent le même squelette
-  (chargement liste → filtres/recherche → affichage en cards/tableau). Candidates au refactor :
-  `arme.vue` (1232), `occupation.vue` (879), `competence.vue` (748), `artefact.vue` (620),
-  `equipement-moderne.vue` / `equipement-classique.vue` (607 chacun), `phobie.vue` (473),
-  `manie.vue` (471). → Extraire un composable de liste + un composant de mise en page commun.
+- [x] **Mutualiser les pages `app/pages/ressources/*`** — ✅ FAIT. Les 9 pages partagent
+  désormais :
+  - `app/components/ResourceListLayout.vue` — chrome commun (header, citation, panneau stats,
+    toolbar, messages d'état) via props + slots (`#toolbar`, `#subtoolbar`, défaut = liste, `#footer`).
+  - `app/assets/css/resource-list.css` — CSS commun namespacé sous `.resource-page`, accent piloté
+    par `--accent`/`--accent-text`/`--accent-rgb` (gold/crimson/arcane), inclus widgets (tags,
+    dropdown, filtres actifs, badges, légende, lignes dépliables).
+  - composables `useMultiSelectFilter` (dropdown + click-outside) et `useExpandableRows`.
+  - Résultat : pages **6182 → 2858 lignes** (−54 %) ; infra partagée 751 lignes.
+  - ⚠️ `arme.vue` (la plus custom) migrée en mode conservateur (chrome via le layout, corps
+    préservé en scoped namespacé) → **à vérifier visuellement** (toolbar, table, détail, CRUD
+    « sauver dans la bibliothèque », responsive).
 - [ ] **`app/components/AppHeader.vue` (661 lignes)** — voir s'il y a des sous-éléments
   (menu, navigation) à extraire.
 - [ ] Vérifier la cohérence des appels API côté pages (`$fetch`/`useFetch`) et factoriser les

@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/resource-list.css'],
 
   runtimeConfig: {
     // Variables privées (server only)
