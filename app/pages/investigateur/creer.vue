@@ -108,11 +108,6 @@ const occSkillPickers = computed((): OccPicker[] => {
   })
 })
 
-// Options pour FREE_CHOICE : compétences non-catégorie du formulaire principal
-const freeChoiceOptions = computed(() =>
-  competences.filter(c => !CATEGORY_KEYS.has(c.key)).map(c => c.label)
-)
-
 // ── Calcul des clés dorées et vertes ──────────────────────────────────────────
 
 // FIXED_SPEC → clés grille principale
@@ -151,7 +146,10 @@ const selectedChoiceKeys = computed((): Set<string> => {
       if (opt?.competence.isCategory) {
         // Option catégorie : utiliser la sous-sélection
         const sub = catSubSelections.value[`${i}_${slot}`]
-        if (sub) { const k = SPEC_TO_KEY[sub]; if (k) keys.add(k) }
+        if (sub) {
+          const k = SPEC_TO_KEY[sub]
+          if (k) keys.add(k)
+        }
       } else {
         ;(SKILL_TO_FORM_KEYS[name] ?? []).forEach(k => keys.add(k))
       }
@@ -249,7 +247,9 @@ const choiceKeys = computed((): Set<string> => {
 
 const highlightedKeys = computed((): Set<string> => new Set([...fixedKeys.value, ...choiceKeys.value]))
 
-function isGroupHighlighted(...keys: string[]) { return keys.some(k => fixedKeys.value.has(k)) }
+function isGroupHighlighted(...keys: string[]) {
+  return keys.some(k => fixedKeys.value.has(k))
+}
 function isGroupChoice(...keys: string[]) {
   return !isGroupHighlighted(...keys) && keys.some(k => choiceKeys.value.has(k))
 }
@@ -264,22 +264,10 @@ function updateChoice(idx: number, slot: number, value: string) {
   // Effacer la sous-sélection si l'option principale change
   const catKey = `${idx}_${slot}`
   if (catSubSelections.value[catKey]) {
-    const next = { ...catSubSelections.value }; delete next[catKey]
+    const { [catKey]: _omit, ...next } = catSubSelections.value
     catSubSelections.value = next
   }
   choiceSelections.value = { ...choiceSelections.value, [idx]: current }
-}
-function updateCatSub(idx: number, slot: number, value: string) {
-  catSubSelections.value = { ...catSubSelections.value, [`${idx}_${slot}`]: value }
-}
-function updateFreeSpec(idx: number, value: string) {
-  freeSpecSelections.value = { ...freeSpecSelections.value, [idx]: value }
-}
-function updateFreeChoice(idx: number, slot: number, value: string, count: number) {
-  const current = [...(freeChoiceSelections.value[idx] ?? Array(count).fill(''))]
-  while (current.length < count) current.push('')
-  current[slot] = value
-  freeChoiceSelections.value = { ...freeChoiceSelections.value, [idx]: current }
 }
 
 const route = useRoute()

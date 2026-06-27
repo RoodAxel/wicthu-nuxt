@@ -131,7 +131,9 @@ export default defineEventHandler(async (event) => {
 
   for (let i = 1; i <= 12; i++) {
     setField(form, `EQUIP${i}`, body[`EQUIP${i}`] ?? '')
-    try { pdfDoc.getForm().getTextField(`EQUIP${i}`).setFontSize(9) } catch { /* champ absent */ }
+    try {
+      pdfDoc.getForm().getTextField(`EQUIP${i}`).setFontSize(9)
+    } catch { /* champ absent */ }
   }
 
   // ── Chance (boutons radio CHANCE.0 … CHANCE.100) ────────────
