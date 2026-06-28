@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { manie } from '@prisma/client'
+import type { manie as Manie } from '@prisma/client'
 
-const { data: manies, status, error } = useFetch<manie[]>('/api/manie')
+const { data: manies, status, error } = useFetch<Manie[]>('/api/manie')
 
 const search = ref('')
-const random = ref<manie | null>(null)
+const random = ref<Manie | null>(null)
 const sortName = ref<'asc' | 'desc'>('asc')
 
 const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')

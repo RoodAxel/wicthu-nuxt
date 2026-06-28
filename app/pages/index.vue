@@ -188,15 +188,6 @@ useSeoMeta({
   color: var(--color-arcane);
 }
 
-.hero-tagline {
-  font-family: var(--font-heading);
-  font-size: var(--fs-btn);
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: var(--color-arcane);
-  margin-bottom: var(--space-xl);
-}
-
 .hero-description {
   font-family: var(--font-flavor);
   font-size: var(--fs-hero-desc);

@@ -1,10 +1,14 @@
 <script setup lang="ts">
-const { form } = injectCharacterCreation()
+const { form, creditWealth } = injectCharacterCreation()
 </script>
 
 <template>
   <section class="form-section">
     <h2 class="section-title">Finances</h2>
+    <p v-if="creditWealth" class="section-hint">
+      Valeurs déduites automatiquement de votre Crédit
+      (<span class="wealth-tranche">{{ creditWealth.tranche }}</span>) — modifiables selon les besoins du scénario.
+    </p>
     <div class="identity-grid">
       <div class="field-group">
         <label class="field-label" for="capital">Capital</label>

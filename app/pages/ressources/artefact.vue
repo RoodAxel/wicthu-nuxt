@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { artefact } from '@prisma/client'
+import type { artefact as Artefact } from '@prisma/client'
 
-const { data: artefacts, status, error } = useFetch<artefact[]>('/api/artefact')
+const { data: artefacts, status, error } = useFetch<Artefact[]>('/api/artefact')
 
 const search = ref('')
 const { expandedId, toggleExpand } = useExpandableRows()

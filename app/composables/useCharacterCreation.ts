@@ -17,8 +17,9 @@ export function useCharacterCreation() {
   // Moteur occupation : sélection, mise en évidence des compétences, budget de points
   const occupations = useOccupations(form)
 
-  // Richesse dérivée du crédit (synchronisée dans `form` via un watchEffect interne)
-  useCreditWealth(form, occupations.occupationDetail)
+  // Richesse dérivée du crédit (synchronisée dans `form` via un watchEffect interne ;
+  // `creditWealth` est exposé pour afficher la tranche dans la section Finances)
+  const wealth = useCreditWealth(form, occupations.occupationDetail)
 
   // Modificateurs d'âge + tirage de la Chance
   const age = useAgeModifiers(form)
@@ -34,7 +35,7 @@ export function useCharacterCreation() {
 
   return {
     form, pv_max, pm_max, sm_initial, impact, carrure, mvt,
-    ...occupations, ...age, ...gen, ...library, ...persistence
+    ...occupations, ...wealth, ...age, ...gen, ...library, ...persistence
   }
 }
 
