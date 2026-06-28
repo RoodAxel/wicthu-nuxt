@@ -92,6 +92,11 @@ function formatPrice(base: number, max: number | null, unit: string | null, supe
   const withUnit = unit ? `${price}/${unit.toLowerCase()}` : price
   return superior ? `${withUnit}+` : withUnit
 }
+
+useSeoMeta({
+  title: 'Équipement moderne',
+  description: 'Matériel et équipement contemporain pour L\'Appel de Cthulhu : prix et catégories.'
+})
 </script>
 
 <template>

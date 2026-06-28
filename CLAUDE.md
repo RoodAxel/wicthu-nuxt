@@ -14,12 +14,27 @@ Design system « Arkham Codex » piloté par `app/assets/css/main.css` (variable
 Beaucoup de fichiers ont grossi. Objectif : extraire des composants / composables réutilisables,
 réduire la duplication, gagner en lisibilité — **sans changer le comportement**.
 
-- [ ] **`app/pages/investigateur/creer.vue` (2951 lignes) — le gros morceau.**
-  - Découper en sous-composants par étape/section de la fiche (identité, caractéristiques,
-    compétences, équipement, etc.).
-  - Sortir la logique métier (calculs de stats, génération aléatoire, validation, état du
-    formulaire) dans des composables (`app/composables/`).
-  - Identifier les blocs `<template>` répétés → composants réutilisables.
+- [x] **`app/pages/investigateur/creer.vue` (2951 lignes) — le gros morceau.** — ✅ FAIT.
+  **2951 → 261 lignes** (orchestrateur mince). Refacto incrémental en 5 phases (lint/typecheck/build
+  vérifiés à chaque étape, comportement inchangé) :
+  - **Constantes & types** : `app/utils/investigateur/constants.ts` + `format.ts`, types complétés
+    dans `app/types/investigateur.ts`.
+  - **Logique métier en composables** (`app/composables/`) : `useCharacterForm`, `useOccupations`,
+    `useCreditWealth`, `useAgeModifiers`, `useCharacteristicsGen`, `useWeaponLibrary`,
+    `useCharacterPersistence`, agrégés par `useCharacterCreation` (instancie tout autour du `form`
+    réactif partagé).
+  - **Contexte provide/inject** : `CharacterCreationKey` + `injectCharacterCreation()` (évite le
+    prop-drilling ET `vue/no-mutating-props`).
+  - **Sous-composants par section** : `app/components/investigateur/*` (11 composants :
+    Identity, AgeModifiers, Characteristics, DerivedStats, Chance, Skills, VariableSkills, Weapons,
+    Background, Finances, Equipment). Chacun injecte le contexte, template-only.
+  - **CSS commun** : `app/assets/css/investigateur-form.css`, namespacé sous `.character-form`
+    (même pattern que `resource-list.css`), enregistré dans `nuxt.config.ts`. Le chrome de page
+    (header, citation) + la barre d'actions restent scopés dans `creer.vue`.
+  - ⚠️ **À vérifier visuellement / en runtime** (compilation OK, exécution non testée) : création
+    neuve **et** édition (`?edit=`), les 4 méthodes de génération, mise en évidence occupation +
+    compteurs de points, modificateurs d'âge + tests d'ÉDU + Chance, bibliothèque d'armes, portrait,
+    **sauvegarde + export PDF**, et le responsive.
 - [x] **Mutualiser les pages `app/pages/ressources/*`** — ✅ FAIT. Les 9 pages partagent
   désormais :
   - `app/components/ResourceListLayout.vue` — chrome commun (header, citation, panneau stats,
@@ -63,29 +78,45 @@ réduire la duplication, gagner en lisibilité — **sans changer le comportemen
 > préexistantes (auto-corrigeables via `eslint --fix`) ; `npm audit` signale des vulnérabilités
 > de dépendances. À traiter séparément (cf. section 1 / maintenance).
 
-## 3. Référencement (SEO)
+## 3. Référencement (SEO) — ✅ FAIT (vérifié au build ; à valider en runtime)
 
-État actuel : seul `app/app.vue` définit un titre/description génériques + `lang="fr"`. Plusieurs
-pages `ressources/*` (listes) n'ont **pas** de `useSeoMeta` propre. Pas de sitemap, robots, ni OG.
+Stack retenue : **`@nuxtjs/seo`** (module parapluie = sitemap + robots + og-image + schema-org +
+seo-utils/canonical), piloté par `site: { url: SITE_URL, name: 'Wicthu', … }` dans `nuxt.config.ts`.
+Renderer OG : **satori** (`satori` + `@resvg/resvg-js`) plutôt que takumi (beta, natif) pour la
+portabilité Windows→Linux.
 
-- [ ] Ajouter **`@nuxtjs/sitemap`** et **`@nuxtjs/robots`** (génération `sitemap.xml` + `robots.txt`).
-- [ ] Définir un **`useSeoMeta` par page** (titre + description uniques) sur toutes les pages
-  publiques, notamment les listes `ressources/*` qui en sont dépourvues, l'accueil et les pages
-  légales. Les pages dynamiques `[id].vue` (entité, sort, ouvrage-mythe) ont déjà du meta — vérifier
-  qu'il est complet (titre dynamique + description).
-- [ ] Ajouter les **balises Open Graph / Twitter Card** (`og:title`, `og:description`, `og:image`,
-  `twitter:card`) + une image OG par défaut dans `public/`.
-- [ ] Ajouter les **URLs canoniques** (s'appuyer sur `runtimeConfig.public.siteUrl`).
-- [ ] Vérifier que les pages d'auth/profil ne sont **pas** indexées (`robots: noindex`).
-- [ ] Soigner la structure sémantique (un seul `<h1>` par page, hiérarchie des titres) et les
-  `alt` des images.
-- [ ] (Optionnel) Données structurées JSON-LD pour les fiches de ressources.
+- [x] **`@nuxtjs/seo` installé + configuré** (`sitemap.xml` + `robots.txt` générés au runtime ;
+  routes `_og/d/image` + polices OG présentes dans `.output`).
+- [x] **`useSeoMeta` par page** : accueil, 9 listes `ressources/*`, 3 index `ressources/*`, 2 pages
+  légales (titre + description). Les 3 `[id].vue` (sort, ouvrage-mythe, entité) passés de `useHead`
+  (titre seul) à `useSeoMeta` (titre **+ description** dynamiques). Titres pilotés par un
+  `titleTemplate` global dans `app.vue` (`%s · Wicthu`, fallback marque).
+- [x] **Open Graph / Twitter Card + image OG** : `og-image` génère une image par page
+  (`app/components/OgImage/Default.satori.vue`, thème Arkham Codex), défaut posé via
+  `defineOgImageComponent('Default')` dans `app.vue` ; og:/twitter: auto-dérivés par seo-utils.
+- [x] **URLs canoniques** : injectées automatiquement par seo-utils à partir de `site.url`.
+- [x] **Auth/profil/creer non indexés** : `routeRules` `{ robots: false }` (Disallow robots.txt +
+  `<meta name="robots" noindex>`) + exclus du sitemap.
+- [x] **Structure sémantique** : `<h1>` unique par page (accueil = `<h1 class="sr-only">` ajouté ;
+  listes via `ResourceListLayout`) ; aucun `<img>` sans `alt`.
+- [ ] **(Optionnel, non fait)** : URLs **dynamiques** dans le sitemap (entités/sorts/ouvrages —
+  nécessite une source sitemap interrogeant la BDD) et **JSON-LD** enrichi par fiche (schema-org est
+  dispo via le module ; un WebSite/WebPage de base est déjà émis).
+
+> ⚠️ **À valider en runtime** : `/robots.txt`, `/sitemap.xml`, et l'aperçu OG (ex. partage Discord /
+> [opengraph.xyz](https://www.opengraph.xyz)). Vérifier que `SITE_URL` pointe bien vers le domaine de
+> prod (sinon canonical/sitemap/OG utiliseront `localhost`).
 
 ## 4. Derniers bugs (à la fin)
 
 > À compléter au fil de l'eau. Consigner ici chaque bug repéré avec étapes de repro.
 
-- [ ] l'esquive n'est pas renseigné dans les stats de combat en bas de page.
+- [x] ~~l'esquive n'est pas renseigné dans les stats de combat en bas de page.~~ — ✅ CORRIGÉ.
+  Cause : `ESQ_0` n'est jamais stocké (seule la base DEX÷2 s'affiche en *placeholder* du formulaire),
+  donc `setField` l'ignorait (valeur vide) à la génération du PDF. Fix dans
+  `server/api/investigateur/generate-pdf.post.ts` : repli sur la base **DEX÷2** quand l'esquive n'a
+  pas reçu de points (+ recalcul de ses ½/⅕). À vérifier : générer un PDF avec DEX renseigné sans
+  saisir l'esquive → elle doit apparaître à DEX÷2.
 
 ---
 

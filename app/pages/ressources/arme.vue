@@ -191,6 +191,11 @@ const stats = computed(() => [
   { number: weapons.value?.filter(w => w.epoque.includes('moderne')).length ?? 0, label: 'Modernes' },
   { number: filtered.value.length, label: 'Résultats', highlight: true }
 ])
+
+useSeoMeta({
+  title: 'Armes',
+  description: 'Catalogue des armes pour L\'Appel de Cthulhu : dégâts, portée, cadence de tir, capacité et compétence de combat associée.'
+})
 </script>
 
 <template>

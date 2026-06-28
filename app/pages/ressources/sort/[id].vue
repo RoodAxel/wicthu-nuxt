@@ -6,9 +6,12 @@ const id = route.params.id as string
 
 const { data: sort, status, error } = await useFetch<SortDetail>(`/api/sort/${id}`)
 
-useHead(() => ({
-  title: sort.value ? `${sort.value.name} — Sorts` : 'Sort'
-}))
+useSeoMeta({
+  title: () => sort.value ? `${sort.value.name} — Sorts` : 'Sort',
+  description: () => sort.value
+    ? `${sort.value.name} : coût en points de magie, en Santé mentale, temps d'incantation et effets de ce sort de L'Appel de Cthulhu.`
+    : 'Détail d\'un sort de L\'Appel de Cthulhu.'
+})
 
 const searchVariantes = ref('')
 

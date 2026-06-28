@@ -5,10 +5,10 @@ defineProps<{
   auteur: string | null
   langue: string | null
   date: string | null
-  sante_mental: string | null
-  gain_mythe_initial: number | null
-  gain_mythe_complet: number | null
-  mythe_cthulhu: number | null
+  santeMental: string | null
+  gainMytheInitial: number | null
+  gainMytheComplet: number | null
+  mytheCthulhu: number | null
   semaine: number | null
   sortCount: number
 }>()
@@ -25,12 +25,12 @@ function openDetail(id: number) {
     <span class="col-auteur row-muted">{{ auteur ?? '—' }}</span>
     <span class="col-langue row-muted">{{ langue ?? '—' }}</span>
     <span class="col-date row-muted">{{ date ?? '—' }}</span>
-    <span class="col-sm row-sanity">{{ sante_mental ?? '—' }}</span>
+    <span class="col-sm row-sanity">{{ santeMental ?? '—' }}</span>
     <span class="col-gain row-gain">
-      <span v-if="gain_mythe_initial != null">+{{ gain_mythe_initial }}%/{{ gain_mythe_complet }}%</span>
+      <span v-if="gainMytheInitial != null">+{{ gainMytheInitial }}%/{{ gainMytheComplet }}%</span>
       <span v-else>—</span>
     </span>
-    <span class="col-mythe row-mythe">{{ mythe_cthulhu != null ? `${mythe_cthulhu}%` : '—' }}</span>
+    <span class="col-mythe row-mythe">{{ mytheCthulhu != null ? `${mytheCthulhu}%` : '—' }}</span>
     <span class="col-sorts row-sorts">{{ sortCount }} sort{{ sortCount !== 1 ? 's' : '' }}</span>
   </div>
 </template>

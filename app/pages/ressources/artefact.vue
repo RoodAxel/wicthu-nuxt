@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { artefact } from '@prisma/client'
+import type { artefact as Artefact } from '@prisma/client'
 
-const { data: artefacts, status, error } = useFetch<artefact[]>('/api/artefact')
+const { data: artefacts, status, error } = useFetch<Artefact[]>('/api/artefact')
 
 const search = ref('')
 const { expandedId, toggleExpand } = useExpandableRows()
@@ -77,6 +77,11 @@ const stats = computed(() => [
   { number: artefacts.value?.length ?? 0, label: 'Artefacts' },
   { number: filtered.value.length, label: 'Résultats' }
 ])
+
+useSeoMeta({
+  title: 'Artefacts',
+  description: 'Artefacts et objets surnaturels du Mythe de Cthulhu : descriptions et propriétés pour L\'Appel de Cthulhu.'
+})
 </script>
 
 <template>

@@ -6,9 +6,12 @@ const id = route.params.id as string
 
 const { data: ouvrage, status, error } = await useFetch<OuvrageMytheDetail>(`/api/ouvrage-mythe/${id}`)
 
-useHead(() => ({
-  title: ouvrage.value ? `${ouvrage.value.titre} — Ouvrages du Mythe` : 'Ouvrage du Mythe'
-}))
+useSeoMeta({
+  title: () => ouvrage.value ? `${ouvrage.value.titre} — Ouvrages du Mythe` : 'Ouvrage du Mythe',
+  description: () => ouvrage.value
+    ? `${ouvrage.value.titre} : sorts enseignés, gain en Mythe de Cthulhu et perte de Santé mentale de cet ouvrage.`
+    : 'Détail d\'un ouvrage du Mythe de Cthulhu.'
+})
 
 const searchSorts = ref('')
 

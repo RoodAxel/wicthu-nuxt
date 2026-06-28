@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { phobie } from '@prisma/client'
+import type { phobie as Phobie } from '@prisma/client'
 
-const { data: phobies, status, error } = useFetch<phobie[]>('/api/phobie')
+const { data: phobies, status, error } = useFetch<Phobie[]>('/api/phobie')
 
 const search = ref('')
-const random = ref<phobie | null>(null)
+const random = ref<Phobie | null>(null)
 const sortName = ref<'asc' | 'desc'>('asc')
 
 const sortNameIcon = computed(() => sortName.value === 'asc' ? '↑' : '↓')
@@ -35,6 +35,11 @@ function pickRandom() {
   const pool = phobies.value
   random.value = pool[Math.floor(Math.random() * pool.length)]!
 }
+
+useSeoMeta({
+  title: 'Phobies',
+  description: 'Liste des phobies pour incarner les séquelles mentales de vos investigateurs de L\'Appel de Cthulhu.'
+})
 </script>
 
 <template>

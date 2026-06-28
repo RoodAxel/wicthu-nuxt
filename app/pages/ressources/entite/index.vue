@@ -84,6 +84,11 @@ const countByCategorie = computed(() => {
 const selectedCategoryNames = computed(() =>
   CATEGORIES.filter(c => selectedCategories.value.has(c.value))
 )
+
+useSeoMeta({
+  title: 'Entités du Mythe',
+  description: 'Bestiaire du Mythe de Cthulhu : caractéristiques, attaques et descriptions des créatures et divinités pour L\'Appel de Cthulhu.'
+})
 </script>
 
 <template>

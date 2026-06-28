@@ -1,4 +1,8 @@
 <script setup lang="ts">
+useSeoMeta({
+  description: 'Wicthu, le compagnon de jeu de L\'Appel de Cthulhu : créez vos fiches d\'investigateur et explorez les sorts, entités, ouvrages du Mythe et toutes les ressources de jeu.',
+  ogTitle: 'Wicthu — Wiki L\'Appel de Cthulhu'
+})
 </script>
 
 <template>
@@ -7,9 +11,13 @@
     <!-- ── HERO ───────────────────────────────────────────── -->
     <section class="hero">
       <img src="/logoWicthu.png" alt="Wicthu" class="hero-logo">
+      <h1 class="hero-title">
+        Wicthu
+        <span class="hero-title-sub">Wiki l'Appel de Cthulhu</span>
+      </h1>
       <p class="hero-description">
-        Un outil pour les Guardiens et joueurs de <em>L'Appel de Cthulhu</em> —
-        consultez les archives et gérer vos fiches d'investigateurs.
+        Un outil pour les Gardiens et joueurs de <em>L'Appel de Cthulhu</em> —
+        consultez les archives et gérez vos fiches d'investigateurs.
       </p>
     </section>
 
@@ -46,7 +54,7 @@
         <NuxtLink to="/ressources/artefact" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Artefact</span>
-            <span class="resource-desc">Objets d'origine inconnu aux propriétés surnaturelles.</span>
+            <span class="resource-desc">Objets d'origine inconnue aux propriétés surnaturelles.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
@@ -159,13 +167,25 @@
   margin-bottom: var(--space-md);
 }
 
-.hero-tagline {
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.hero-title-sub {
+  display: block;
+  margin-top: var(--space-sm);
   font-family: var(--font-heading);
-  font-size: var(--fs-btn);
-  letter-spacing: 0.25em;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-arcane);
-  margin-bottom: var(--space-xl);
 }
 
 .hero-description {

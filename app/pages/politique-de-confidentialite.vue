@@ -1,3 +1,10 @@
+<script setup lang="ts">
+useSeoMeta({
+  title: 'Politique de confidentialité',
+  description: 'Politique de confidentialité et gestion des données personnelles du site Wicthu.'
+})
+</script>
+
 <template>
   <main class="page-wrapper">
     <div class="page-header">

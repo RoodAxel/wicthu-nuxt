@@ -42,6 +42,7 @@ async function handleUpdate() {
     setTimeout(() => router.push('/auth/login'), 3000)
   }
 }
+useSeoMeta({ title: 'Réinitialiser le mot de passe' })
 </script>
 
 <template>

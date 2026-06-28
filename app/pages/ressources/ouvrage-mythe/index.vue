@@ -104,6 +104,11 @@ const filtered = computed(() => {
 
   return result
 })
+
+useSeoMeta({
+  title: 'Ouvrages du Mythe',
+  description: 'Ouvrages du Mythe de Cthulhu : sorts enseignés, gain en Mythe de Cthulhu et perte de Santé mentale.'
+})
 </script>
 
 <template>
@@ -180,10 +185,10 @@ const filtered = computed(() => {
           :auteur="o.auteur"
           :langue="o.langue"
           :date="o.date"
-          :sante_mental="o.sante_mental"
-          :gain_mythe_initial="o.gain_mythe_initial"
-          :gain_mythe_complet="o.gain_mythe_complet"
-          :mythe_cthulhu="o.mythe_cthulhu"
+          :sante-mental="o.sante_mental"
+          :gain-mythe-initial="o.gain_mythe_initial"
+          :gain-mythe-complet="o.gain_mythe_complet"
+          :mythe-cthulhu="o.mythe_cthulhu"
           :semaine="o.semaine"
           :sort-count="o._count.ouvrage_sort"
         />

@@ -162,6 +162,11 @@ const stats = computed(() => [
 function toggle(id: number) {
   expanded.value = expanded.value === id ? null : id
 }
+
+useSeoMeta({
+  title: 'Ouvrages occultes',
+  description: 'Ouvrages occultes de L\'Appel de Cthulhu : descriptions et informations.'
+})
 </script>
 
 <template>
