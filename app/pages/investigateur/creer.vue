@@ -20,6 +20,9 @@ onMounted(() => {
   if (bottomSentinel.value) observer.observe(bottomSentinel.value)
   onUnmounted(() => observer.disconnect())
 })
+useSeoMeta({
+  title: () => editId.value ? 'Modifier la fiche' : 'Nouvelle fiche'
+})
 </script>
 
 <template>

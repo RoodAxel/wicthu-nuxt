@@ -35,6 +35,11 @@ function pickRandom() {
   const pool = phobies.value
   random.value = pool[Math.floor(Math.random() * pool.length)]!
 }
+
+useSeoMeta({
+  title: 'Phobies',
+  description: 'Liste des phobies pour incarner les séquelles mentales de vos investigateurs de L\'Appel de Cthulhu.'
+})
 </script>
 
 <template>

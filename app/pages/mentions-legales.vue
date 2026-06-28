@@ -1,3 +1,10 @@
+<script setup lang="ts">
+useSeoMeta({
+  title: 'Mentions légales',
+  description: 'Mentions légales du site Wicthu, compagnon de jeu pour L\'Appel de Cthulhu.'
+})
+</script>
+
 <template>
   <main class="page-wrapper">
     <div class="page-header">

@@ -24,9 +24,12 @@ const id = route.params.id as string
 
 const { data: entite, status, error } = await useFetch<EntiteDetail>(`/api/entite/${id}`)
 
-useHead(() => ({
-  title: entite.value ? `${entite.value.name} — Entité` : 'Entité'
-}))
+useSeoMeta({
+  title: () => entite.value ? `${entite.value.name} — Entité` : 'Entité',
+  description: () => entite.value
+    ? `${entite.value.name} : caractéristiques, attaques et description de cette entité du Mythe de Cthulhu.`
+    : 'Détail d\'une entité du Mythe de Cthulhu.'
+})
 </script>
 
 <template>

@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@nuxtjs/supabase'
+    '@nuxtjs/supabase',
+    '@nuxtjs/seo'
   ],
 
   devtools: {
@@ -11,6 +12,14 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css', '~/assets/css/resource-list.css', '~/assets/css/investigateur-form.css'],
+
+  // ── SEO (@nuxtjs/seo) ────────────────────────────────────────────────────
+  site: {
+    url: process.env.SITE_URL || 'http://localhost:3000',
+    name: 'Wicthu',
+    description: 'Compagnon de jeu pour L\'Appel de Cthulhu : créateur de fiches d\'investigateur, sorts, entités du Mythe, ouvrages occultes et ressources de jeu.',
+    defaultLocale: 'fr'
+  },
 
   runtimeConfig: {
     // Variables privées (server only)
@@ -22,6 +31,13 @@ export default defineNuxtConfig({
       supabaseKey: process.env.SUPABASE_KEY,
       siteUrl: process.env.SITE_URL || 'http://localhost:3000'
     }
+  },
+
+  // Pages non indexables (robots.txt Disallow + <meta name="robots" noindex>)
+  routeRules: {
+    '/auth/**': { robots: false },
+    '/profil': { robots: false },
+    '/investigateur/creer': { robots: false }
   },
 
   compatibilityDate: '2025-01-15',
@@ -37,6 +53,11 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  sitemap: {
+    // Pages privées / derrière authentification : hors sitemap
+    exclude: ['/auth/**', '/profil', '/investigateur/creer']
   },
 
   supabase: {

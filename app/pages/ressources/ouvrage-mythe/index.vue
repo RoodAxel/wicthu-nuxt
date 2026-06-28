@@ -104,6 +104,11 @@ const filtered = computed(() => {
 
   return result
 })
+
+useSeoMeta({
+  title: 'Ouvrages du Mythe',
+  description: 'Ouvrages du Mythe de Cthulhu : sorts enseignés, gain en Mythe de Cthulhu et perte de Santé mentale.'
+})
 </script>
 
 <template>

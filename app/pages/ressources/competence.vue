@@ -96,6 +96,11 @@ const sortBaseIcon = computed(() => {
 const selectedCategoryNames = computed(() =>
   categories.value.filter(c => selectedCategories.value.has(c.id))
 )
+
+useSeoMeta({
+  title: 'Compétences',
+  description: 'Liste complète des compétences de L\'Appel de Cthulhu (7e édition) avec leurs valeurs de base et catégories.'
+})
 </script>
 
 <template>

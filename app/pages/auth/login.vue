@@ -47,6 +47,7 @@ function switchMode(m: 'login' | 'reset') {
   errorMsg.value = ''
   resetSent.value = false
 }
+useSeoMeta({ title: 'Connexion' })
 </script>
 
 <template>

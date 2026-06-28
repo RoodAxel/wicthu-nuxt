@@ -36,6 +36,7 @@ onMounted(async () => {
 
   errorMsg.value = 'Lien invalide ou expiré.'
 })
+useSeoMeta({ title: 'Confirmation du compte' })
 </script>
 
 <template>

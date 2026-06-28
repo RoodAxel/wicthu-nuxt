@@ -78,23 +78,34 @@ réduire la duplication, gagner en lisibilité — **sans changer le comportemen
 > préexistantes (auto-corrigeables via `eslint --fix`) ; `npm audit` signale des vulnérabilités
 > de dépendances. À traiter séparément (cf. section 1 / maintenance).
 
-## 3. Référencement (SEO)
+## 3. Référencement (SEO) — ✅ FAIT (vérifié au build ; à valider en runtime)
 
-État actuel : seul `app/app.vue` définit un titre/description génériques + `lang="fr"`. Plusieurs
-pages `ressources/*` (listes) n'ont **pas** de `useSeoMeta` propre. Pas de sitemap, robots, ni OG.
+Stack retenue : **`@nuxtjs/seo`** (module parapluie = sitemap + robots + og-image + schema-org +
+seo-utils/canonical), piloté par `site: { url: SITE_URL, name: 'Wicthu', … }` dans `nuxt.config.ts`.
+Renderer OG : **satori** (`satori` + `@resvg/resvg-js`) plutôt que takumi (beta, natif) pour la
+portabilité Windows→Linux.
 
-- [ ] Ajouter **`@nuxtjs/sitemap`** et **`@nuxtjs/robots`** (génération `sitemap.xml` + `robots.txt`).
-- [ ] Définir un **`useSeoMeta` par page** (titre + description uniques) sur toutes les pages
-  publiques, notamment les listes `ressources/*` qui en sont dépourvues, l'accueil et les pages
-  légales. Les pages dynamiques `[id].vue` (entité, sort, ouvrage-mythe) ont déjà du meta — vérifier
-  qu'il est complet (titre dynamique + description).
-- [ ] Ajouter les **balises Open Graph / Twitter Card** (`og:title`, `og:description`, `og:image`,
-  `twitter:card`) + une image OG par défaut dans `public/`.
-- [ ] Ajouter les **URLs canoniques** (s'appuyer sur `runtimeConfig.public.siteUrl`).
-- [ ] Vérifier que les pages d'auth/profil ne sont **pas** indexées (`robots: noindex`).
-- [ ] Soigner la structure sémantique (un seul `<h1>` par page, hiérarchie des titres) et les
-  `alt` des images.
-- [ ] (Optionnel) Données structurées JSON-LD pour les fiches de ressources.
+- [x] **`@nuxtjs/seo` installé + configuré** (`sitemap.xml` + `robots.txt` générés au runtime ;
+  routes `_og/d/image` + polices OG présentes dans `.output`).
+- [x] **`useSeoMeta` par page** : accueil, 9 listes `ressources/*`, 3 index `ressources/*`, 2 pages
+  légales (titre + description). Les 3 `[id].vue` (sort, ouvrage-mythe, entité) passés de `useHead`
+  (titre seul) à `useSeoMeta` (titre **+ description** dynamiques). Titres pilotés par un
+  `titleTemplate` global dans `app.vue` (`%s · Wicthu`, fallback marque).
+- [x] **Open Graph / Twitter Card + image OG** : `og-image` génère une image par page
+  (`app/components/OgImage/Default.satori.vue`, thème Arkham Codex), défaut posé via
+  `defineOgImageComponent('Default')` dans `app.vue` ; og:/twitter: auto-dérivés par seo-utils.
+- [x] **URLs canoniques** : injectées automatiquement par seo-utils à partir de `site.url`.
+- [x] **Auth/profil/creer non indexés** : `routeRules` `{ robots: false }` (Disallow robots.txt +
+  `<meta name="robots" noindex>`) + exclus du sitemap.
+- [x] **Structure sémantique** : `<h1>` unique par page (accueil = `<h1 class="sr-only">` ajouté ;
+  listes via `ResourceListLayout`) ; aucun `<img>` sans `alt`.
+- [ ] **(Optionnel, non fait)** : URLs **dynamiques** dans le sitemap (entités/sorts/ouvrages —
+  nécessite une source sitemap interrogeant la BDD) et **JSON-LD** enrichi par fiche (schema-org est
+  dispo via le module ; un WebSite/WebPage de base est déjà émis).
+
+> ⚠️ **À valider en runtime** : `/robots.txt`, `/sitemap.xml`, et l'aperçu OG (ex. partage Discord /
+> [opengraph.xyz](https://www.opengraph.xyz)). Vérifier que `SITE_URL` pointe bien vers le domaine de
+> prod (sinon canonical/sitemap/OG utiliseront `localhost`).
 
 ## 4. Derniers bugs (à la fin)
 

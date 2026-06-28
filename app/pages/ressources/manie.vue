@@ -35,6 +35,11 @@ function pickRandom() {
   const pool = manies.value
   random.value = pool[Math.floor(Math.random() * pool.length)]!
 }
+
+useSeoMeta({
+  title: 'Manies',
+  description: 'Liste des manies pour incarner les séquelles mentales de vos investigateurs de L\'Appel de Cthulhu.'
+})
 </script>
 
 <template>

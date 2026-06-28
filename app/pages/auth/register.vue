@@ -32,6 +32,7 @@ async function handleRegister() {
     success.value = true
   }
 }
+useSeoMeta({ title: 'Inscription' })
 </script>
 
 <template>

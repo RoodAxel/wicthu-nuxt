@@ -148,6 +148,11 @@ function choiceLabel(skill: OccupationSkill): string {
 function isFixedSkill(skill: OccupationSkill) {
   return skill.type === 'FIXED' || skill.type === 'FIXED_SPEC' || skill.type === 'FREE_SPEC'
 }
+
+useSeoMeta({
+  title: 'Occupations',
+  description: 'Occupations d\'investigateur pour L\'Appel de Cthulhu : compétences associées et formules de points de crédit.'
+})
 </script>
 
 <template>

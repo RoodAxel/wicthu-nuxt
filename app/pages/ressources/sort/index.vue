@@ -36,6 +36,11 @@ const filtered = computed(() => {
   })
   return result
 })
+
+useSeoMeta({
+  title: 'Sorts',
+  description: 'Grimoire des sorts de L\'Appel de Cthulhu : coût en points de magie, en Santé mentale, temps d\'incantation et variantes.'
+})
 </script>
 
 <template>

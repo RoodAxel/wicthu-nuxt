@@ -77,6 +77,11 @@ const stats = computed(() => [
   { number: artefacts.value?.length ?? 0, label: 'Artefacts' },
   { number: filtered.value.length, label: 'Résultats' }
 ])
+
+useSeoMeta({
+  title: 'Artefacts',
+  description: 'Artefacts et objets surnaturels du Mythe de Cthulhu : descriptions et propriétés pour L\'Appel de Cthulhu.'
+})
 </script>
 
 <template>

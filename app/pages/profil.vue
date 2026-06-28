@@ -113,6 +113,7 @@ function formatDate(iso: string) {
     hour: '2-digit', minute: '2-digit'
   })
 }
+useSeoMeta({ title: 'Mon profil' })
 </script>
 
 <template>

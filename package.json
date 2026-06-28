@@ -14,11 +14,14 @@
     "@iconify-json/lucide": "^1.2.90",
     "@iconify-json/simple-icons": "^1.2.70",
     "@nuxt/ui": "^4.4.0",
+    "@nuxtjs/seo": "^5.3.1",
     "@nuxtjs/supabase": "^2.0.4",
     "@prisma/client": "^6.19.2",
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.98.0",
     "nuxt": "^4.3.1",
     "pdf-lib": "^1.17.1",
+    "satori": "^0.26.0",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
