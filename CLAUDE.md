@@ -111,7 +111,12 @@ portabilité Windows→Linux.
 
 > À compléter au fil de l'eau. Consigner ici chaque bug repéré avec étapes de repro.
 
-- [ ] l'esquive n'est pas renseigné dans les stats de combat en bas de page.
+- [x] ~~l'esquive n'est pas renseigné dans les stats de combat en bas de page.~~ — ✅ CORRIGÉ.
+  Cause : `ESQ_0` n'est jamais stocké (seule la base DEX÷2 s'affiche en *placeholder* du formulaire),
+  donc `setField` l'ignorait (valeur vide) à la génération du PDF. Fix dans
+  `server/api/investigateur/generate-pdf.post.ts` : repli sur la base **DEX÷2** quand l'esquive n'a
+  pas reçu de points (+ recalcul de ses ½/⅕). À vérifier : générer un PDF avec DEX renseigné sans
+  saisir l'esquive → elle doit apparaître à DEX÷2.
 
 ---
 

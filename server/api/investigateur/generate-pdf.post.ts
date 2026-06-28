@@ -102,6 +102,14 @@ export default defineEventHandler(async (event) => {
     setField(form, `${s}_2`, fifth(v))
   }
 
+  // Esquive : stat de combat toujours renseignée. Sans points investis, ESQ_0
+  // reste vide côté formulaire (seule la base DEX÷2 est affichée en placeholder)
+  // → on retombe sur la base pour qu'elle apparaisse sur la fiche.
+  const esquive = str(body['ESQ_0']) || half(body['DEX_0'])
+  setField(form, 'ESQ_0', esquive)
+  setField(form, 'ESQ_1', half(esquive))
+  setField(form, 'ESQ_2', fifth(esquive))
+
   for (const group of customGroups) {
     for (const prefix of group) {
       setField(form, `${prefix}_label`, body[`${prefix}_label`] ?? '')
@@ -173,6 +181,7 @@ export default defineEventHandler(async (event) => {
       const image = isJpeg ? await pdfDoc.embedJpg(imageBytes) : await pdfDoc.embedPng(imageBytes)
 
       const page = pdfDoc.getPages()[0]
+      if (!page) throw new Error('PDF template sans page')
 
       // Retirer uniquement l'annotation Illu-invest pour que l'image
       // dessinée sur le contenu de page soit visible (sans flatten global)

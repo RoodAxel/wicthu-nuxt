@@ -113,8 +113,9 @@ export function useOccupations(form: Record<string, string>) {
       const catVar = CAT_TO_VAR[catName]
       if (!catVar) return
       const idx = used[catName] ?? 0
-      if (idx >= catVar.labels.length) return
-      result[catVar.labels[idx]] = { spec, locked }
+      const label = catVar.labels[idx]
+      if (!label) return
+      result[label] = { spec, locked }
       used[catName] = idx + 1
     }
     for (const [i, skill] of occupationDetail.value.skills.entries()) {

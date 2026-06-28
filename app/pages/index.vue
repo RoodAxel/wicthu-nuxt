@@ -16,8 +16,8 @@ useSeoMeta({
         <span class="hero-title-sub">Wiki l'Appel de Cthulhu</span>
       </h1>
       <p class="hero-description">
-        Un outil pour les Guardiens et joueurs de <em>L'Appel de Cthulhu</em> —
-        consultez les archives et gérer vos fiches d'investigateurs.
+        Un outil pour les Gardiens et joueurs de <em>L'Appel de Cthulhu</em> —
+        consultez les archives et gérez vos fiches d'investigateurs.
       </p>
     </section>
 
@@ -54,7 +54,7 @@ useSeoMeta({
         <NuxtLink to="/ressources/artefact" class="resource-card">
           <div class="resource-body">
             <span class="resource-name">Artefact</span>
-            <span class="resource-desc">Objets d'origine inconnu aux propriétés surnaturelles.</span>
+            <span class="resource-desc">Objets d'origine inconnue aux propriétés surnaturelles.</span>
           </div>
           <span class="resource-arrow">→</span>
         </NuxtLink>
