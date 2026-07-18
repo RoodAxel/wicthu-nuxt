@@ -39,6 +39,8 @@ export function useCharacterForm() {
     LG1_label: '', LG1_0: '', LG2_label: '', LG2_0: '', LG3_label: '', LG3_0: '',
     // Pilotage
     PL1_label: '', PL1_0: '',
+    // Survie
+    SR1_label: '', SR1_0: '',
     // Sciences
     SC1_label: '', SC1_0: '', SC2_label: '', SC2_0: '', SC3_label: '', SC3_0: '',
     // Compétences perso

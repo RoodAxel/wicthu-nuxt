@@ -66,7 +66,7 @@ export const CAT_TO_VAR: Record<string, { slots: string[], labels: string[] }> =
   'Langues': { slots: ['LG1_0', 'LG2_0', 'LG3_0'], labels: ['LG1_label', 'LG2_label', 'LG3_label'] },
   'Pilotage': { slots: ['PL1_0'], labels: ['PL1_label'] },
   'Sciences': { slots: ['SC1_0', 'SC2_0', 'SC3_0'], labels: ['SC1_label', 'SC2_label', 'SC3_label'] },
-  'Survie': { slots: [], labels: [] }
+  'Survie': { slots: ['SR1_0'], labels: ['SR1_label'] }
 }
 
 // Mapping compétence fixe → clé de formulaire + valeur de base
@@ -100,6 +100,7 @@ export const COMP_BASE: Record<string, number> = {
   CR2_0: 25, CR3_0: 25,
   LG1_0: 1, LG2_0: 1, LG3_0: 1,
   PL1_0: 1,
+  SR1_0: 10,
   SC1_0: 1, SC2_0: 1, SC3_0: 1,
   CP1_0: 0, CP2_0: 0, CP3_0: 0, CP4_0: 0, CP5_0: 0
 }
@@ -108,9 +109,10 @@ export const COMP_BASE: Record<string, number> = {
 export const CATEGORY_KEYS = new Set([
   'ART_0', // Arts et métiers → AR1, AR2, AR3
   'SCI_0', // Sciences → SC1, SC2, SC3
-  'PIL_0', // Pilotage → PL1
-  'SUR_0' // Survie
-  // LAG_0 (Langue maternelle) est éditable : base dynamique = ÉDU
+  'PIL_0' // Pilotage → PL1
+  // SUR_0 (Survie) est éditable (certaines occupations la donnent telle quelle)
+  //   et possède aussi un slot enfant SR1 ; LAG_0 (Langue maternelle) est
+  //   éditable avec base dynamique = ÉDU
 ])
 
 // Caractéristiques principales (8) + formules de tirage

@@ -70,6 +70,7 @@ export default defineEventHandler(async (event) => {
     ['CR2', 'CR3'],
     ['LG1', 'LG2', 'LG3'],
     ['PL1'],
+    ['SR1'],
     ['SC1', 'SC2', 'SC3'],
     ['CP1', 'CP2', 'CP3', 'CP4', 'CP5']
   ] as const
@@ -271,9 +272,12 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── 3. URL signée valable 60 secondes ──────────────────────
+  // Le nom de stockage reste horodaté (unicité), mais le fichier téléchargé
+  // porte simplement le nom de l'investigateur.
+  const downloadName = `${(body.Nom || 'investigateur').trim().replace(/\s+/g, '_')}.pdf`
   const { data: signedData, error: signError } = await supabase.storage
     .from('fiches')
-    .createSignedUrl(fileName, 60)
+    .createSignedUrl(fileName, 60, { download: downloadName })
 
   if (signError || !signedData?.signedUrl) {
     throw createError({ statusCode: 500, statusMessage: `Signed URL error: ${signError?.message}` })

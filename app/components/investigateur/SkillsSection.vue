@@ -82,12 +82,47 @@ function isFreeChoiceTaken(idx: number, slot: number, key: string): boolean {
   return fixedKeys.value.has(key)
 }
 
+// Choix libre « Autre… » : la compétence personnalisée occupe un slot des
+// Compétences personnelles (CP1–5), dont la ligne passe en or.
+function firstFreeCpKey(): string | null {
+  const used = new Set<string>()
+  for (const sel of Object.values(freeChoiceSelections.value))
+    sel.forEach((k) => { if (k?.startsWith('CP')) used.add(k) })
+  for (const i of [1, 2, 3, 4, 5]) {
+    const key = `CP${i}_0`
+    if (!used.has(key) && !form[`CP${i}_label`]) return key
+  }
+  return null
+}
+const hasFreeCpSlot = computed(() => firstFreeCpKey() !== null)
+
+function freeChoiceSelectValue(idx: number, slot: number): string {
+  const sel = (freeChoiceSelections.value[idx] ?? [])[slot] ?? ''
+  return sel.startsWith('CP') ? CUSTOM_SPEC : sel
+}
+function isCustomFreeChoice(idx: number, slot: number): boolean {
+  return ((freeChoiceSelections.value[idx] ?? [])[slot] ?? '').startsWith('CP')
+}
+function customFreeChoiceLabelKey(idx: number, slot: number): string {
+  return ((freeChoiceSelections.value[idx] ?? [])[slot] ?? '').replace('_0', '_label')
+}
+function onFreeChoiceSelect(idx: number, slot: number, value: string) {
+  if (value !== CUSTOM_SPEC) {
+    updateFreeChoice(idx, slot, value)
+    return
+  }
+  if (isCustomFreeChoice(idx, slot)) return
+  const cp = firstFreeCpKey()
+  if (cp) updateFreeChoice(idx, slot, cp)
+}
+
 // ── Sous-lignes de spécialités (texte libre), intégrées sous leur catégorie ──
 type SubRow = { key: string, labelKey: string, placeholder: string }
 const SUB_ROWS: Record<string, SubRow[]> = {
   ART_0: [1, 2, 3].map(i => ({ key: `AR${i}_0`, labelKey: `AR${i}_label`, placeholder: 'Spécialité…' })),
   LAG_0: [1, 2, 3].map(i => ({ key: `LG${i}_0`, labelKey: `LG${i}_label`, placeholder: 'Langue…' })),
   PIL_0: [{ key: 'PL1_0', labelKey: 'PL1_label', placeholder: 'Véhicule…' }],
+  SUR_0: [{ key: 'SR1_0', labelKey: 'SR1_label', placeholder: 'Milieu (mer, désert…)' }],
   SCI_0: [1, 2, 3].map(i => ({ key: `SC${i}_0`, labelKey: `SC${i}_label`, placeholder: 'Spécialité…' }))
 }
 
@@ -305,8 +340,8 @@ function onRowClick(key: string) {
           <div v-for="slot in picker.count" :key="slot" class="choice-slot-group">
             <select
               class="field-select choice-select"
-              :value="(freeChoiceSelections[picker.i] ?? [])[slot - 1] ?? ''"
-              @change="updateFreeChoice(picker.i, slot - 1, ($event.target as HTMLSelectElement).value)"
+              :value="freeChoiceSelectValue(picker.i, slot - 1)"
+              @change="onFreeChoiceSelect(picker.i, slot - 1, ($event.target as HTMLSelectElement).value)"
             >
               <option value="">— Choisir —</option>
               <option
@@ -315,7 +350,18 @@ function onRowClick(key: string) {
                 :value="c.key"
                 :disabled="isFreeChoiceTaken(picker.i, slot - 1, c.key)"
               >{{ c.label }}</option>
+              <option
+                :value="CUSTOM_SPEC"
+                :disabled="!isCustomFreeChoice(picker.i, slot - 1) && !hasFreeCpSlot"
+              >Autre… (compétence personnelle)</option>
             </select>
+            <input
+              v-if="isCustomFreeChoice(picker.i, slot - 1)"
+              v-model="form[customFreeChoiceLabelKey(picker.i, slot - 1)]"
+              class="field-input choice-select"
+              type="text"
+              placeholder="Nom de la compétence…"
+            >
           </div>
         </div>
       </div>
@@ -445,7 +491,12 @@ function onRowClick(key: string) {
     <div class="perso-skills">
       <h3 class="variable-subtitle">Compétences personnelles</h3>
       <div class="variable-row-grid">
-        <div v-for="i in [1, 2, 3, 4, 5]" :key="`cp${i}`" class="variable-row">
+        <div
+          v-for="i in [1, 2, 3, 4, 5]"
+          :key="`cp${i}`"
+          class="variable-row"
+          :class="{ 'variable-row--gold': fixedKeys.has(`CP${i}_0`) }"
+        >
           <input v-model="form[`CP${i}_label`]" class="field-input label-input" type="text" placeholder="Compétence…">
           <input v-model="form[`CP${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
         </div>

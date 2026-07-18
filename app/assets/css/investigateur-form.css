@@ -665,6 +665,12 @@
   white-space: nowrap;
 }
 .character-form .perso-skills { margin-top: var(--space-lg); }
+/* Ligne perso occupée par un choix libre d'occupation → or */
+.character-form .variable-row--gold .label-input,
+.character-form .variable-row--gold .comp-input {
+  border-color: rgba(184, 146, 74, 0.5);
+}
+.character-form .variable-row--gold .label-input { color: var(--color-gold); }
 .character-form .comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }
 .character-form .comp-base { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); text-align: right; }
 .character-form .comp-input {
