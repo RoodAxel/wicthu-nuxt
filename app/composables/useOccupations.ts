@@ -159,15 +159,19 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  // choiceKeys : vert = options CHOICE_FROM_LIST non sélectionnées (non-catégorie)
+  // choiceKeys : vert = options CHOICE_FROM_LIST encore sélectionnables.
+  // Quota atteint → les options restantes redeviennent neutres (fini le doute
+  // « dois-je investir dans toutes les vertes ? »).
   const choiceKeys = computed((): Set<string> => {
     const keys = new Set<string>()
     if (!occupationDetail.value) return keys
     for (const picker of occSkillPickers.value) {
       if (picker.type !== 'CHOICE_FROM_LIST') continue
-      const selected = new Set((choiceSelections.value[picker.i] ?? []).filter(Boolean))
+      const selected = (choiceSelections.value[picker.i] ?? []).filter(Boolean)
+      if (selected.length >= picker.count) continue
+      const chosen = new Set(selected)
       for (const opt of picker.options) {
-        if (!opt.competence.isCategory && !selected.has(opt.competence.name))
+        if (!opt.competence.isCategory && !chosen.has(opt.competence.name))
           (SKILL_TO_FORM_KEYS[opt.competence.name] ?? []).forEach(k => keys.add(k))
       }
     }
@@ -175,11 +179,29 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  function isGroupHighlighted(...keys: string[]) {
-    return keys.some(k => fixedKeys.value.has(k))
-  }
-  function isGroupChoice(...keys: string[]) {
-    return !isGroupHighlighted(...keys) && keys.some(k => choiceKeys.value.has(k))
+  // Clic sur une ligne de la grille : sélectionne (1er slot libre) ou
+  // désélectionne l'option de liste correspondante — miroir des dropdowns.
+  function toggleChoiceKey(key: string) {
+    for (const picker of occSkillPickers.value) {
+      if (picker.type !== 'CHOICE_FROM_LIST') continue
+      const opt = picker.options.find(o =>
+        !o.competence.isCategory && (SKILL_TO_FORM_KEYS[o.competence.name] ?? []).includes(key)
+      )
+      if (!opt) continue
+      const name = opt.competence.name
+      const current = choiceSelections.value[picker.i] ?? []
+      const slotOfName = current.indexOf(name)
+      if (slotOfName >= 0) {
+        updateChoice(picker.i, slotOfName, '')
+        return
+      }
+      for (let s = 0; s < picker.count; s++) {
+        if (!current[s]) {
+          updateChoice(picker.i, s, name)
+          return
+        }
+      }
+    }
   }
 
   function updateChoice(idx: number, slot: number, value: string) {
@@ -315,7 +337,7 @@ export function useOccupations(form: Record<string, string>) {
     occupationList, selectedOccupationId, occupationDetail, customOccupation,
     choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections,
     occSkillPickers, updateChoice, updateFreeSpec, updateFreeChoice, updateCatSub,
-    fixedKeys, choiceKeys, occupationVarSlots, isGroupHighlighted, isGroupChoice,
+    fixedKeys, choiceKeys, selectedChoiceKeys, occupationVarSlots, toggleChoiceKey,
     getSkillBase,
     occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,
     intPointsTotal, intPointsSpent, intPointsRemaining

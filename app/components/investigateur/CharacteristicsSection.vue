@@ -13,6 +13,13 @@ const {
   <section class="form-section">
     <h2 class="section-title">Caractéristiques</h2>
 
+    <InvestigateurFormHint title="Une seule méthode suffit">
+      Choisissez <strong>une</strong> des quatre méthodes ci-dessous (à valider avec
+      votre Gardien) : tirage classique aux dés, distribution libre d'un pool tiré,
+      achat avec 460 points, ou tableau fixe de la création accélérée. Les valeurs
+      vont de 1 à 100 ; l'âge appliquera ensuite ses modificateurs.
+    </InvestigateurFormHint>
+
     <!-- Sélecteur de méthode -->
     <div class="gen-methods">
       <button

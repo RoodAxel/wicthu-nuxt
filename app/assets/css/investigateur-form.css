@@ -350,18 +350,39 @@
   text-align: right;
   font-size: var(--fs-secondary);
 }
-.character-form .variable-group--highlighted {
-  outline: 1px solid rgba(184, 146, 74, 0.35);
-  outline-offset: 4px;
-  border-radius: var(--radius-sm);
+/* ── ENCADRÉS D'AIDE (notes du Gardien) ──────────────────── */
+.character-form .form-hint {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: baseline;
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-gold);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
 }
-.character-form .variable-group--highlighted .variable-subtitle { color: var(--color-gold); }
-.character-form .variable-group--choice {
-  outline: 1px solid rgba(127, 179, 138, 0.3);
-  outline-offset: 4px;
-  border-radius: var(--radius-sm);
+.character-form .form-hint-glyph {
+  color: var(--color-gold);
+  font-size: var(--fs-secondary);
 }
-.character-form .variable-group--choice .variable-subtitle { color: var(--color-arcane); }
+.character-form .form-hint-body {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-secondary);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+.character-form .form-hint-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin-bottom: 2px;
+}
 
 /* ── CHOICE PICKER ───────────────────────────────────────── */
 .character-form .choice-picker {
@@ -601,15 +622,32 @@
   display: grid; grid-template-columns: repeat(2, 1fr);
   border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden;
 }
+/* Cellule = compétence principale + éventuelles sous-lignes de spécialités */
+.character-form .comp-cell {
+  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+}
+.character-form .comp-cell--shaded { background: var(--color-deep); }
 .character-form .comp-row {
   display: grid; grid-template-columns: 1fr 42px 70px;
   align-items: center; gap: var(--space-sm);
   padding: var(--space-xs) var(--space-md);
-  border-bottom: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
 }
-.character-form .comp-row:nth-child(4n+2),
-.character-form .comp-row:nth-child(4n+3) { background: var(--color-deep); }
+.character-form .comp-clickable { cursor: pointer; }
+.character-form .comp-clickable:hover .comp-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.character-form .comp-subrow {
+  display: grid; grid-template-columns: 14px 1fr 70px;
+  align-items: center; gap: var(--space-sm);
+  padding: 2px var(--space-md) var(--space-xs) var(--space-lg);
+}
+.character-form .comp-subglyph {
+  color: var(--color-text-muted);
+  font-size: var(--fs-secondary);
+}
+.character-form .perso-skills { margin-top: var(--space-lg); }
 .character-form .comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }
 .character-form .comp-base { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); text-align: right; }
 .character-form .comp-input {
@@ -626,9 +664,7 @@
 .character-form .comp-input::-webkit-inner-spin-button { display: none; }
 .character-form .comp-input:focus { border-color: var(--color-arcane-dim); }
 
-/* ── VARIABLE SKILLS ─────────────────────────────────────── */
-.character-form .variable-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
-.character-form .variable-group--full { grid-column: span 2; }
+/* ── COMPÉTENCES PERSONNELLES ────────────────────────────── */
 .character-form .variable-subtitle {
   font-family: var(--font-heading);
   font-size: var(--fs-section-title); letter-spacing: 0.12em; text-transform: uppercase;
@@ -956,12 +992,9 @@
   .character-form .derived-grid { grid-template-columns: repeat(4, 1fr); }
   .character-form .carac-header, .character-form .carac-row { grid-template-columns: 50px 1fr 85px 50px 50px; }
   .character-form .comp-grid { grid-template-columns: 1fr; }
-  .character-form .comp-row { border-right: none; }
-  .character-form .comp-row:nth-child(4n+2),
-  .character-form .comp-row:nth-child(4n+3) { background: unset; }
-  .character-form .comp-row:nth-child(even) { background: var(--color-deep); }
-  .character-form .variable-grid { grid-template-columns: 1fr; }
-  .character-form .variable-group--full { grid-column: span 1; }
+  .character-form .comp-cell { border-right: none; }
+  .character-form .comp-cell--shaded { background: unset; }
+  .character-form .comp-cell:nth-child(even) { background: var(--color-deep); }
   .character-form .variable-row-grid { grid-template-columns: 1fr; }
   .character-form .background-grid { grid-template-columns: 1fr; }
   .character-form .chance-card {

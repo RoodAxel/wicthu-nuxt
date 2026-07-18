@@ -6,7 +6,9 @@ const {
   form, occupationDetail, occSkillPickers,
   choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections,
   updateChoice, updateFreeSpec, updateFreeChoice, updateCatSub,
-  fixedKeys, choiceKeys, getSkillBase,
+  fixedKeys, choiceKeys, selectedChoiceKeys, occupationVarSlots, toggleChoiceKey,
+  getSkillBase,
+  uniqueWeaponCompetences, getCompBase,
   occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,
   intPointsTotal, intPointsSpent, intPointsRemaining
 } = injectCharacterCreation()
@@ -38,12 +40,47 @@ function isFreeChoiceTaken(idx: number, slot: number, key: string): boolean {
   if ((freeChoiceSelections.value[idx] ?? [])[slot] === key) return false
   return fixedKeys.value.has(key)
 }
+
+// ── Sous-lignes de spécialités, intégrées sous leur catégorie ────────────────
+type SubRow = { key: string, labelKey: string, kind: 'text' | 'weapon', placeholder: string }
+const SUB_ROWS: Record<string, SubRow[]> = {
+  ART_0: [1, 2, 3].map(i => ({ key: `AR${i}_0`, labelKey: `AR${i}_label`, kind: 'text' as const, placeholder: 'Spécialité…' })),
+  CD2_0: [3, 4].map(i => ({ key: `CD${i}_0`, labelKey: `CD${i}_label`, kind: 'weapon' as const, placeholder: '' })),
+  CR1_0: [2, 3].map(i => ({ key: `CR${i}_0`, labelKey: `CR${i}_label`, kind: 'weapon' as const, placeholder: '' })),
+  LAG_0: [1, 2, 3].map(i => ({ key: `LG${i}_0`, labelKey: `LG${i}_label`, kind: 'text' as const, placeholder: 'Langue…' })),
+  PIL_0: [{ key: 'PL1_0', labelKey: 'PL1_label', kind: 'text' as const, placeholder: 'Véhicule…' }],
+  SCI_0: [1, 2, 3].map(i => ({ key: `SC${i}_0`, labelKey: `SC${i}_label`, kind: 'text' as const, placeholder: 'Spécialité…' }))
+}
+
+// ── Clic sur une ligne verte / or-choisie : (dé)sélection directe ────────────
+function isClickable(key: string) {
+  return choiceKeys.value.has(key) || selectedChoiceKeys.value.has(key)
+}
+function rowTitle(key: string): string | undefined {
+  if (choiceKeys.value.has(key)) return 'Cliquer pour la choisir pour votre occupation'
+  if (selectedChoiceKeys.value.has(key)) return 'Cliquer pour annuler ce choix'
+  return undefined
+}
+function onRowClick(key: string) {
+  if (isClickable(key)) toggleChoiceKey(key)
+}
 </script>
 
 <template>
   <section class="form-section">
     <h2 class="section-title">Compétences</h2>
     <p class="section-hint">Valeur finale après répartition — les ½ et ⅕ sont calculés automatiquement.</p>
+
+    <InvestigateurFormHint v-if="occupationDetail" title="Comment répartir vos points">
+      Deux réserves distinctes : les points d'<strong>occupation</strong> ne peuvent aller
+      que dans les compétences de votre métier (en <strong>or</strong>) ; les points
+      d'<strong>intérêt personnel</strong> (INT × 2) vont où bon vous semble. Les compétences
+      en <strong>vert</strong> attendent un choix : cliquez sur l'une d'elles (ou utilisez les
+      menus ci-dessous) pour l'ajouter à votre occupation. La valeur saisie est le
+      <strong>total final</strong>, base comprise — l'Esquive part de DEX÷2, la Langue
+      maternelle d'ÉDU.
+    </InvestigateurFormHint>
+
     <div class="points-trackers">
       <div v-if="occupationDetail?.point_competence" class="occ-points-tracker" :class="{ 'occ-points-over': occOverflow > 0 }">
         <span class="occ-points-label">Occupation</span>
@@ -168,19 +205,79 @@ function isFreeChoiceTaken(idx: number, slot: number, key: string): boolean {
     </div>
     <div class="comp-grid">
       <div
-        v-for="c in competences"
+        v-for="(c, i) in competences"
         :key="c.key"
-        class="comp-row"
-        :class="{
-          'comp-highlighted': fixedKeys.has(c.key),
-          'comp-choice': choiceKeys.has(c.key),
-          'comp-category': CATEGORY_KEYS.has(c.key)
-        }"
+        class="comp-cell"
+        :class="{ 'comp-cell--shaded': i % 4 === 1 || i % 4 === 2 }"
       >
-        <span class="comp-name">{{ c.label }}</span>
-        <span class="comp-base">{{ getSkillBase(c.key) }}%</span>
-        <span v-if="CATEGORY_KEYS.has(c.key)" class="comp-category-badge">—</span>
-        <input v-else v-model="form[c.key]" class="comp-input" type="number" min="0" max="100" :placeholder="String(getSkillBase(c.key))">
+        <div
+          class="comp-row"
+          :class="{
+            'comp-highlighted': fixedKeys.has(c.key),
+            'comp-choice': choiceKeys.has(c.key),
+            'comp-category': CATEGORY_KEYS.has(c.key),
+            'comp-clickable': isClickable(c.key)
+          }"
+          :title="rowTitle(c.key)"
+          @click="onRowClick(c.key)"
+        >
+          <span class="comp-name">{{ c.label }}</span>
+          <span class="comp-base">{{ getSkillBase(c.key) }}%</span>
+          <span v-if="CATEGORY_KEYS.has(c.key)" class="comp-category-badge">—</span>
+          <input
+            v-else
+            v-model="form[c.key]"
+            class="comp-input"
+            type="number" min="0" max="100"
+            :placeholder="String(getSkillBase(c.key))"
+            @click.stop
+          >
+        </div>
+        <div
+          v-for="sub in SUB_ROWS[c.key] ?? []"
+          :key="sub.key"
+          class="comp-subrow"
+          :class="{
+            'comp-highlighted': fixedKeys.has(sub.key),
+            'comp-choice': choiceKeys.has(sub.key)
+          }"
+        >
+          <span class="comp-subglyph" aria-hidden="true">↳</span>
+          <select
+            v-if="sub.kind === 'weapon'"
+            v-model="form[sub.labelKey]"
+            class="field-select label-select"
+          >
+            <option value="">— Compétence —</option>
+            <option v-for="w in uniqueWeaponCompetences" :key="w.name" :value="w.name">{{ w.name }}</option>
+          </select>
+          <input
+            v-else
+            v-model="form[sub.labelKey]"
+            class="field-input label-input"
+            type="text"
+            :placeholder="sub.placeholder"
+            :readonly="occupationVarSlots[sub.labelKey]?.locked"
+            :class="{ 'input-locked': occupationVarSlots[sub.labelKey]?.locked }"
+          >
+          <input
+            v-model="form[sub.key]"
+            class="comp-input"
+            type="number" min="0" max="100"
+            :placeholder="sub.kind === 'weapon' ? getCompBase(sub.labelKey) : String(getSkillBase(sub.key))"
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Compétences personnelles (hors liste officielle) -->
+    <div class="perso-skills">
+      <h3 class="variable-subtitle">Compétences personnelles</h3>
+      <div class="variable-row-grid">
+        <div v-for="i in [1, 2, 3, 4, 5]" :key="`cp${i}`" class="variable-row">
+          <input v-model="form[`CP${i}_label`]" class="field-input label-input" type="text" placeholder="Compétence…">
+          <input v-model="form[`CP${i}_0`]" class="comp-input" type="number" min="0" max="100" placeholder="0">
+        </div>
       </div>
     </div>
   </section>
