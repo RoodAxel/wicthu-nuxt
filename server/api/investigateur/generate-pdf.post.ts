@@ -110,6 +110,16 @@ export default defineEventHandler(async (event) => {
   setField(form, 'ESQ_0', esquive)
   setField(form, 'ESQ_1', half(esquive))
   setField(form, 'ESQ_2', fifth(esquive))
+  // … et sa copie dans le bloc combat (EQV_*, sous impact/carrure)
+  setField(form, 'EQV_0', esquive)
+  setField(form, 'EQV_1', half(esquive))
+  setField(form, 'EQV_2', fifth(esquive))
+
+  // Langue maternelle : base = ÉDU si aucun point investi
+  const langueMat = str(body['LAG_0']) || str(body['EDU_0'])
+  setField(form, 'LAG_0', langueMat)
+  setField(form, 'LAG_1', half(langueMat))
+  setField(form, 'LAG_2', fifth(langueMat))
 
   for (const group of customGroups) {
     for (const prefix of group) {

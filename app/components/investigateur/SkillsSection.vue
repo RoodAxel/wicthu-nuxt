@@ -38,6 +38,41 @@ function selectedCatOption(p: ChoiceListPicker, slot: number) {
   return opt?.competence.isCategory ? opt.competence : null
 }
 
+// ── Saisie libre « Autre… » : les listes de spécialités de la BDD ne sont
+// qu'un échantillon, le joueur peut donc toujours entrer la sienne. ─────────
+const CUSTOM_SPEC = '__custom__'
+const freeSpecCustom = ref<Record<number, boolean>>({})
+const catSubCustom = ref<Record<string, boolean>>({})
+
+function isCustomSpec(p: FreeSpecPicker): boolean {
+  if (freeSpecCustom.value[p.i]) return true
+  const sel = freeSpecSelections.value[p.i]
+  return !!sel && !p.children.some(c => c.name === sel)
+}
+function freeSpecSelectValue(p: FreeSpecPicker): string {
+  return isCustomSpec(p) ? CUSTOM_SPEC : (freeSpecSelections.value[p.i] ?? '')
+}
+function onFreeSpecSelect(i: number, value: string) {
+  freeSpecCustom.value = { ...freeSpecCustom.value, [i]: value === CUSTOM_SPEC }
+  updateFreeSpec(i, value === CUSTOM_SPEC ? '' : value)
+}
+
+function isCustomCatSub(p: ChoiceListPicker, slot: number): boolean {
+  const cat = selectedCatOption(p, slot)
+  if (cat && cat.children.length === 0) return true
+  const k = `${p.i}_${slot}`
+  if (catSubCustom.value[k]) return true
+  const sel = catSubSelections.value[k]
+  return !!sel && !!cat && !cat.children.some(c => c.name === sel)
+}
+function catSubSelectValue(p: ChoiceListPicker, slot: number): string {
+  return isCustomCatSub(p, slot) ? CUSTOM_SPEC : (catSubSelections.value[`${p.i}_${slot}`] ?? '')
+}
+function onCatSubSelect(p: ChoiceListPicker, slot: number, value: string) {
+  catSubCustom.value = { ...catSubCustom.value, [`${p.i}_${slot}`]: value === CUSTOM_SPEC }
+  updateCatSub(p.i, slot, value === CUSTOM_SPEC ? '' : value)
+}
+
 // Compétences proposables en choix libre (grille principale, hors catégories)
 const freeChoiceOptions = competences.filter(c => !CATEGORY_KEYS.has(c.key))
 
@@ -209,10 +244,10 @@ function onRowClick(key: string) {
               >{{ opt.competence.name }}</option>
             </select>
             <select
-              v-if="selectedCatOption(picker, slot - 1)"
+              v-if="selectedCatOption(picker, slot - 1) && selectedCatOption(picker, slot - 1)!.children.length"
               class="field-select choice-select choice-select--sub"
-              :value="catSubSelections[`${picker.i}_${slot - 1}`] ?? ''"
-              @change="updateCatSub(picker.i, slot - 1, ($event.target as HTMLSelectElement).value)"
+              :value="catSubSelectValue(picker, slot - 1)"
+              @change="onCatSubSelect(picker, slot - 1, ($event.target as HTMLSelectElement).value)"
             >
               <option value="">— Spécialité —</option>
               <option
@@ -220,7 +255,16 @@ function onRowClick(key: string) {
                 :key="child.id"
                 :value="child.name"
               >{{ child.name }}</option>
+              <option :value="CUSTOM_SPEC">Autre… (saisie libre)</option>
             </select>
+            <input
+              v-if="selectedCatOption(picker, slot - 1) && isCustomCatSub(picker, slot - 1)"
+              class="field-input choice-select choice-select--sub"
+              type="text"
+              placeholder="Spécialité…"
+              :value="catSubSelections[`${picker.i}_${slot - 1}`] ?? ''"
+              @change="updateCatSub(picker.i, slot - 1, ($event.target as HTMLInputElement).value)"
+            >
           </div>
         </div>
       </div>
@@ -233,14 +277,15 @@ function onRowClick(key: string) {
             <select
               v-if="picker.children.length"
               class="field-select choice-select"
-              :value="freeSpecSelections[picker.i] ?? ''"
-              @change="updateFreeSpec(picker.i, ($event.target as HTMLSelectElement).value)"
+              :value="freeSpecSelectValue(picker)"
+              @change="onFreeSpecSelect(picker.i, ($event.target as HTMLSelectElement).value)"
             >
               <option value="">— Choisir —</option>
               <option v-for="child in picker.children" :key="child.id" :value="child.name">{{ child.name }}</option>
+              <option :value="CUSTOM_SPEC">Autre… (saisie libre)</option>
             </select>
             <input
-              v-else
+              v-if="!picker.children.length || isCustomSpec(picker)"
               class="field-input choice-select"
               type="text"
               placeholder="Spécialité…"

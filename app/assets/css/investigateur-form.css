@@ -652,13 +652,17 @@
 .character-form .comp-subrow .comp-name { font-size: var(--fs-secondary); }
 /* Fourchette de Crédit recommandée par l'occupation */
 .character-form .comp-reco {
-  margin-left: var(--space-xs);
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-micro);
-  letter-spacing: 0;
+  display: inline-block;
+  margin-left: var(--space-sm);
+  padding: 0 6px;
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.04em;
   color: var(--color-gold);
-  opacity: 0.85;
+  background: rgba(184, 146, 74, 0.12);
+  border: 1px solid rgba(184, 146, 74, 0.45);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 .character-form .perso-skills { margin-top: var(--space-lg); }
 .character-form .comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }

@@ -237,8 +237,43 @@ export function useOccupations(form: Record<string, string>) {
     catSubSelections.value = { ...catSubSelections.value, [`${idx}_${slot}`]: spec }
   }
 
+  // ── Persistance des choix ─────────────────────────────────────────────────────
+  // Les sélections sont sérialisées dans `form['occSelections']` (sauvegardé tel
+  // quel avec la fiche) et restaurées quand on recharge la même occupation.
+  function applySavedSelections(raw: string | undefined) {
+    if (!raw) return
+    try {
+      const saved = JSON.parse(raw) as {
+        occupation?: string
+        choice?: Record<number, string[]>
+        freeSpec?: Record<number, string>
+        freeChoice?: Record<number, string[]>
+        catSub?: Record<string, string>
+      }
+      if (saved.occupation !== occupationDetail.value?.name) return
+      choiceSelections.value = saved.choice ?? {}
+      freeSpecSelections.value = saved.freeSpec ?? {}
+      freeChoiceSelections.value = saved.freeChoice ?? {}
+      catSubSelections.value = saved.catSub ?? {}
+    } catch { /* sélection sauvegardée illisible — ignorée */ }
+  }
+
+  watch([choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections], () => {
+    if (!occupationDetail.value) return
+    form['occSelections'] = JSON.stringify({
+      occupation: occupationDetail.value.name,
+      choice: choiceSelections.value,
+      freeSpec: freeSpecSelections.value,
+      freeChoice: freeChoiceSelections.value,
+      catSub: catSubSelections.value
+    })
+  }, { deep: true })
+
   // ── Watchers occupation ───────────────────────────────────────────────────────
   watch(selectedOccupationId, async (id) => {
+    // Stash avant reset : en mode édition, les choix sauvegardés sont déjà
+    // dans le form et seraient écrasés par la sérialisation des vides.
+    const savedRaw = form['occSelections']
     choiceSelections.value = {}
     freeSpecSelections.value = {}
     freeChoiceSelections.value = {}
@@ -250,6 +285,7 @@ export function useOccupations(form: Record<string, string>) {
     const occ = occupationList.value?.find(o => o.id === id)
     if (occ) form['Occupation'] = occ.name
     occupationDetail.value = await $fetch<OccupationDetail>(`/api/occupation/${id}`)
+    applySavedSelections(savedRaw)
   })
 
   // En mode édition : retrouver l'occupation depuis le nom sauvegardé

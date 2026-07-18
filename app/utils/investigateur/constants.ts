@@ -15,7 +15,7 @@ export const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
   'Conduite': ['COD_0'],
   'Conduite engin lourd': ['CEL_0'],
   'Crédit': ['CRE_0'],
-  'Crochetage': ['CRE_0'],
+  'Crochetage': ['CRO_0'],
   'Discrétion': ['DIS_0'],
   'Droit': ['DRO_0'],
   'Écouter': ['ECO_0'],
@@ -27,6 +27,7 @@ export const SKILL_TO_FORM_KEYS: Record<string, string[]> = {
   'Histoire': ['HIS_0'],
   'Imposture': ['IPO_0'],
   'Intimidation': ['ITI_0'],
+  'Lancer': ['LAN_0'],
   'Langue maternelle': ['LAG_0'],
   'Langues': ['LG1_0', 'LG2_0', 'LG3_0'],
   'Mécanique': ['MEC_0'],
@@ -71,7 +72,7 @@ export const CAT_TO_VAR: Record<string, { slots: string[], labels: string[] }> =
 // Mapping compétence fixe → clé de formulaire + valeur de base
 export const FIXED_COMPETENCE_MAP: Record<string, { key: string, base: number }> = {
   'Corps à corps': { key: 'CR1_0', base: 25 },
-  'Armes de poing': { key: 'CD1_0', base: 15 },
+  'Armes de poing': { key: 'CD1_0', base: 20 },
   'Fusils': { key: 'CD2_0', base: 25 }
 }
 
@@ -87,12 +88,12 @@ export const CARAC_KEY: Record<string, string> = {
 // Valeur de base de chaque champ compétence (valeur sans investissement)
 export const COMP_BASE: Record<string, number> = {
   ANT_0: 1, ARC_0: 1, ART_0: 5, BAR_0: 5, BIB_0: 20, CHA_0: 15,
-  CD1_0: 15, CD2_0: 25, CR1_0: 25, COM_0: 25, COD_0: 20, CEL_0: 5,
-  CRE_0: 0, CRO_0: 1, DIS_0: 20, DRO_0: 5, ECO_0: 20, ELE_0: 1,
+  CD1_0: 20, CD2_0: 25, CR1_0: 25, COM_0: 5, COD_0: 20, CEL_0: 1,
+  CRE_0: 0, CRO_0: 1, DIS_0: 20, DRO_0: 5, ECO_0: 20, ELE_0: 10,
   EQU_0: 5, ESQ_0: 0, EST_0: 5, GRI_0: 20, HIS_0: 5, IPO_0: 5,
-  ITI_0: 15, LAN_0: 0, MEC_0: 10, MED_0: 1, MYT_0: 0, NAG_0: 20,
+  ITI_0: 15, LAG_0: 0, LAN_0: 20, MEC_0: 10, MED_0: 1, MYT_0: 0, NAG_0: 20,
   NAT_0: 10, OCC_0: 5, ORI_0: 10, PER_0: 10, PIC_0: 10, PIL_0: 1,
-  PIS_0: 20, PLO_0: 1, PRE_0: 30, PSA_0: 1, PSO_0: 10, SAU_0: 20,
+  PIS_0: 10, PLO_0: 1, PRE_0: 30, PSA_0: 1, PSO_0: 10, SAU_0: 20,
   SCI_0: 1, SUR_0: 10, TOC_0: 25,
   AR1_0: 5, AR2_0: 5, AR3_0: 5,
   CD3_0: 15, CD4_0: 15,
@@ -108,8 +109,8 @@ export const CATEGORY_KEYS = new Set([
   'ART_0', // Arts et métiers → AR1, AR2, AR3
   'SCI_0', // Sciences → SC1, SC2, SC3
   'PIL_0', // Pilotage → PL1
-  'SUR_0', // Survie
-  'LAG_0' // Langue maternelle → auto EDU
+  'SUR_0' // Survie
+  // LAG_0 (Langue maternelle) est éditable : base dynamique = ÉDU
 ])
 
 // Caractéristiques principales (8) + formules de tirage
@@ -132,18 +133,18 @@ export const competences = [
   { key: 'BAR_0', label: 'Baratin', base: 5 },
   { key: 'BIB_0', label: 'Bibliothèque', base: 20 },
   { key: 'CHA_0', label: 'Charme', base: 15 },
-  { key: 'CD1_0', label: 'Armes de poing', base: 15 },
+  { key: 'CD1_0', label: 'Armes de poing', base: 20 },
   { key: 'CD2_0', label: 'Fusils', base: 25 },
   { key: 'CR1_0', label: 'Corps à corps', base: 25 },
-  { key: 'COM_0', label: 'Comptabilité', base: 25 },
+  { key: 'COM_0', label: 'Comptabilité', base: 5 },
   { key: 'COD_0', label: 'Conduite', base: 20 },
-  { key: 'CEL_0', label: 'Conduite engin lourd', base: 5 },
+  { key: 'CEL_0', label: 'Conduite engin lourd', base: 1 },
   { key: 'CRE_0', label: 'Crédit', base: 0 },
   { key: 'CRO_0', label: 'Crochetage', base: 1 },
   { key: 'DIS_0', label: 'Discrétion', base: 20 },
   { key: 'DRO_0', label: 'Droit', base: 5 },
   { key: 'ECO_0', label: 'Écoute', base: 20 },
-  { key: 'ELE_0', label: 'Électricité', base: 1 },
+  { key: 'ELE_0', label: 'Électricité', base: 10 },
   { key: 'EQU_0', label: 'Équitation', base: 5 },
   { key: 'ESQ_0', label: 'Esquive', base: 0 },
   { key: 'EST_0', label: 'Estimation', base: 5 },
@@ -151,6 +152,7 @@ export const competences = [
   { key: 'HIS_0', label: 'Histoire', base: 5 },
   { key: 'IPO_0', label: 'Imposture', base: 5 },
   { key: 'ITI_0', label: 'Intimidation', base: 15 },
+  { key: 'LAN_0', label: 'Lancer', base: 20 },
   { key: 'LAG_0', label: 'Langue maternelle', base: 0 },
   { key: 'MEC_0', label: 'Mécanique', base: 10 },
   { key: 'MED_0', label: 'Médecine', base: 1 },
@@ -162,7 +164,7 @@ export const competences = [
   { key: 'PER_0', label: 'Persuasion', base: 10 },
   { key: 'PIC_0', label: 'Pickpocket', base: 10 },
   { key: 'PIL_0', label: 'Pilotage', base: 1 },
-  { key: 'PIS_0', label: 'Pister', base: 20 },
+  { key: 'PIS_0', label: 'Pister', base: 10 },
   { key: 'PLO_0', label: 'Plongée', base: 1 },
   { key: 'PRE_0', label: 'Premiers soins', base: 30 },
   { key: 'PSA_0', label: 'Psychanalyse', base: 1 },
