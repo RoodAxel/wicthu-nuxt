@@ -1,4 +1,4 @@
-import { n, half, fifth } from '~/utils/investigateur/format'
+import { n, half, fifth, mvtAgePenalty } from '~/utils/investigateur/format'
 
 /**
  * État central de la fiche : le `form` réactif (~150 champs) + les stats dérivées
@@ -99,9 +99,11 @@ export function useCharacterForm() {
     const dex = n(form['DEX_0'])
     const tai = n(form['TAI_0'])
     if (forVal === 0 && dex === 0 && tai === 0) return ''
-    if (forVal < tai && dex < tai) return '7'
-    if (forVal > tai && dex > tai) return '9'
-    return '8'
+    let base = 8
+    if (forVal < tai && dex < tai) base = 7
+    else if (forVal > tai && dex > tai) base = 9
+    // Règle d'âge : −1 par tranche de 10 ans à partir de 40 ans
+    return String(Math.max(1, base - mvtAgePenalty(n(form['age']))))
   })
 
   // Synchronise les dérivées + les ½/⅕ des armes dans `form` (pour l'envoi/PDF)

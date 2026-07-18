@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { n } from '~/utils/investigateur/format'
+import { n, mvtAgePenalty } from '~/utils/investigateur/format'
 
 const { form, ageCategory, eduTestResults, rollEduTests, totalEduBonus } = injectCharacterCreation()
+
+const mvtMalus = computed(() => mvtAgePenalty(n(form['age'])))
 </script>
 
 <template>
@@ -42,6 +44,15 @@ const { form, ageCategory, eduTestResults, rollEduTests, totalEduBonus } = injec
             <span v-if="n(form['APP_0']) > 0" class="age-target">
               {{ n(form['APP_0']) }} → {{ Math.max(0, n(form['APP_0']) - ageCategory.appMalus) }}
             </span>
+          </span>
+        </div>
+
+        <!-- Malus MVT (appliqué automatiquement au calcul) -->
+        <div v-if="mvtMalus > 0" class="age-rule">
+          <span class="age-rule-glyph">−</span>
+          <span>
+            <strong>MVT réduit de {{ mvtMalus }}</strong>.
+            <span class="age-hint">Appliqué automatiquement dans les stats dérivées.</span>
           </span>
         </div>
 

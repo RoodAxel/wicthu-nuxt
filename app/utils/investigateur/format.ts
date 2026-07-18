@@ -17,6 +17,15 @@ export function fifth(val: string | undefined) {
   return v > 0 ? String(v) : ''
 }
 
+/**
+ * Malus de MVT lié à l'âge (règles 7e éd.) : −1 par tranche de 10 ans
+ * à partir de 40 ans (40–49 : −1 … 80–89 : −5).
+ */
+export function mvtAgePenalty(age: number): number {
+  if (age < 40) return 0
+  return Math.min(5, Math.floor((age - 30) / 10))
+}
+
 /** Formate un montant en dollars avec séparateurs de milliers. */
 export function fmtMoney(v: number): string {
   return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' $'
