@@ -368,10 +368,9 @@ function onRowClick(key: string) {
     </div>
     <div class="comp-grid">
       <div
-        v-for="(cell, i) in gridCells"
+        v-for="cell in gridCells"
         :key="cell.key"
         class="comp-cell"
-        :class="{ 'comp-cell--shaded': i % 4 === 1 || i % 4 === 2 }"
       >
         <!-- Compétence classique (+ éventuelles sous-lignes de spécialité) -->
         <template v-if="cell.kind === 'skill'">

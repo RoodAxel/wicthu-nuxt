@@ -618,16 +618,21 @@
 }
 
 /* ── COMPÉTENCES ─────────────────────────────────────────── */
+/* Flux multi-colonnes (et non grille) : les cellules s'empilent sans trous,
+   une cellule haute (catégorie + sous-lignes) ne crée plus de vide chez sa
+   voisine. Lecture alphabétique de haut en bas, puis colonne suivante. */
 .character-form .comp-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  columns: 2;
+  column-gap: 0;
+  column-rule: 1px solid var(--color-border);
   border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden;
 }
 /* Cellule = compétence principale + éventuelles sous-lignes de spécialités */
 .character-form .comp-cell {
+  break-inside: avoid;
   border-bottom: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
 }
-.character-form .comp-cell--shaded { background: var(--color-deep); }
+.character-form .comp-cell:nth-child(even) { background: var(--color-deep); }
 .character-form .comp-row {
   display: grid; grid-template-columns: 1fr 42px 70px;
   align-items: center; gap: var(--space-sm);
@@ -1014,10 +1019,7 @@
   .character-form .identity-grid { grid-template-columns: 1fr; }
   .character-form .derived-grid { grid-template-columns: repeat(4, 1fr); }
   .character-form .carac-header, .character-form .carac-row { grid-template-columns: 50px 1fr 85px 50px 50px; }
-  .character-form .comp-grid { grid-template-columns: 1fr; }
-  .character-form .comp-cell { border-right: none; }
-  .character-form .comp-cell--shaded { background: unset; }
-  .character-form .comp-cell:nth-child(even) { background: var(--color-deep); }
+  .character-form .comp-grid { columns: 1; }
   .character-form .variable-row-grid { grid-template-columns: 1fr; }
   .character-form .background-grid { grid-template-columns: 1fr; }
   .character-form .chance-card {
