@@ -8,10 +8,16 @@ const {
   updateChoice, updateFreeSpec, updateFreeChoice, updateCatSub,
   fixedKeys, choiceKeys, selectedChoiceKeys, occupationVarSlots, toggleChoiceKey,
   getSkillBase,
-  uniqueWeaponCompetences, getCompBase,
   occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,
   intPointsTotal, intPointsSpent, intPointsRemaining
 } = injectCharacterCreation()
+
+// Fourchette de Crédit recommandée par l'occupation (rappel dans la grille)
+const creditRange = computed(() => {
+  const d = occupationDetail.value
+  if (!d || d.credit_min == null || d.credit_max == null) return null
+  return `${d.credit_min}–${d.credit_max}`
+})
 
 // Pickers regroupés par type (narrowing TS explicite pour le template)
 const fixedSpecPickers = computed(() => occSkillPickers.value.filter((p): p is FixedSpecPicker => p.type === 'FIXED_SPEC'))
@@ -41,15 +47,81 @@ function isFreeChoiceTaken(idx: number, slot: number, key: string): boolean {
   return fixedKeys.value.has(key)
 }
 
-// ── Sous-lignes de spécialités, intégrées sous leur catégorie ────────────────
-type SubRow = { key: string, labelKey: string, kind: 'text' | 'weapon', placeholder: string }
+// ── Sous-lignes de spécialités (texte libre), intégrées sous leur catégorie ──
+type SubRow = { key: string, labelKey: string, placeholder: string }
 const SUB_ROWS: Record<string, SubRow[]> = {
-  ART_0: [1, 2, 3].map(i => ({ key: `AR${i}_0`, labelKey: `AR${i}_label`, kind: 'text' as const, placeholder: 'Spécialité…' })),
-  CD2_0: [3, 4].map(i => ({ key: `CD${i}_0`, labelKey: `CD${i}_label`, kind: 'weapon' as const, placeholder: '' })),
-  CR1_0: [2, 3].map(i => ({ key: `CR${i}_0`, labelKey: `CR${i}_label`, kind: 'weapon' as const, placeholder: '' })),
-  LAG_0: [1, 2, 3].map(i => ({ key: `LG${i}_0`, labelKey: `LG${i}_label`, kind: 'text' as const, placeholder: 'Langue…' })),
-  PIL_0: [{ key: 'PL1_0', labelKey: 'PL1_label', kind: 'text' as const, placeholder: 'Véhicule…' }],
-  SCI_0: [1, 2, 3].map(i => ({ key: `SC${i}_0`, labelKey: `SC${i}_label`, kind: 'text' as const, placeholder: 'Spécialité…' }))
+  ART_0: [1, 2, 3].map(i => ({ key: `AR${i}_0`, labelKey: `AR${i}_label`, placeholder: 'Spécialité…' })),
+  LAG_0: [1, 2, 3].map(i => ({ key: `LG${i}_0`, labelKey: `LG${i}_label`, placeholder: 'Langue…' })),
+  PIL_0: [{ key: 'PL1_0', labelKey: 'PL1_label', placeholder: 'Véhicule…' }],
+  SCI_0: [1, 2, 3].map(i => ({ key: `SC${i}_0`, labelKey: `SC${i}_label`, placeholder: 'Spécialité…' }))
+}
+
+// ── Combat : deux catégories avec leurs vraies spécialités (hiérarchie BDD) ──
+// Combat rapproché → Corps à corps (fixe) + 2 slots ; Combat à distance →
+// Armes de poing, Fusils (fixes) + 2 slots. Les listes ne proposent que les
+// enfants de la catégorie, moins les trois compétences à slot fixe.
+type CombatSub
+  = | { kind: 'fixed', key: string, label: string }
+    | { kind: 'pick', key: string, labelKey: string, list: 'melee' | 'ranged' }
+type GridCell
+  = | { kind: 'skill', key: string, label: string }
+    | { kind: 'combat', key: string, label: string, subs: CombatSub[] }
+
+const gridCells = computed((): GridCell[] => {
+  const cells: GridCell[] = []
+  for (const c of competences) {
+    if (c.key === 'CD1_0') {
+      cells.push({ kind: 'combat', key: 'CAT_CD', label: 'Combat à distance', subs: [
+        { kind: 'fixed', key: 'CD1_0', label: 'Armes de poing' },
+        { kind: 'fixed', key: 'CD2_0', label: 'Fusils' },
+        { kind: 'pick', key: 'CD3_0', labelKey: 'CD3_label', list: 'ranged' },
+        { kind: 'pick', key: 'CD4_0', labelKey: 'CD4_label', list: 'ranged' }
+      ] })
+    } else if (c.key === 'CR1_0') {
+      cells.push({ kind: 'combat', key: 'CAT_CR', label: 'Combat rapproché', subs: [
+        { kind: 'fixed', key: 'CR1_0', label: 'Corps à corps' },
+        { kind: 'pick', key: 'CR2_0', labelKey: 'CR2_label', list: 'melee' },
+        { kind: 'pick', key: 'CR3_0', labelKey: 'CR3_label', list: 'melee' }
+      ] })
+    } else if (c.key !== 'CD2_0') {
+      cells.push({ kind: 'skill', key: c.key, label: c.label })
+    }
+  }
+  return cells
+})
+
+type CompetenceApi = {
+  id: number
+  name: string
+  baseValue: number | null
+  isCategory: boolean | null
+  category: { id: number, name: string } | null
+}
+const { data: allCompetences } = useFetch<CompetenceApi[]>('/api/competence')
+
+function combatChildren(cat: string, excluded: string[]) {
+  return (allCompetences.value ?? [])
+    .filter(c => c.category?.name === cat && !excluded.includes(c.name))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+}
+const meleeOptions = computed(() => combatChildren('Combat rapproché', ['Corps à corps']))
+const rangedOptions = computed(() => combatChildren('Combat à distance', ['Armes de poing', 'Fusils']))
+
+function combatBase(labelKey: string): string {
+  const name = form[labelKey]
+  if (!name) return '0'
+  const comp = (allCompetences.value ?? []).find(c => c.name === name)
+  return String(comp?.baseValue ?? 0)
+}
+
+// Une même spécialité ne peut pas occuper les deux slots de sa catégorie
+const PICK_SIBLING: Record<string, string> = {
+  CD3_label: 'CD4_label', CD4_label: 'CD3_label',
+  CR2_label: 'CR3_label', CR3_label: 'CR2_label'
+}
+function isCombatOptionTaken(labelKey: string, name: string): boolean {
+  const sibling = PICK_SIBLING[labelKey]
+  return sibling ? form[sibling] === name : false
 }
 
 // ── Clic sur une ligne verte / or-choisie : (dé)sélection directe ────────────
@@ -205,68 +277,122 @@ function onRowClick(key: string) {
     </div>
     <div class="comp-grid">
       <div
-        v-for="(c, i) in competences"
-        :key="c.key"
+        v-for="(cell, i) in gridCells"
+        :key="cell.key"
         class="comp-cell"
         :class="{ 'comp-cell--shaded': i % 4 === 1 || i % 4 === 2 }"
       >
-        <div
-          class="comp-row"
-          :class="{
-            'comp-highlighted': fixedKeys.has(c.key),
-            'comp-choice': choiceKeys.has(c.key),
-            'comp-category': CATEGORY_KEYS.has(c.key),
-            'comp-clickable': isClickable(c.key)
-          }"
-          :title="rowTitle(c.key)"
-          @click="onRowClick(c.key)"
-        >
-          <span class="comp-name">{{ c.label }}</span>
-          <span class="comp-base">{{ getSkillBase(c.key) }}%</span>
-          <span v-if="CATEGORY_KEYS.has(c.key)" class="comp-category-badge">—</span>
-          <input
-            v-else
-            v-model="form[c.key]"
-            class="comp-input"
-            type="number" min="0" max="100"
-            :placeholder="String(getSkillBase(c.key))"
-            @click.stop
+        <!-- Compétence classique (+ éventuelles sous-lignes de spécialité) -->
+        <template v-if="cell.kind === 'skill'">
+          <div
+            class="comp-row"
+            :class="{
+              'comp-highlighted': fixedKeys.has(cell.key),
+              'comp-choice': choiceKeys.has(cell.key),
+              'comp-category': CATEGORY_KEYS.has(cell.key),
+              'comp-clickable': isClickable(cell.key)
+            }"
+            :title="rowTitle(cell.key)"
+            @click="onRowClick(cell.key)"
           >
-        </div>
-        <div
-          v-for="sub in SUB_ROWS[c.key] ?? []"
-          :key="sub.key"
-          class="comp-subrow"
-          :class="{
-            'comp-highlighted': fixedKeys.has(sub.key),
-            'comp-choice': choiceKeys.has(sub.key)
-          }"
-        >
-          <span class="comp-subglyph" aria-hidden="true">↳</span>
-          <select
-            v-if="sub.kind === 'weapon'"
-            v-model="form[sub.labelKey]"
-            class="field-select label-select"
+            <span class="comp-name">
+              {{ cell.label }}<span v-if="cell.key === 'CRE_0' && creditRange" class="comp-reco">reco {{ creditRange }}</span>
+            </span>
+            <span class="comp-base">{{ getSkillBase(cell.key) }}%</span>
+            <span v-if="CATEGORY_KEYS.has(cell.key)" class="comp-category-badge">—</span>
+            <input
+              v-else
+              v-model="form[cell.key]"
+              class="comp-input"
+              type="number" min="0" max="100"
+              :placeholder="String(getSkillBase(cell.key))"
+              @click.stop
+            >
+          </div>
+          <div
+            v-for="sub in SUB_ROWS[cell.key] ?? []"
+            :key="sub.key"
+            class="comp-subrow"
+            :class="{
+              'comp-highlighted': fixedKeys.has(sub.key),
+              'comp-choice': choiceKeys.has(sub.key)
+            }"
           >
-            <option value="">— Compétence —</option>
-            <option v-for="w in uniqueWeaponCompetences" :key="w.name" :value="w.name">{{ w.name }}</option>
-          </select>
-          <input
-            v-else
-            v-model="form[sub.labelKey]"
-            class="field-input label-input"
-            type="text"
-            :placeholder="sub.placeholder"
-            :readonly="occupationVarSlots[sub.labelKey]?.locked"
-            :class="{ 'input-locked': occupationVarSlots[sub.labelKey]?.locked }"
-          >
-          <input
-            v-model="form[sub.key]"
-            class="comp-input"
-            type="number" min="0" max="100"
-            :placeholder="sub.kind === 'weapon' ? getCompBase(sub.labelKey) : String(getSkillBase(sub.key))"
-          >
-        </div>
+            <span class="comp-subglyph" aria-hidden="true">↳</span>
+            <input
+              v-model="form[sub.labelKey]"
+              class="field-input label-input"
+              type="text"
+              :placeholder="sub.placeholder"
+              :readonly="occupationVarSlots[sub.labelKey]?.locked"
+              :class="{ 'input-locked': occupationVarSlots[sub.labelKey]?.locked }"
+            >
+            <input
+              v-model="form[sub.key]"
+              class="comp-input"
+              type="number" min="0" max="100"
+              :placeholder="String(getSkillBase(sub.key))"
+            >
+          </div>
+        </template>
+
+        <!-- Catégorie de combat : spécialités fixes + slots au choix -->
+        <template v-else>
+          <div class="comp-row comp-category">
+            <span class="comp-name">{{ cell.label }}</span>
+            <span class="comp-base" />
+            <span class="comp-category-badge">—</span>
+          </div>
+          <template v-for="sub in cell.subs" :key="sub.key">
+            <div
+              v-if="sub.kind === 'fixed'"
+              class="comp-subrow comp-subrow--named"
+              :class="{
+                'comp-highlighted': fixedKeys.has(sub.key),
+                'comp-choice': choiceKeys.has(sub.key),
+                'comp-clickable': isClickable(sub.key)
+              }"
+              :title="rowTitle(sub.key)"
+              @click="onRowClick(sub.key)"
+            >
+              <span class="comp-subglyph" aria-hidden="true">↳</span>
+              <span class="comp-name">{{ sub.label }}</span>
+              <span class="comp-base">{{ getSkillBase(sub.key) }}%</span>
+              <input
+                v-model="form[sub.key]"
+                class="comp-input"
+                type="number" min="0" max="100"
+                :placeholder="String(getSkillBase(sub.key))"
+                @click.stop
+              >
+            </div>
+            <div
+              v-else
+              class="comp-subrow"
+              :class="{
+                'comp-highlighted': fixedKeys.has(sub.key),
+                'comp-choice': choiceKeys.has(sub.key)
+              }"
+            >
+              <span class="comp-subglyph" aria-hidden="true">↳</span>
+              <select v-model="form[sub.labelKey]" class="field-select label-select">
+                <option value="">— Spécialité —</option>
+                <option
+                  v-for="o in (sub.list === 'melee' ? meleeOptions : rangedOptions)"
+                  :key="o.id"
+                  :value="o.name"
+                  :disabled="isCombatOptionTaken(sub.labelKey, o.name)"
+                >{{ o.name }}</option>
+              </select>
+              <input
+                v-model="form[sub.key]"
+                class="comp-input"
+                type="number" min="0" max="100"
+                :placeholder="combatBase(sub.labelKey)"
+              >
+            </div>
+          </template>
+        </template>
       </div>
     </div>
 

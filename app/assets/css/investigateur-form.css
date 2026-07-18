@@ -244,6 +244,7 @@
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
 }
+/* Occupation = or (comme les compétences surlignées), intérêt personnel = vert */
 .character-form .occ-points-tracker {
   display: flex;
   align-items: center;
@@ -251,7 +252,7 @@
   gap: var(--space-sm);
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-arcane);
+  border-left: 3px solid var(--color-gold);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   font-family: var(--font-heading);
@@ -260,11 +261,11 @@
   transition: border-color var(--transition-fast);
 }
 .character-form .occ-points-tracker--int {
-  border-left-color: var(--color-gold);
+  border-left-color: var(--color-arcane);
 }
 .character-form .occ-points-tracker--int .occ-points-count,
 .character-form .occ-points-tracker--int .occ-points-remaining {
-  color: var(--color-gold);
+  color: var(--color-arcane);
 }
 .character-form .occ-points-tracker.occ-points-over {
   border-left-color: var(--color-crimson);
@@ -285,7 +286,7 @@
   color: var(--color-border);
 }
 .character-form .occ-points-count {
-  color: var(--color-arcane);
+  color: var(--color-gold);
   font-weight: bold;
 }
 .character-form .occ-points-over .occ-points-count {
@@ -294,7 +295,7 @@
 .character-form .occ-points-remaining {
   margin-left: auto;
   font-weight: bold;
-  color: var(--color-arcane);
+  color: var(--color-gold);
 }
 .character-form .occ-points-over .occ-points-remaining {
   color: var(--color-crimson);
@@ -367,9 +368,8 @@
   font-size: var(--fs-secondary);
 }
 .character-form .form-hint-body {
-  font-family: var(--font-flavor);
-  font-style: italic;
-  font-size: var(--fs-secondary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
   color: var(--color-text-secondary);
   line-height: 1.6;
 }
@@ -646,6 +646,19 @@
 .character-form .comp-subglyph {
   color: var(--color-text-muted);
   font-size: var(--fs-secondary);
+}
+/* Sous-ligne nommée (spécialités fixes de combat : nom + base + valeur) */
+.character-form .comp-subrow--named { grid-template-columns: 14px 1fr 42px 70px; }
+.character-form .comp-subrow .comp-name { font-size: var(--fs-secondary); }
+/* Fourchette de Crédit recommandée par l'occupation */
+.character-form .comp-reco {
+  margin-left: var(--space-xs);
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: var(--fs-micro);
+  letter-spacing: 0;
+  color: var(--color-gold);
+  opacity: 0.85;
 }
 .character-form .perso-skills { margin-top: var(--space-lg); }
 .character-form .comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }
