@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, createError, getRequestHeader } from 'h3'
 import { PDFDocument, PDFName, PDFArray, PDFDict, StandardFonts } from 'pdf-lib'
 import { createClient } from '@supabase/supabase-js'
+import { BACKGROUND_LIMITS } from '#shared/investigateur-background'
 import type { CharacterFormData } from '../../types/investigateur'
 
 function str(val: unknown): string {
@@ -69,6 +70,7 @@ export default defineEventHandler(async (event) => {
     ['CR2', 'CR3'],
     ['LG1', 'LG2', 'LG3'],
     ['PL1'],
+    ['SR1'],
     ['SC1', 'SC2', 'SC3'],
     ['CP1', 'CP2', 'CP3', 'CP4', 'CP5']
   ] as const
@@ -109,6 +111,16 @@ export default defineEventHandler(async (event) => {
   setField(form, 'ESQ_0', esquive)
   setField(form, 'ESQ_1', half(esquive))
   setField(form, 'ESQ_2', fifth(esquive))
+  // … et sa copie dans le bloc combat (EQV_*, sous impact/carrure)
+  setField(form, 'EQV_0', esquive)
+  setField(form, 'EQV_1', half(esquive))
+  setField(form, 'EQV_2', fifth(esquive))
+
+  // Langue maternelle : base = ÉDU si aucun point investi
+  const langueMat = str(body['LAG_0']) || str(body['EDU_0'])
+  setField(form, 'LAG_0', langueMat)
+  setField(form, 'LAG_1', half(langueMat))
+  setField(form, 'LAG_2', fifth(langueMat))
 
   for (const group of customGroups) {
     for (const prefix of group) {
@@ -120,15 +132,17 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const backgroundSplit: Record<string, number> = {
-    Description: 35, ideologieEtCroyance: 30, traits: 40, personnesImportantes: 30,
-    sequellesCicatrices: 30, lieuxSignificatifs: 34, phobiesManies: 33,
-    'bienPrécieux': 36, ouvragesOccultes: 20, rencontresEntites: 20
-  }
-  for (const [key, split] of Object.entries(backgroundSplit)) {
-    const val = sanitize(str(body[key]))
-    setField(form, key, val.slice(0, split))
-    setField(form, `${key}1`, val.slice(split))
+  // Répartition sur les 2 lignes du template : coupe sur un espace quand c'est
+  // possible (sans faire déborder la 2e ligne), sinon coupe brute à `split`.
+  for (const [key, { split, max }] of Object.entries(BACKGROUND_LIMITS)) {
+    const val = sanitize(str(body[key])).slice(0, max)
+    let cut = split
+    if (val.length > split) {
+      const space = val.lastIndexOf(' ', split)
+      if (space > 0 && space >= split - 12 && val.length - space - 1 <= max - split) cut = space
+    }
+    setField(form, key, val.slice(0, cut).trimEnd())
+    setField(form, `${key}1`, val.slice(cut).trimStart())
   }
 
   const capitalFull = sanitize(str(body.capital))
@@ -144,11 +158,33 @@ export default defineEventHandler(async (event) => {
     } catch { /* champ absent */ }
   }
 
-  // ── Chance (boutons radio CHANCE.0 … CHANCE.100) ────────────
+  // ── Chance (boutons radio) ──────────────────────────────────
+  // Le groupe CHANCE du template est corrompu : ni /Opt ni les noms d'états
+  // d'apparence ne suivent les numéros imprimés (doublons, trous, bulles
+  // déplacées) — select(String(n)) coche donc une mauvaise bulle. Seule la
+  // géométrie est fiable : triées par ligne (y décroissant) puis par x, les
+  // bulles suivent l'ordre imprimé « Pas de chance », 01…28, 29…64, 65…100,
+  // soit l'index N = la valeur N.
   const chanceVal = Math.round(Number(body.Chance))
   if (!isNaN(chanceVal) && chanceVal >= 0 && chanceVal <= 100) {
     try {
-      form.getRadioGroup('CHANCE').select(String(chanceVal))
+      const chanceGroup = form.getRadioGroup('CHANCE')
+      const widgets = [...chanceGroup.acroField.getWidgets()].sort((a, b) => {
+        const ra = a.getRectangle()
+        const rb = b.getRectangle()
+        // lignes espacées de ~11pt : bucket à la dizaine pour absorber le bruit
+        return Math.round(rb.y / 10) - Math.round(ra.y / 10) || ra.x - rb.x
+      })
+      const target = widgets[chanceVal]
+      const ap = target?.dict.lookupMaybe(PDFName.of('AP'), PDFDict)
+      const normal = ap?.lookupMaybe(PDFName.of('N'), PDFDict)
+      const onState = normal?.keys().find(k => k !== PDFName.of('Off'))
+      if (target && onState) {
+        for (const w of widgets) {
+          w.dict.set(PDFName.of('AS'), w === target ? onState : PDFName.of('Off'))
+        }
+        chanceGroup.acroField.dict.set(PDFName.of('V'), onState)
+      }
     } catch { /* champ absent — ignoré */ }
   }
 
@@ -236,9 +272,12 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── 3. URL signée valable 60 secondes ──────────────────────
+  // Le nom de stockage reste horodaté (unicité), mais le fichier téléchargé
+  // porte simplement le nom de l'investigateur.
+  const downloadName = `${(body.Nom || 'investigateur').trim().replace(/\s+/g, '_')}.pdf`
   const { data: signedData, error: signError } = await supabase.storage
     .from('fiches')
-    .createSignedUrl(fileName, 60)
+    .createSignedUrl(fileName, 60, { download: downloadName })
 
   if (signError || !signedData?.signedUrl) {
     throw createError({ statusCode: 500, statusMessage: `Signed URL error: ${signError?.message}` })

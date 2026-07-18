@@ -9,6 +9,11 @@ const { form, creditWealth } = injectCharacterCreation()
       Valeurs déduites automatiquement de votre Crédit
       (<span class="wealth-tranche">{{ creditWealth.tranche }}</span>) — modifiables selon les besoins du scénario.
     </p>
+    <InvestigateurFormHint v-else title="D'où vient l'argent ?">
+      Renseignez votre <strong>Crédit</strong> dans la grille de compétences :
+      la tranche de richesse, les espèces, le capital et les dépenses courantes
+      en seront déduits automatiquement (barème 1920 ou moderne selon l'occupation).
+    </InvestigateurFormHint>
     <div class="identity-grid">
       <div class="field-group">
         <label class="field-label" for="capital">Capital</label>

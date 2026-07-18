@@ -55,11 +55,8 @@ useSeoMeta({
       <!-- ── CHANCE ────────────────────────────────────────────── -->
       <InvestigateurChanceSection />
 
-      <!-- ── COMPÉTENCES ─────────────────────────────────────── -->
+      <!-- ── COMPÉTENCES (spécialités et perso incluses) ─────── -->
       <InvestigateurSkillsSection />
-
-      <!-- ── COMPÉTENCES VARIABLES ───────────────────────────── -->
-      <InvestigateurVariableSkillsSection />
 
       <!-- ── ARMES ─────────────────────────────────────────────── -->
       <InvestigateurWeaponsSection />

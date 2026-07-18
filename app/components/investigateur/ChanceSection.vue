@@ -5,6 +5,13 @@ const { form, ageCategory, rollChance } = injectCharacterCreation()
 <template>
   <section class="form-section chance-section">
     <h2 class="section-title">Chance</h2>
+    <InvestigateurFormHint title="À quoi sert la Chance ?">
+      Tirée en <strong>3d6 × 5</strong>, elle permet en jeu de forcer le destin
+      (dépenser des points pour transformer un échec en réussite).
+      <template v-if="ageCategory?.eduYouthMalus">
+        Jeunesse oblige : deux tirages, on garde le meilleur — le bouton s'en charge.
+      </template>
+    </InvestigateurFormHint>
     <div class="chance-row">
       <div class="chance-card">
         <div class="chance-input-group">

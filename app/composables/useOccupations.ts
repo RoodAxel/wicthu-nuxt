@@ -1,5 +1,5 @@
 import type {
-  OccupationListItem, OccupationDetail, OccPicker, ChoiceListPicker
+  OccupationListItem, OccupationDetail, OccPicker, ChoiceListPicker, FreeChoicePicker
 } from '~/types/investigateur'
 import {
   SKILL_TO_FORM_KEYS, SPEC_TO_KEY, CAT_TO_VAR, COMP_BASE, CARAC_KEY
@@ -18,9 +18,9 @@ export function useOccupations(form: Record<string, string>) {
   const customOccupation = ref(false)
 
   // ── État des sélections ──────────────────────────────────────────────────────
-  const choiceSelections = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST
+  const choiceSelections = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST: idx → noms d'options
   const freeSpecSelections = ref<Record<number, string>>({}) // FREE_SPEC: idx → specName
-  const freeChoiceSelections = ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → names
+  const freeChoiceSelections = ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → clés formulaire (ex. OCC_0)
   // Sous-sélection lorsqu'une option CHOICE_FROM_LIST est une catégorie : `${i}_${slot}` → specName
   const catSubSelections = ref<Record<string, string>>({})
 
@@ -91,16 +91,12 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  // FREE_CHOICE → clés grille principale
+  // FREE_CHOICE → clés grille principale (les sélections stockent la clé directement)
   const freeChoiceMainKeys = computed((): Set<string> => {
     const keys = new Set<string>()
     if (!occupationDetail.value) return keys
-    occupationDetail.value.skills.forEach((skill, i) => {
-      if (skill.type !== 'FREE_CHOICE') return
-      ;(freeChoiceSelections.value[i] ?? []).filter(Boolean).forEach(name =>
-        (SKILL_TO_FORM_KEYS[name] ?? []).slice(0, 1).forEach(k => keys.add(k))
-      )
-    })
+    for (const sel of Object.values(freeChoiceSelections.value))
+      sel.filter(Boolean).forEach(k => keys.add(k))
     return keys
   })
 
@@ -163,15 +159,19 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  // choiceKeys : vert = options CHOICE_FROM_LIST non sélectionnées (non-catégorie)
+  // choiceKeys : vert = options CHOICE_FROM_LIST encore sélectionnables.
+  // Quota atteint → les options restantes redeviennent neutres (fini le doute
+  // « dois-je investir dans toutes les vertes ? »).
   const choiceKeys = computed((): Set<string> => {
     const keys = new Set<string>()
     if (!occupationDetail.value) return keys
     for (const picker of occSkillPickers.value) {
       if (picker.type !== 'CHOICE_FROM_LIST') continue
-      const selected = new Set((choiceSelections.value[picker.i] ?? []).filter(Boolean))
+      const selected = (choiceSelections.value[picker.i] ?? []).filter(Boolean)
+      if (selected.length >= picker.count) continue
+      const chosen = new Set(selected)
       for (const opt of picker.options) {
-        if (!opt.competence.isCategory && !selected.has(opt.competence.name))
+        if (!opt.competence.isCategory && !chosen.has(opt.competence.name))
           (SKILL_TO_FORM_KEYS[opt.competence.name] ?? []).forEach(k => keys.add(k))
       }
     }
@@ -179,13 +179,29 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  const highlightedKeys = computed((): Set<string> => new Set([...fixedKeys.value, ...choiceKeys.value]))
-
-  function isGroupHighlighted(...keys: string[]) {
-    return keys.some(k => fixedKeys.value.has(k))
-  }
-  function isGroupChoice(...keys: string[]) {
-    return !isGroupHighlighted(...keys) && keys.some(k => choiceKeys.value.has(k))
+  // Clic sur une ligne de la grille : sélectionne (1er slot libre) ou
+  // désélectionne l'option de liste correspondante — miroir des dropdowns.
+  function toggleChoiceKey(key: string) {
+    for (const picker of occSkillPickers.value) {
+      if (picker.type !== 'CHOICE_FROM_LIST') continue
+      const opt = picker.options.find(o =>
+        !o.competence.isCategory && (SKILL_TO_FORM_KEYS[o.competence.name] ?? []).includes(key)
+      )
+      if (!opt) continue
+      const name = opt.competence.name
+      const current = choiceSelections.value[picker.i] ?? []
+      const slotOfName = current.indexOf(name)
+      if (slotOfName >= 0) {
+        updateChoice(picker.i, slotOfName, '')
+        return
+      }
+      for (let s = 0; s < picker.count; s++) {
+        if (!current[s]) {
+          updateChoice(picker.i, s, name)
+          return
+        }
+      }
+    }
   }
 
   function updateChoice(idx: number, slot: number, value: string) {
@@ -203,8 +219,61 @@ export function useOccupations(form: Record<string, string>) {
     choiceSelections.value = { ...choiceSelections.value, [idx]: current }
   }
 
+  function updateFreeSpec(idx: number, spec: string) {
+    freeSpecSelections.value = { ...freeSpecSelections.value, [idx]: spec }
+  }
+
+  function updateFreeChoice(idx: number, slot: number, key: string) {
+    const picker = occSkillPickers.value.find(p => p.i === idx && p.type === 'FREE_CHOICE') as FreeChoicePicker | undefined
+    const count = picker?.count ?? 1
+    const current = [...(freeChoiceSelections.value[idx] ?? Array(count).fill(''))]
+    while (current.length < count) current.push('')
+    current[slot] = key
+    freeChoiceSelections.value = { ...freeChoiceSelections.value, [idx]: current }
+  }
+
+  // Sous-sélection de spécialité quand l'option choisie dans une liste est une catégorie
+  function updateCatSub(idx: number, slot: number, spec: string) {
+    catSubSelections.value = { ...catSubSelections.value, [`${idx}_${slot}`]: spec }
+  }
+
+  // ── Persistance des choix ─────────────────────────────────────────────────────
+  // Les sélections sont sérialisées dans `form['occSelections']` (sauvegardé tel
+  // quel avec la fiche) et restaurées quand on recharge la même occupation.
+  function applySavedSelections(raw: string | undefined) {
+    if (!raw) return
+    try {
+      const saved = JSON.parse(raw) as {
+        occupation?: string
+        choice?: Record<number, string[]>
+        freeSpec?: Record<number, string>
+        freeChoice?: Record<number, string[]>
+        catSub?: Record<string, string>
+      }
+      if (saved.occupation !== occupationDetail.value?.name) return
+      choiceSelections.value = saved.choice ?? {}
+      freeSpecSelections.value = saved.freeSpec ?? {}
+      freeChoiceSelections.value = saved.freeChoice ?? {}
+      catSubSelections.value = saved.catSub ?? {}
+    } catch { /* sélection sauvegardée illisible — ignorée */ }
+  }
+
+  watch([choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections], () => {
+    if (!occupationDetail.value) return
+    form['occSelections'] = JSON.stringify({
+      occupation: occupationDetail.value.name,
+      choice: choiceSelections.value,
+      freeSpec: freeSpecSelections.value,
+      freeChoice: freeChoiceSelections.value,
+      catSub: catSubSelections.value
+    })
+  }, { deep: true })
+
   // ── Watchers occupation ───────────────────────────────────────────────────────
   watch(selectedOccupationId, async (id) => {
+    // Stash avant reset : en mode édition, les choix sauvegardés sont déjà
+    // dans le form et seraient écrasés par la sérialisation des vides.
+    const savedRaw = form['occSelections']
     choiceSelections.value = {}
     freeSpecSelections.value = {}
     freeChoiceSelections.value = {}
@@ -216,6 +285,7 @@ export function useOccupations(form: Record<string, string>) {
     const occ = occupationList.value?.find(o => o.id === id)
     if (occ) form['Occupation'] = occ.name
     occupationDetail.value = await $fetch<OccupationDetail>(`/api/occupation/${id}`)
+    applySavedSelections(savedRaw)
   })
 
   // En mode édition : retrouver l'occupation depuis le nom sauvegardé
@@ -274,33 +344,36 @@ export function useOccupations(form: Record<string, string>) {
     parseOccPoints(occupationDetail.value?.point_competence ?? null)
   )
 
-  const highlightedInvested = computed(() =>
+  // Seules les compétences OR (imposées ou effectivement choisies) consomment la
+  // réserve d'occupation ; les vertes non retenues relèvent de l'intérêt personnel.
+  const goldInvested = computed(() =>
     Object.keys(COMP_BASE).reduce((sum, key) => {
-      if (!highlightedKeys.value.has(key)) return sum
+      if (!fixedKeys.value.has(key)) return sum
       return sum + Math.max(0, n(form[key]) - getSkillBase(key))
     }, 0)
   )
 
-  const nonHighlightedInvested = computed(() =>
+  const nonGoldInvested = computed(() =>
     Object.keys(COMP_BASE).reduce((sum, key) => {
-      if (highlightedKeys.value.has(key)) return sum
+      if (fixedKeys.value.has(key)) return sum
       return sum + Math.max(0, n(form[key]) - getSkillBase(key))
     }, 0)
   )
 
-  const occOverflow = computed(() => Math.max(0, highlightedInvested.value - occPointsTotal.value))
+  const occOverflow = computed(() => Math.max(0, goldInvested.value - occPointsTotal.value))
 
-  const occPointsSpent = computed(() => highlightedInvested.value)
-  const occPointsRemaining = computed(() => Math.max(0, occPointsTotal.value - highlightedInvested.value))
+  const occPointsSpent = computed(() => goldInvested.value)
+  const occPointsRemaining = computed(() => Math.max(0, occPointsTotal.value - goldInvested.value))
 
   const intPointsTotal = computed(() => n(form['INT_0']) * 2)
-  const intPointsSpent = computed(() => nonHighlightedInvested.value + occOverflow.value)
+  const intPointsSpent = computed(() => nonGoldInvested.value + occOverflow.value)
   const intPointsRemaining = computed(() => intPointsTotal.value - intPointsSpent.value)
 
   return {
     occupationList, selectedOccupationId, occupationDetail, customOccupation,
-    choiceSelections, occSkillPickers, updateChoice,
-    fixedKeys, choiceKeys, occupationVarSlots, isGroupHighlighted, isGroupChoice,
+    choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections,
+    occSkillPickers, updateChoice, updateFreeSpec, updateFreeChoice, updateCatSub,
+    fixedKeys, choiceKeys, selectedChoiceKeys, occupationVarSlots, toggleChoiceKey,
     getSkillBase,
     occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,
     intPointsTotal, intPointsSpent, intPointsRemaining

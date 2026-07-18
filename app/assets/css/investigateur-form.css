@@ -156,6 +156,17 @@
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
+.character-form .field-counter {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+.character-form .field-counter--full {
+  color: var(--color-crimson-light);
+  opacity: 1;
+}
 .character-form .random-name-btn {
   display: inline-flex;
   align-items: center;
@@ -233,6 +244,7 @@
   gap: var(--space-sm);
   margin-bottom: var(--space-lg);
 }
+/* Occupation = or (comme les compétences surlignées), intérêt personnel = vert */
 .character-form .occ-points-tracker {
   display: flex;
   align-items: center;
@@ -240,7 +252,7 @@
   gap: var(--space-sm);
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-arcane);
+  border-left: 3px solid var(--color-gold);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   font-family: var(--font-heading);
@@ -249,11 +261,11 @@
   transition: border-color var(--transition-fast);
 }
 .character-form .occ-points-tracker--int {
-  border-left-color: var(--color-gold);
+  border-left-color: var(--color-arcane);
 }
 .character-form .occ-points-tracker--int .occ-points-count,
 .character-form .occ-points-tracker--int .occ-points-remaining {
-  color: var(--color-gold);
+  color: var(--color-arcane);
 }
 .character-form .occ-points-tracker.occ-points-over {
   border-left-color: var(--color-crimson);
@@ -274,7 +286,7 @@
   color: var(--color-border);
 }
 .character-form .occ-points-count {
-  color: var(--color-arcane);
+  color: var(--color-gold);
   font-weight: bold;
 }
 .character-form .occ-points-over .occ-points-count {
@@ -283,7 +295,7 @@
 .character-form .occ-points-remaining {
   margin-left: auto;
   font-weight: bold;
-  color: var(--color-arcane);
+  color: var(--color-gold);
 }
 .character-form .occ-points-over .occ-points-remaining {
   color: var(--color-crimson);
@@ -339,18 +351,38 @@
   text-align: right;
   font-size: var(--fs-secondary);
 }
-.character-form .variable-group--highlighted {
-  outline: 1px solid rgba(184, 146, 74, 0.35);
-  outline-offset: 4px;
-  border-radius: var(--radius-sm);
+/* ── ENCADRÉS D'AIDE (notes du Gardien) ──────────────────── */
+.character-form .form-hint {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: baseline;
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-gold);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
 }
-.character-form .variable-group--highlighted .variable-subtitle { color: var(--color-gold); }
-.character-form .variable-group--choice {
-  outline: 1px solid rgba(127, 179, 138, 0.3);
-  outline-offset: 4px;
-  border-radius: var(--radius-sm);
+.character-form .form-hint-glyph {
+  color: var(--color-gold);
+  font-size: var(--fs-secondary);
 }
-.character-form .variable-group--choice .variable-subtitle { color: var(--color-arcane); }
+.character-form .form-hint-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+.character-form .form-hint-title {
+  display: block;
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin-bottom: 2px;
+}
 
 /* ── CHOICE PICKER ───────────────────────────────────────── */
 .character-form .choice-picker {
@@ -586,19 +618,89 @@
 }
 
 /* ── COMPÉTENCES ─────────────────────────────────────────── */
+/* Flux multi-colonnes (et non grille) : les cellules s'empilent sans trous,
+   une cellule haute (catégorie + sous-lignes) ne crée plus de vide chez sa
+   voisine. Lecture alphabétique de haut en bas, puis colonne suivante. */
 .character-form .comp-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  columns: 2;
+  column-gap: 0;
+  column-rule: 1px solid var(--color-border);
   border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden;
 }
+/* Cellule = compétence principale + éventuelles sous-lignes de spécialités.
+   La bordure de séparation vit sur chaque LIGNE (pas sur la cellule) : toutes
+   les lignes ont la même hauteur totale et les colonnes restent en phase. */
+.character-form .comp-cell {
+  break-inside: avoid;
+}
+.character-form .comp-cell:nth-child(even) { background: var(--color-deep); }
+/* Hauteur STRICTEMENT identique pour toutes les lignes (classiques, en-têtes
+   de catégorie, sous-lignes) : hauteur fixe en border-box, centrage vertical
+   par align-items — l'alignement des deux colonnes ne dépend plus du contenu. */
 .character-form .comp-row {
   display: grid; grid-template-columns: 1fr 42px 70px;
   align-items: center; gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
+  padding: 0 var(--space-md);
+  height: 35px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
 }
-.character-form .comp-row:nth-child(4n+2),
-.character-form .comp-row:nth-child(4n+3) { background: var(--color-deep); }
+.character-form .comp-clickable { cursor: pointer; }
+.character-form .comp-clickable:hover .comp-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.character-form .comp-subrow {
+  display: grid; grid-template-columns: 14px 1fr 70px;
+  align-items: center; gap: var(--space-sm);
+  padding: 0 var(--space-md) 0 var(--space-lg);
+  height: 35px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--color-border);
+}
+/* Hauteur unique pour tous les contrôles de la grille : les lignes des deux
+   colonnes gardent le même rythme vertical (alignement en vis-à-vis). */
+.character-form .comp-row .comp-input,
+.character-form .comp-subrow .comp-input,
+.character-form .comp-subrow .label-input,
+.character-form .comp-subrow .label-select {
+  height: 26px;
+  box-sizing: border-box;
+}
+.character-form .comp-subrow .label-input,
+.character-form .comp-subrow .label-select {
+  padding: 2px var(--space-xs);
+  font-size: var(--fs-secondary);
+  border-radius: var(--radius-sm);
+}
+.character-form .comp-subglyph {
+  color: var(--color-text-muted);
+  font-size: var(--fs-secondary);
+}
+/* Sous-ligne nommée (spécialités fixes de combat : nom + base + valeur) */
+.character-form .comp-subrow--named { grid-template-columns: 14px 1fr 42px 70px; }
+.character-form .comp-subrow .comp-name { font-size: var(--fs-secondary); }
+/* Fourchette de Crédit recommandée par l'occupation */
+.character-form .comp-reco {
+  display: inline-block;
+  margin-left: var(--space-sm);
+  padding: 0 6px;
+  font-family: var(--font-heading);
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.04em;
+  color: var(--color-gold);
+  background: rgba(184, 146, 74, 0.12);
+  border: 1px solid rgba(184, 146, 74, 0.45);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.character-form .perso-skills { margin-top: var(--space-lg); }
+/* Ligne perso occupée par un choix libre d'occupation → or */
+.character-form .variable-row--gold .label-input,
+.character-form .variable-row--gold .comp-input {
+  border-color: rgba(184, 146, 74, 0.5);
+}
+.character-form .variable-row--gold .label-input { color: var(--color-gold); }
 .character-form .comp-name { font-family: var(--font-heading); font-size: var(--fs-row-name); letter-spacing: 0.03em; color: var(--color-text-primary); }
 .character-form .comp-base { font-family: var(--font-heading); font-size: var(--fs-secondary); color: var(--color-text-muted); text-align: right; }
 .character-form .comp-input {
@@ -615,9 +717,7 @@
 .character-form .comp-input::-webkit-inner-spin-button { display: none; }
 .character-form .comp-input:focus { border-color: var(--color-arcane-dim); }
 
-/* ── VARIABLE SKILLS ─────────────────────────────────────── */
-.character-form .variable-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
-.character-form .variable-group--full { grid-column: span 2; }
+/* ── COMPÉTENCES PERSONNELLES ────────────────────────────── */
 .character-form .variable-subtitle {
   font-family: var(--font-heading);
   font-size: var(--fs-section-title); letter-spacing: 0.12em; text-transform: uppercase;
@@ -944,13 +1044,7 @@
   .character-form .identity-grid { grid-template-columns: 1fr; }
   .character-form .derived-grid { grid-template-columns: repeat(4, 1fr); }
   .character-form .carac-header, .character-form .carac-row { grid-template-columns: 50px 1fr 85px 50px 50px; }
-  .character-form .comp-grid { grid-template-columns: 1fr; }
-  .character-form .comp-row { border-right: none; }
-  .character-form .comp-row:nth-child(4n+2),
-  .character-form .comp-row:nth-child(4n+3) { background: unset; }
-  .character-form .comp-row:nth-child(even) { background: var(--color-deep); }
-  .character-form .variable-grid { grid-template-columns: 1fr; }
-  .character-form .variable-group--full { grid-column: span 1; }
+  .character-form .comp-grid { columns: 1; }
   .character-form .variable-row-grid { grid-template-columns: 1fr; }
   .character-form .background-grid { grid-template-columns: 1fr; }
   .character-form .chance-card {

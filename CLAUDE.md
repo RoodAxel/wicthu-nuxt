@@ -118,6 +118,39 @@ portabilité Windows→Linux.
   pas reçu de points (+ recalcul de ses ½/⅕). À vérifier : générer un PDF avec DEX renseigné sans
   saisir l'esquive → elle doit apparaître à DEX÷2.
 
+### Retours testeurs (juillet 2026) — ✅ CORRIGÉS (branche `fix/refactor-creation-form`)
+
+- [x] **Chance décalée sur le PDF** (35 saisi → 36 coché). Cause : le groupe radio `CHANCE` du
+  template Orbe est **corrompu** (`/Opt` avec doublons/trous, états d'apparence qui ne suivent pas
+  les numéros imprimés). Fix : sélection **positionnelle** (bulles triées par ligne puis x ;
+  index 0 = « Pas de chance », puis 01…28 / 29…64 / 65…100). Ne jamais revenir à
+  `getRadioGroup('CHANCE').select()`.
+- [x] **Compétences vertes débitées de la réserve d'occupation** même non choisies. Fix dans
+  `useOccupations` : seules les clés **or** (`fixedKeys`) consomment les points d'occupation.
+- [x] **FREE_CHOICE / FREE_SPEC / CHOICE_FROM_LIST non-« social » sans UI** (depuis toujours —
+  seul le picker « social » existait) → points forcément comptés en intérêt personnel. Fix :
+  pickers complets dans `SkillsSection` (+ sous-choix de spécialité pour les options catégorie).
+- [x] **Background tronqué en silence** (~2 lignes PDF par champ). Fix : limites partagées
+  `shared/investigateur-background.ts` (import `#shared/…`), `maxlength` + compteur sur les
+  textareas, césure sur espace côté serveur.
+- [x] **UX grille** : vert **cliquable** (sélection directe, quota atteint → le vert restant
+  s'éteint), spécialités **intégrées sous leur catégorie** dans la grille
+  (`VariableSkillsSection` supprimée), encadrés d'aide `InvestigateurFormHint`.
+- [x] **Règle d'âge MVT** : −1 par tranche dès 40 ans, appliqué au calcul (`mvtAgePenalty`).
+
+> 🔁 **Décision en attente (testeurs) — nom du PDF généré** : actuellement l'URL signée force le
+> **téléchargement** sous le nom de l'investigateur (`createSignedUrl(fileName, 60, { download:
+> downloadName })` dans `server/api/investigateur/generate-pdf.post.ts`). Pour revenir à la
+> **visualisation dans l'onglet** (avec le nom horodaté), retirer le 3e argument :
+> `createSignedUrl(fileName, 60)` (et supprimer `downloadName`). Compromis possible si on veut
+> l'inline **et** un nom plus propre : nommer le fichier de stockage `${nom}_${Date.now()}.pdf`
+> (le nom doit rester unique, upload en `upsert: false`).
+
+> ⚠️ Outillage local : `npm run typecheck` plante si `node_modules/vue-router` n'existe pas
+> (il est niché sous `node_modules/nuxt/`). Une **jonction** locale le répare :
+> `cmd /c mklink /J node_modules\vue-router node_modules\nuxt\node_modules\vue-router`
+> (à refaire après chaque `npm ci`).
+
 ---
 
 ### Notes / vérifs utiles
