@@ -322,7 +322,8 @@ const occupations: OccupationDef[] = [
       { type: 'FIXED', name: 'Conduite engin lourd' },
       { type: 'FIXED', name: 'Électricité' },
       { type: 'FIXED', name: 'Mécanique' },
-      { type: 'FIXED_SPEC', categoryName: 'Sciences', specName: 'Ingénierie et Physique' },
+      { type: 'FIXED_SPEC', categoryName: 'Sciences', specName: 'Ingénierie' },
+      { type: 'FIXED_SPEC', categoryName: 'Sciences', specName: 'Physique' },
       { type: 'FREE_CHOICE', count: 1 }
     ]
   },
@@ -367,7 +368,8 @@ const occupations: OccupationDef[] = [
       { type: 'FIXED', name: 'Médecine' },
       { type: 'FIXED', name: 'Premiers soins' },
       { type: 'FIXED', name: 'Psychologie' },
-      { type: 'FIXED_SPEC', categoryName: 'Sciences', specName: 'Biologie et Pharmacologie' },
+      { type: 'FIXED_SPEC', categoryName: 'Sciences', specName: 'Biologie' },
+      { type: 'FIXED_SPEC', categoryName: 'Sciences', specName: 'Pharmacologie' },
       { type: 'FREE_CHOICE', count: 2, note: 'spécialités personnelles ou d\'époque' }
     ]
   },
