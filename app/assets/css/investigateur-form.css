@@ -634,11 +634,15 @@
   break-inside: avoid;
 }
 .character-form .comp-cell:nth-child(even) { background: var(--color-deep); }
+/* Hauteur STRICTEMENT identique pour toutes les lignes (classiques, en-têtes
+   de catégorie, sous-lignes) : hauteur fixe en border-box, centrage vertical
+   par align-items — l'alignement des deux colonnes ne dépend plus du contenu. */
 .character-form .comp-row {
   display: grid; grid-template-columns: 1fr 42px 70px;
   align-items: center; gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
-  min-height: 26px;
+  padding: 0 var(--space-md);
+  height: 35px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--color-border);
 }
 .character-form .comp-clickable { cursor: pointer; }
@@ -649,8 +653,9 @@
 .character-form .comp-subrow {
   display: grid; grid-template-columns: 14px 1fr 70px;
   align-items: center; gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-lg);
-  min-height: 26px;
+  padding: 0 var(--space-md) 0 var(--space-lg);
+  height: 35px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--color-border);
 }
 /* Hauteur unique pour tous les contrôles de la grille : les lignes des deux
