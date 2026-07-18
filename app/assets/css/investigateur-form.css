@@ -627,10 +627,11 @@
   column-rule: 1px solid var(--color-border);
   border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden;
 }
-/* Cellule = compétence principale + éventuelles sous-lignes de spécialités */
+/* Cellule = compétence principale + éventuelles sous-lignes de spécialités.
+   La bordure de séparation vit sur chaque LIGNE (pas sur la cellule) : toutes
+   les lignes ont la même hauteur totale et les colonnes restent en phase. */
 .character-form .comp-cell {
   break-inside: avoid;
-  border-bottom: 1px solid var(--color-border);
 }
 .character-form .comp-cell:nth-child(even) { background: var(--color-deep); }
 .character-form .comp-row {
@@ -638,6 +639,7 @@
   align-items: center; gap: var(--space-sm);
   padding: var(--space-xs) var(--space-md);
   min-height: 26px;
+  border-bottom: 1px solid var(--color-border);
 }
 .character-form .comp-clickable { cursor: pointer; }
 .character-form .comp-clickable:hover .comp-name {
@@ -649,6 +651,7 @@
   align-items: center; gap: var(--space-sm);
   padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-lg);
   min-height: 26px;
+  border-bottom: 1px solid var(--color-border);
 }
 /* Hauteur unique pour tous les contrôles de la grille : les lignes des deux
    colonnes gardent le même rythme vertical (alignement en vis-à-vis). */
