@@ -637,6 +637,7 @@
   display: grid; grid-template-columns: 1fr 42px 70px;
   align-items: center; gap: var(--space-sm);
   padding: var(--space-xs) var(--space-md);
+  min-height: 26px;
 }
 .character-form .comp-clickable { cursor: pointer; }
 .character-form .comp-clickable:hover .comp-name {
@@ -646,7 +647,23 @@
 .character-form .comp-subrow {
   display: grid; grid-template-columns: 14px 1fr 70px;
   align-items: center; gap: var(--space-sm);
-  padding: 2px var(--space-md) var(--space-xs) var(--space-lg);
+  padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-lg);
+  min-height: 26px;
+}
+/* Hauteur unique pour tous les contrôles de la grille : les lignes des deux
+   colonnes gardent le même rythme vertical (alignement en vis-à-vis). */
+.character-form .comp-row .comp-input,
+.character-form .comp-subrow .comp-input,
+.character-form .comp-subrow .label-input,
+.character-form .comp-subrow .label-select {
+  height: 26px;
+  box-sizing: border-box;
+}
+.character-form .comp-subrow .label-input,
+.character-form .comp-subrow .label-select {
+  padding: 2px var(--space-xs);
+  font-size: var(--fs-secondary);
+  border-radius: var(--radius-sm);
 }
 .character-form .comp-subglyph {
   color: var(--color-text-muted);
