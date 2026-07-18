@@ -138,6 +138,14 @@ portabilité Windows→Linux.
   (`VariableSkillsSection` supprimée), encadrés d'aide `InvestigateurFormHint`.
 - [x] **Règle d'âge MVT** : −1 par tranche dès 40 ans, appliqué au calcul (`mvtAgePenalty`).
 
+> 🔁 **Décision en attente (testeurs) — nom du PDF généré** : actuellement l'URL signée force le
+> **téléchargement** sous le nom de l'investigateur (`createSignedUrl(fileName, 60, { download:
+> downloadName })` dans `server/api/investigateur/generate-pdf.post.ts`). Pour revenir à la
+> **visualisation dans l'onglet** (avec le nom horodaté), retirer le 3e argument :
+> `createSignedUrl(fileName, 60)` (et supprimer `downloadName`). Compromis possible si on veut
+> l'inline **et** un nom plus propre : nommer le fichier de stockage `${nom}_${Date.now()}.pdf`
+> (le nom doit rester unique, upload en `upsert: false`).
+
 > ⚠️ Outillage local : `npm run typecheck` plante si `node_modules/vue-router` n'existe pas
 > (il est niché sous `node_modules/nuxt/`). Une **jonction** locale le répare :
 > `cmd /c mklink /J node_modules\vue-router node_modules\nuxt\node_modules\vue-router`
