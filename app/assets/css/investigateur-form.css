@@ -156,6 +156,17 @@
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
+.character-form .field-counter {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+.character-form .field-counter--full {
+  color: var(--color-crimson-light);
+  opacity: 1;
+}
 .character-form .random-name-btn {
   display: inline-flex;
   align-items: center;

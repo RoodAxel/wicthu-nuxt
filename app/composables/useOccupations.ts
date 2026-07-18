@@ -1,5 +1,5 @@
 import type {
-  OccupationListItem, OccupationDetail, OccPicker, ChoiceListPicker
+  OccupationListItem, OccupationDetail, OccPicker, ChoiceListPicker, FreeChoicePicker
 } from '~/types/investigateur'
 import {
   SKILL_TO_FORM_KEYS, SPEC_TO_KEY, CAT_TO_VAR, COMP_BASE, CARAC_KEY
@@ -18,9 +18,9 @@ export function useOccupations(form: Record<string, string>) {
   const customOccupation = ref(false)
 
   // ── État des sélections ──────────────────────────────────────────────────────
-  const choiceSelections = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST
+  const choiceSelections = ref<Record<number, string[]>>({}) // CHOICE_FROM_LIST: idx → noms d'options
   const freeSpecSelections = ref<Record<number, string>>({}) // FREE_SPEC: idx → specName
-  const freeChoiceSelections = ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → names
+  const freeChoiceSelections = ref<Record<number, string[]>>({}) // FREE_CHOICE: idx → clés formulaire (ex. OCC_0)
   // Sous-sélection lorsqu'une option CHOICE_FROM_LIST est une catégorie : `${i}_${slot}` → specName
   const catSubSelections = ref<Record<string, string>>({})
 
@@ -91,16 +91,12 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  // FREE_CHOICE → clés grille principale
+  // FREE_CHOICE → clés grille principale (les sélections stockent la clé directement)
   const freeChoiceMainKeys = computed((): Set<string> => {
     const keys = new Set<string>()
     if (!occupationDetail.value) return keys
-    occupationDetail.value.skills.forEach((skill, i) => {
-      if (skill.type !== 'FREE_CHOICE') return
-      ;(freeChoiceSelections.value[i] ?? []).filter(Boolean).forEach(name =>
-        (SKILL_TO_FORM_KEYS[name] ?? []).slice(0, 1).forEach(k => keys.add(k))
-      )
-    })
+    for (const sel of Object.values(freeChoiceSelections.value))
+      sel.filter(Boolean).forEach(k => keys.add(k))
     return keys
   })
 
@@ -179,8 +175,6 @@ export function useOccupations(form: Record<string, string>) {
     return keys
   })
 
-  const highlightedKeys = computed((): Set<string> => new Set([...fixedKeys.value, ...choiceKeys.value]))
-
   function isGroupHighlighted(...keys: string[]) {
     return keys.some(k => fixedKeys.value.has(k))
   }
@@ -201,6 +195,24 @@ export function useOccupations(form: Record<string, string>) {
       catSubSelections.value = next
     }
     choiceSelections.value = { ...choiceSelections.value, [idx]: current }
+  }
+
+  function updateFreeSpec(idx: number, spec: string) {
+    freeSpecSelections.value = { ...freeSpecSelections.value, [idx]: spec }
+  }
+
+  function updateFreeChoice(idx: number, slot: number, key: string) {
+    const picker = occSkillPickers.value.find(p => p.i === idx && p.type === 'FREE_CHOICE') as FreeChoicePicker | undefined
+    const count = picker?.count ?? 1
+    const current = [...(freeChoiceSelections.value[idx] ?? Array(count).fill(''))]
+    while (current.length < count) current.push('')
+    current[slot] = key
+    freeChoiceSelections.value = { ...freeChoiceSelections.value, [idx]: current }
+  }
+
+  // Sous-sélection de spécialité quand l'option choisie dans une liste est une catégorie
+  function updateCatSub(idx: number, slot: number, spec: string) {
+    catSubSelections.value = { ...catSubSelections.value, [`${idx}_${slot}`]: spec }
   }
 
   // ── Watchers occupation ───────────────────────────────────────────────────────
@@ -274,32 +286,35 @@ export function useOccupations(form: Record<string, string>) {
     parseOccPoints(occupationDetail.value?.point_competence ?? null)
   )
 
-  const highlightedInvested = computed(() =>
+  // Seules les compétences OR (imposées ou effectivement choisies) consomment la
+  // réserve d'occupation ; les vertes non retenues relèvent de l'intérêt personnel.
+  const goldInvested = computed(() =>
     Object.keys(COMP_BASE).reduce((sum, key) => {
-      if (!highlightedKeys.value.has(key)) return sum
+      if (!fixedKeys.value.has(key)) return sum
       return sum + Math.max(0, n(form[key]) - getSkillBase(key))
     }, 0)
   )
 
-  const nonHighlightedInvested = computed(() =>
+  const nonGoldInvested = computed(() =>
     Object.keys(COMP_BASE).reduce((sum, key) => {
-      if (highlightedKeys.value.has(key)) return sum
+      if (fixedKeys.value.has(key)) return sum
       return sum + Math.max(0, n(form[key]) - getSkillBase(key))
     }, 0)
   )
 
-  const occOverflow = computed(() => Math.max(0, highlightedInvested.value - occPointsTotal.value))
+  const occOverflow = computed(() => Math.max(0, goldInvested.value - occPointsTotal.value))
 
-  const occPointsSpent = computed(() => highlightedInvested.value)
-  const occPointsRemaining = computed(() => Math.max(0, occPointsTotal.value - highlightedInvested.value))
+  const occPointsSpent = computed(() => goldInvested.value)
+  const occPointsRemaining = computed(() => Math.max(0, occPointsTotal.value - goldInvested.value))
 
   const intPointsTotal = computed(() => n(form['INT_0']) * 2)
-  const intPointsSpent = computed(() => nonHighlightedInvested.value + occOverflow.value)
+  const intPointsSpent = computed(() => nonGoldInvested.value + occOverflow.value)
   const intPointsRemaining = computed(() => intPointsTotal.value - intPointsSpent.value)
 
   return {
     occupationList, selectedOccupationId, occupationDetail, customOccupation,
-    choiceSelections, occSkillPickers, updateChoice,
+    choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections,
+    occSkillPickers, updateChoice, updateFreeSpec, updateFreeChoice, updateCatSub,
     fixedKeys, choiceKeys, occupationVarSlots, isGroupHighlighted, isGroupChoice,
     getSkillBase,
     occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,

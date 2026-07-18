@@ -1,12 +1,43 @@
 <script setup lang="ts">
+import type { ChoiceListPicker, FreeChoicePicker, FreeSpecPicker, FixedSpecPicker } from '~/types/investigateur'
 import { competences, CATEGORY_KEYS } from '~/utils/investigateur/constants'
 
 const {
-  form, occupationDetail, occSkillPickers, choiceSelections, updateChoice,
+  form, occupationDetail, occSkillPickers,
+  choiceSelections, freeSpecSelections, freeChoiceSelections, catSubSelections,
+  updateChoice, updateFreeSpec, updateFreeChoice, updateCatSub,
   fixedKeys, choiceKeys, getSkillBase,
   occPointsTotal, occPointsSpent, occPointsRemaining, occOverflow,
   intPointsTotal, intPointsSpent, intPointsRemaining
 } = injectCharacterCreation()
+
+// Pickers regroupés par type (narrowing TS explicite pour le template)
+const fixedSpecPickers = computed(() => occSkillPickers.value.filter((p): p is FixedSpecPicker => p.type === 'FIXED_SPEC'))
+const choiceListPickers = computed(() => occSkillPickers.value.filter((p): p is ChoiceListPicker => p.type === 'CHOICE_FROM_LIST'))
+const freeSpecPickers = computed(() => occSkillPickers.value.filter((p): p is FreeSpecPicker => p.type === 'FREE_SPEC'))
+const freeChoicePickers = computed(() => occSkillPickers.value.filter((p): p is FreeChoicePicker => p.type === 'FREE_CHOICE'))
+
+function choiceListLabel(p: ChoiceListPicker): string {
+  if (p.note && /^compétences?\b/i.test(p.note)) return `Choisissez ${p.count} ${p.note} :`
+  if (p.note) return `Choisissez (${p.count}) — ${p.note} :`
+  return `Choisissez ${p.count} compétence${p.count > 1 ? 's' : ''} :`
+}
+
+// Option catégorie choisie dans une liste → demande une sous-spécialité
+function selectedCatOption(p: ChoiceListPicker, slot: number) {
+  const name = (choiceSelections.value[p.i] ?? [])[slot]
+  const opt = p.options.find(o => o.competence.name === name)
+  return opt?.competence.isCategory ? opt.competence : null
+}
+
+// Compétences proposables en choix libre (grille principale, hors catégories)
+const freeChoiceOptions = competences.filter(c => !CATEGORY_KEYS.has(c.key))
+
+// Une option est indisponible si elle est déjà en or ailleurs (imposée ou choisie)
+function isFreeChoiceTaken(idx: number, slot: number, key: string): boolean {
+  if ((freeChoiceSelections.value[idx] ?? [])[slot] === key) return false
+  return fixedKeys.value.has(key)
+}
 </script>
 
 <template>
@@ -40,15 +71,21 @@ const {
       Compétences <span class="highlight-sample highlight-sample--fixed">obligatoires</span>
       ou <span class="highlight-sample highlight-sample--choice">disponibles au choix</span> de votre occupation.
     </p>
-    <div v-if="occSkillPickers.some(p => p.type === 'CHOICE_FROM_LIST' && (p as any).note?.includes('social'))" class="choice-picker">
-      <div
-        v-for="picker in occSkillPickers.filter(p => p.type === 'CHOICE_FROM_LIST' && (p as any).note?.includes('social'))"
-        :key="picker.i"
-        class="choice-group choice-group--choice-from-list"
-      >
-        <span class="choice-label">{{ `Choisissez ${(picker as any).count} compétence sociale :` }}</span>
+    <div v-if="occSkillPickers.length" class="choice-picker">
+
+      <!-- Spécialités imposées par l'occupation (information) -->
+      <div v-for="picker in fixedSpecPickers" :key="`fs${picker.i}`" class="choice-group choice-group--fixed-spec">
+        <span class="choice-label choice-label--fixed">
+          <span class="choice-badge-fixed">Imposée</span>
+          {{ picker.label }}
+        </span>
+      </div>
+
+      <!-- Choix dans une liste fermée -->
+      <div v-for="picker in choiceListPickers" :key="`cl${picker.i}`" class="choice-group choice-group--choice-from-list">
+        <span class="choice-label">{{ choiceListLabel(picker) }}</span>
         <div class="choice-slots">
-          <div v-for="slot in (picker as any).count" :key="slot" class="choice-slot-group">
+          <div v-for="slot in picker.count" :key="slot" class="choice-slot-group">
             <select
               class="field-select choice-select"
               :value="(choiceSelections[picker.i] ?? [])[slot - 1] ?? ''"
@@ -56,11 +93,74 @@ const {
             >
               <option value="">— Choisir —</option>
               <option
-                v-for="opt in (picker as any).options"
+                v-for="opt in picker.options"
                 :key="opt.competence.id"
                 :value="opt.competence.name"
-                :disabled="(choiceSelections[picker.i] ?? []).some((v: string, j: number) => j !== slot - 1 && v === opt.competence.name)"
+                :disabled="(choiceSelections[picker.i] ?? []).some((v, j) => j !== slot - 1 && v === opt.competence.name)"
               >{{ opt.competence.name }}</option>
+            </select>
+            <select
+              v-if="selectedCatOption(picker, slot - 1)"
+              class="field-select choice-select choice-select--sub"
+              :value="catSubSelections[`${picker.i}_${slot - 1}`] ?? ''"
+              @change="updateCatSub(picker.i, slot - 1, ($event.target as HTMLSelectElement).value)"
+            >
+              <option value="">— Spécialité —</option>
+              <option
+                v-for="child in selectedCatOption(picker, slot - 1)!.children"
+                :key="child.id"
+                :value="child.name"
+              >{{ child.name }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spécialité libre dans une catégorie -->
+      <div v-for="picker in freeSpecPickers" :key="`fp${picker.i}`" class="choice-group">
+        <span class="choice-label">Choisissez une spécialité de {{ picker.catName }} :</span>
+        <div class="choice-slots">
+          <div class="choice-slot-group">
+            <select
+              v-if="picker.children.length"
+              class="field-select choice-select"
+              :value="freeSpecSelections[picker.i] ?? ''"
+              @change="updateFreeSpec(picker.i, ($event.target as HTMLSelectElement).value)"
+            >
+              <option value="">— Choisir —</option>
+              <option v-for="child in picker.children" :key="child.id" :value="child.name">{{ child.name }}</option>
+            </select>
+            <input
+              v-else
+              class="field-input choice-select"
+              type="text"
+              placeholder="Spécialité…"
+              :value="freeSpecSelections[picker.i] ?? ''"
+              @change="updateFreeSpec(picker.i, ($event.target as HTMLInputElement).value)"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Compétences entièrement libres -->
+      <div v-for="picker in freeChoicePickers" :key="`fc${picker.i}`" class="choice-group choice-group--free-choice">
+        <span class="choice-label">
+          {{ picker.count > 1 ? `${picker.count} compétences au choix` : '1 compétence au choix' }}<template v-if="picker.note"> — {{ picker.note }}</template> :
+        </span>
+        <div class="choice-slots">
+          <div v-for="slot in picker.count" :key="slot" class="choice-slot-group">
+            <select
+              class="field-select choice-select"
+              :value="(freeChoiceSelections[picker.i] ?? [])[slot - 1] ?? ''"
+              @change="updateFreeChoice(picker.i, slot - 1, ($event.target as HTMLSelectElement).value)"
+            >
+              <option value="">— Choisir —</option>
+              <option
+                v-for="c in freeChoiceOptions"
+                :key="c.key"
+                :value="c.key"
+                :disabled="isFreeChoiceTaken(picker.i, slot - 1, c.key)"
+              >{{ c.label }}</option>
             </select>
           </div>
         </div>
