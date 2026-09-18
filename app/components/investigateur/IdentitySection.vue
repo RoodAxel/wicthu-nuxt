@@ -1,13 +1,17 @@
 <script setup lang="ts">
 const {
   form, occupationList, selectedOccupationId, occupationDetail, customOccupation,
-  portraitDataUrl, handlePortraitFile, generateRandomName
+  portraitDataUrl, handlePortraitFile, generateRandomName,
+  genderChoice, genderCustom, genderOptions
 } = injectCharacterCreation()
 </script>
 
 <template>
   <section class="form-section">
     <h2 class="section-title">Identité</h2>
+    <InvestigateurFormHint title="Nom aléatoire">
+      Le bouton <strong>⚄</strong> tire un nom en fonction du genre renseigné.
+    </InvestigateurFormHint>
     <div class="identity-grid">
       <div class="field-group col-2">
         <div class="field-label-row">
@@ -15,13 +19,14 @@ const {
           <button
             type="button"
             class="random-name-btn"
-            title="Générer un nom américain aléatoire"
+            title="Générer un nom américain aléatoire (prénom choisi selon le genre ; les deux listes si « Autre » ou genre non renseigné)"
+            aria-label="Générer un nom aléatoire selon le genre"
             @click="generateRandomName"
           >
             ⚄
           </button>
         </div>
-        <input id="Nom" v-model="form['Nom']" class="field-input" type="text" placeholder="Arkham, 1923…">
+        <input id="Nom" v-model="form['Nom']" class="field-input" type="text">
       </div>
       <div class="field-group col-2">
         <label class="field-label" for="Joueur">Nom du joueur</label>
@@ -66,8 +71,19 @@ const {
         <input id="age" v-model="form['age']" class="field-input" type="number" min="15" max="99">
       </div>
       <div class="field-group">
-        <label class="field-label" for="Sexe">Sexe</label>
-        <input id="Sexe" v-model="form['Sexe']" class="field-input" type="text">
+        <label class="field-label" for="Sexe">Genre</label>
+        <select id="Sexe" v-model="genderChoice" class="field-select">
+          <option value="">— Non renseigné —</option>
+          <option v-for="opt in genderOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <input
+          v-if="genderChoice === 'autre'"
+          v-model="genderCustom"
+          class="field-input"
+          type="text"
+          placeholder="Préciser…"
+          aria-label="Préciser le genre"
+        >
       </div>
       <div class="field-group col-2">
         <label class="field-label" for="Residence">Résidence</label>
