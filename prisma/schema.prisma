@@ -1,5 +1,9 @@
 generator client {
   provider = "prisma-client-js"
+  // `relationJoins` active `relationLoadStrategy: 'join'` : Prisma émet alors
+  // un seul SELECT avec LATERAL JOIN au lieu d'une requête par niveau de
+  // relation. Utilisé par les endpoints occupation, qui chargent 3 niveaux.
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {

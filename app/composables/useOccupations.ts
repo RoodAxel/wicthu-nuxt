@@ -284,7 +284,8 @@ export function useOccupations(form: Record<string, string>) {
     }
     const occ = occupationList.value?.find(o => o.id === id)
     if (occ) form['Occupation'] = occ.name
-    occupationDetail.value = await $fetch<OccupationDetail>(`/api/occupation/${id}`)
+    // `pickers=1` : on a besoin des specialites de chaque categorie pour les menus
+    occupationDetail.value = await $fetch<OccupationDetail>(`/api/occupation/${id}?pickers=1`)
     applySavedSelections(savedRaw)
   })
 

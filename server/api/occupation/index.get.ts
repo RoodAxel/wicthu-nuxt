@@ -10,6 +10,8 @@ import { prisma } from '#server/lib/prisma'
  */
 export default defineEventHandler(async () => {
   const rows = await prisma.occupation.findMany({
+    // un seul SELECT avec LATERAL JOIN au lieu d'une requete par relation
+    relationLoadStrategy: 'join',
     orderBy: { name: 'asc' },
     select: {
       id: true,
