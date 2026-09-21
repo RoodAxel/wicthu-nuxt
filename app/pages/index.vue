@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useSeoMeta({
   description: 'Wicthu, le compagnon de jeu de L\'Appel de Cthulhu : créez vos fiches d\'investigateur et explorez les sorts, entités, ouvrages du Mythe et toutes les ressources de jeu.',
-  ogTitle: 'Wicthu — Wiki L\'Appel de Cthulhu'
+  ogTitle: 'Wicthu · Wiki L\'Appel de Cthulhu'
 })
 </script>
 

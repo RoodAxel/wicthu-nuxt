@@ -1,7 +1,7 @@
 <script setup>
 useHead({
   // Chaque page définit un titre court ; on suffixe la marque. Sans titre → libellé de marque.
-  titleTemplate: title => (title ? `${title} · Wicthu` : 'Wicthu — Wiki L\'Appel de Cthulhu'),
+  titleTemplate: title => (title ? `${title} · Wicthu` : 'Wicthu · Wiki L\'Appel de Cthulhu'),
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
   ],

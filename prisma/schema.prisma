@@ -36,24 +36,22 @@ model artefact {
   image_url   String? @db.VarChar(255)
 }
 
-
 model Competence {
-  id              Int          @id @default(autoincrement())
-  name            String
-  categoryId      Int?         @map("category_id")
-  baseValue       Int?         @map("base_value") @db.SmallInt
-  isCategory      Boolean?     @map("is_category")
-  rare            Boolean?
-  modern          Boolean?
+  id                  Int                     @id @default(autoincrement())
+  name                String
+  categoryId          Int?                    @map("category_id")
+  baseValue           Int?                    @map("base_value") @db.SmallInt
+  isCategory          Boolean?                @map("is_category")
+  rare                Boolean?
+  modern              Boolean?
   // Self-relation
-  category        Competence?  @relation("CompetenceCategory", fields: [categoryId], references: [id])
-  children        Competence[] @relation("CompetenceCategory")
-  weapons              arme[]                  @relation("arme_competenceTocompetence")
-  weaponsOptional      arme[]                  @relation("arme_competence_idTocompetence")
-  occupationSkills     OccupationSkill[]
-  occupationSkillOpts  OccupationSkillOption[]
+  category            Competence?             @relation("CompetenceCategory", fields: [categoryId], references: [id])
+  children            Competence[]            @relation("CompetenceCategory")
+  weapons             arme[]                  @relation("arme_competenceTocompetence")
+  weaponsOptional     arme[]                  @relation("arme_competence_idTocompetence")
+  occupationSkills    OccupationSkill[]
+  occupationSkillOpts OccupationSkillOption[]
 }
-
 
 enum EntiteCategorie {
   CREATURE_MYTHE
@@ -64,35 +62,35 @@ enum EntiteCategorie {
 
 // Entité principale — toutes catégories confondues
 model Entite {
-  id                   Int              @id @default(autoincrement())
-  categorie            EntiteCategorie
-  name                 String           @db.VarChar(255)
+  id             Int             @id @default(autoincrement())
+  categorie      EntiteCategorie
+  name           String          @db.VarChar(255)
   // Sous-titre (ex : "Montures stellaires", "Source d'Impureté")
-  titre                String?          @db.VarChar(255)
+  titre          String?         @db.VarChar(255)
   // Citation littéraire séparée en texte + source
-  citationTexte        String?
-  citationSource       String?          @db.VarChar(512)
+  citationTexte  String?
+  citationSource String?         @db.VarChar(512)
   // Lore / description générale
-  description          String?
+  description    String?
 
   // ── Combat ────────────────────────────────────────────────
   // Peut être "2" ou "1 (2 sous forme reptilienne)"
-  attaquesParRound     String?          @db.VarChar(100)   @map("attaques_par_round")
+  attaquesParRound  String? @map("attaques_par_round") @db.VarChar(100)
   // Description textuelle des options de corps-à-corps
-  optionsCombatDesc    String?          @map("options_combat_desc")
-  protection           String?
-  perteSanteMentale    String?          @db.VarChar(512)   @map("perte_sante_mentale")
+  optionsCombatDesc String? @map("options_combat_desc")
+  protection        String?
+  perteSanteMentale String? @map("perte_sante_mentale") @db.VarChar(512)
 
   // ── Divinités uniquement ───────────────────────────────────
-  culteAdoration       String?          @map("culte_adoration")
-  autresParticularites String?          @map("autres_particularites")
+  culteAdoration       String? @map("culte_adoration")
+  autresParticularites String? @map("autres_particularites")
 
-  imageUrl             String?          @db.VarChar(512)   @map("image_url")
+  imageUrl String? @map("image_url") @db.VarChar(512)
 
-  statBlocks           EntiteStatBlock[]
-  pouvoirs             EntitePouvoir[]
-  attaques             EntiteAttaque[]
-  competences          EntiteCompetence[]
+  statBlocks  EntiteStatBlock[]
+  pouvoirs    EntitePouvoir[]
+  attaques    EntiteAttaque[]
+  competences EntiteCompetence[]
 }
 
 // Bloc de caractéristiques — supporte les entités multi-formes
@@ -100,52 +98,52 @@ model Entite {
 // Ex : Lloigors → 1 enregistrement + formeNote expliquant les stats conditionnelles
 // Ex : Abeilles → aucun enregistrement
 model EntiteStatBlock {
-  id         Int     @id @default(autoincrement())
-  entiteId   Int     @map("entite_id")
-  entite     Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+  id       Int    @id @default(autoincrement())
+  entiteId Int    @map("entite_id")
+  entite   Entite @relation(fields: [entiteId], references: [id], onDelete: Cascade)
 
   // Nom de la forme (null = forme unique / seule)
-  formeName  String? @db.VarChar(100)  @map("forme_name")
+  formeName String? @map("forme_name") @db.VarChar(100)
   // Note globale sur le bloc (ex : "* Sous forme reptilienne uniquement")
-  formeNote  String? @db.VarChar(512)  @map("forme_note")
-  sortOrder  Int     @default(0)       @map("sort_order")
+  formeNote String? @map("forme_note") @db.VarChar(512)
+  sortOrder Int     @default(0) @map("sort_order")
 
   // Caractéristiques — String? pour gérer "—", "variable", chiffres
   // Chaque stat : valeur moyenne + formule de jet (null pour les divinités)
-  forVal     String? @db.VarChar(50)  @map("for_val")
-  forJet     String? @db.VarChar(50)  @map("for_jet")
-  conVal     String? @db.VarChar(50)  @map("con_val")
-  conJet     String? @db.VarChar(50)  @map("con_jet")
-  taiVal     String? @db.VarChar(50)  @map("tai_val")
-  taiJet     String? @db.VarChar(50)  @map("tai_jet")
-  dexVal     String? @db.VarChar(50)  @map("dex_val")
-  dexJet     String? @db.VarChar(50)  @map("dex_jet")
-  intVal     String? @db.VarChar(50)  @map("int_val")
-  intJet     String? @db.VarChar(50)  @map("int_jet")
-  pouVal     String? @db.VarChar(50)  @map("pou_val")
-  pouJet     String? @db.VarChar(50)  @map("pou_jet")
+  forVal String? @map("for_val") @db.VarChar(50)
+  forJet String? @map("for_jet") @db.VarChar(50)
+  conVal String? @map("con_val") @db.VarChar(50)
+  conJet String? @map("con_jet") @db.VarChar(50)
+  taiVal String? @map("tai_val") @db.VarChar(50)
+  taiJet String? @map("tai_jet") @db.VarChar(50)
+  dexVal String? @map("dex_val") @db.VarChar(50)
+  dexJet String? @map("dex_jet") @db.VarChar(50)
+  intVal String? @map("int_val") @db.VarChar(50)
+  intJet String? @map("int_jet") @db.VarChar(50)
+  pouVal String? @map("pou_val") @db.VarChar(50)
+  pouJet String? @map("pou_jet") @db.VarChar(50)
   // Uniquement humanoïdes (Seigneurs shoggoths forme humaine, PNJ...)
-  appVal     String? @db.VarChar(50)  @map("app_val")
-  appJet     String? @db.VarChar(50)  @map("app_jet")
-  eduVal     String? @db.VarChar(50)  @map("edu_val")
-  eduJet     String? @db.VarChar(50)  @map("edu_jet")
+  appVal String? @map("app_val") @db.VarChar(50)
+  appJet String? @map("app_jet") @db.VarChar(50)
+  eduVal String? @map("edu_val") @db.VarChar(50)
+  eduJet String? @map("edu_jet") @db.VarChar(50)
 
   // Stats dérivées (par forme pour les multi-formes)
-  pvMoyen    String? @db.VarChar(50)  @map("pv_moyen")
-  impactMoy  String? @db.VarChar(100) @map("impact_moy")
-  carrureMoy String? @db.VarChar(50)  @map("carrure_moy")
-  pmMoyen    String? @db.VarChar(50)  @map("pm_moyen")
+  pvMoyen    String? @map("pv_moyen") @db.VarChar(50)
+  impactMoy  String? @map("impact_moy") @db.VarChar(100)
+  carrureMoy String? @map("carrure_moy") @db.VarChar(50)
+  pmMoyen    String? @map("pm_moyen") @db.VarChar(50)
   mouvement  String? @db.VarChar(255)
 }
 
 // POUVOIRS DISTINCTIFS (0..n par entité)
 model EntitePouvoir {
-  id          Int     @id @default(autoincrement())
-  entiteId    Int     @map("entite_id")
-  entite      Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
-  name        String  @db.VarChar(255)
+  id          Int    @id @default(autoincrement())
+  entiteId    Int    @map("entite_id")
+  entite      Entite @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+  name        String @db.VarChar(255)
   description String
-  sortOrder   Int     @default(0) @map("sort_order")
+  sortOrder   Int    @default(0) @map("sort_order")
 }
 
 // Lignes de combat individuelles
@@ -171,12 +169,12 @@ model EntiteAttaque {
 
 // Compétences listées en bas de fiche (ex : "Écouter 50 %", "Trouver Objet Caché 50 %")
 model EntiteCompetence {
-  id        Int     @id @default(autoincrement())
-  entiteId  Int     @map("entite_id")
-  entite    Entite  @relation(fields: [entiteId], references: [id], onDelete: Cascade)
-  name      String  @db.VarChar(255)
-  valeur    String  @db.VarChar(50)
-  sortOrder Int     @default(0) @map("sort_order")
+  id        Int    @id @default(autoincrement())
+  entiteId  Int    @map("entite_id")
+  entite    Entite @relation(fields: [entiteId], references: [id], onDelete: Cascade)
+  name      String @db.VarChar(255)
+  valeur    String @db.VarChar(50)
+  sortOrder Int    @default(0) @map("sort_order")
 }
 
 model equipement_classique {
@@ -213,29 +211,51 @@ enum OccupationSkillType {
   FREE_CHOICE
 }
 
+// Epoque de jeu d'une occupation. `null` = jouable aux deux epoques (cas
+// majoritaire) ; le Manuel ne restreint que les occupations etiquetees.
+enum OccupationEra {
+  CLASSIQUE
+  MODERNE
+}
+
 model occupation {
-  id               Int                @id @default(autoincrement())
-  name             String             @db.VarChar(255)
+  id               Int               @id @default(autoincrement())
+  name             String            @db.VarChar(255)
+  slug             String?           @unique @db.VarChar(255)
   credit_min       Int?
   credit_max       Int?
-  point_competence String?            @db.VarChar(255)
-  is_lovecraftian  Boolean            @default(false)
-  is_modern        Boolean            @default(false)
+  point_competence String?           @db.VarChar(255)
+  is_lovecraftian  Boolean           @default(false)
+  is_modern        Boolean           @default(false)
+  era              OccupationEra?
+  // Lore + « Idees de contacts » du Manuel
+  description      String?
+  contacts         String?
+  note             String?
+  // Noms alternatifs des titres composites (« Trafiquant/Voyou » -> « Voyou »)
+  autre_name       String[]          @db.VarChar(255)
+  // Renvois « Voir aussi … » du Manuel (Medecin -> Medecin legiste, Psychiatre)
+  voir_aussi       String[]          @db.VarChar(255)
+  // Variantes d'une meme occupation (Criminel -> Arnaqueur, Cambrioleur, …).
+  // Chaque variante a ses propres statistiques ; certains parents n'en ont aucune.
+  parentId         Int?
+  parent           occupation?       @relation("OccupationParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children         occupation[]      @relation("OccupationParent")
   skills           OccupationSkill[]
 }
 
 model OccupationSkill {
-  id            Int                    @id @default(autoincrement())
-  occupationId  Int
-  occupation    occupation             @relation(fields: [occupationId], references: [id], onDelete: Cascade)
-  type          OccupationSkillType
-  competenceId  Int?
-  competence    Competence?            @relation(fields: [competenceId], references: [id], onDelete: SetNull)
-  specName      String?                @db.VarChar(255)
-  choiceCount   Int?
-  note          String?                @db.VarChar(255)
-  sortOrder     Int                    @default(0)
-  options       OccupationSkillOption[]
+  id           Int                     @id @default(autoincrement())
+  occupationId Int
+  occupation   occupation              @relation(fields: [occupationId], references: [id], onDelete: Cascade)
+  type         OccupationSkillType
+  competenceId Int?
+  competence   Competence?             @relation(fields: [competenceId], references: [id], onDelete: SetNull)
+  specName     String?                 @db.VarChar(255)
+  choiceCount  Int?
+  note         String?                 @db.VarChar(255)
+  sortOrder    Int                     @default(0)
+  options      OccupationSkillOption[]
 }
 
 model OccupationSkillOption {
@@ -244,8 +264,10 @@ model OccupationSkillOption {
   occupationSkill   OccupationSkill @relation(fields: [occupationSkillId], references: [id], onDelete: Cascade)
   competenceId      Int
   competence        Competence      @relation(fields: [competenceId], references: [id], onDelete: Cascade)
+  // Specialite portee par l'option elle-meme, pour les choix du type
+  // « Combat rapproche (Corps a corps) ou Combat a distance (Armes de poing) »
+  specName          String?         @db.VarChar(255)
 }
-
 
 model ouvrage_mythe {
   id                 Int            @id @default(autoincrement())
@@ -275,13 +297,13 @@ model ouvrage_occulte {
 }
 
 model ouvrage_sort {
-  id               Int            @id @default(autoincrement())
+  id               Int           @id @default(autoincrement())
   ouvrage_id       Int
   sort_id          Int?
-  nom_dans_ouvrage String         @db.VarChar(255)
-  note             String?        @db.VarChar(512)
-  ouvrage_mythe    ouvrage_mythe  @relation(fields: [ouvrage_id], references: [id], onDelete: Cascade,  onUpdate: NoAction, map: "fk_ouvrageSort_ouvrageId")
-  sort             sort?          @relation(fields: [sort_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_ouvrageSort_sortId")
+  nom_dans_ouvrage String        @db.VarChar(255)
+  note             String?       @db.VarChar(512)
+  ouvrage_mythe    ouvrage_mythe @relation(fields: [ouvrage_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ouvrageSort_ouvrageId")
+  sort             sort?         @relation(fields: [sort_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_ouvrageSort_sortId")
 }
 
 model phobie {
@@ -289,7 +311,6 @@ model phobie {
   name        String @db.VarChar(255)
   description String @db.VarChar(255)
 }
-
 
 model sort {
   id                  Int            @id @default(autoincrement())
@@ -304,7 +325,6 @@ model sort {
   children            sort[]         @relation("SortParent")
   ouvrage_sort        ouvrage_sort[]
 }
-
 
 model ArmePerso {
   id        Int      @id @default(autoincrement())

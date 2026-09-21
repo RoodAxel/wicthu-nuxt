@@ -1,0 +1,11 @@
+[
+ {
+  "name": "Conduite d'attelage",
+  "baseValue": 20,
+  "isCategory": false,
+  "categoryId": null,
+  "rare": false,
+  "modern": false,
+  "_source": "Manuel de l'Investigateur — référencée par l'occupation Agriculteur (« Conduite ou Conduite d'attelage »), absente de la table Competence."
+ }
+]

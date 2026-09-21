@@ -288,6 +288,20 @@ export function useOccupations(form: Record<string, string>) {
     applySavedSelections(savedRaw)
   })
 
+  // Présélection depuis `?occupation=<slug|nom>` — lien « Créer un investigateur »
+  // des fiches d'occupation. Ne s'applique qu'en création, pas en édition.
+  const route = useRoute()
+  watch(occupationList, () => {
+    const wanted = route.query.occupation
+    if (!wanted || typeof wanted !== 'string') return
+    if (route.query.edit || selectedOccupationId.value || !occupationList.value) return
+    const key = wanted.toLowerCase()
+    const match = occupationList.value.find(
+      o => o.slug?.toLowerCase() === key || o.name.toLowerCase() === key
+    )
+    if (match) selectedOccupationId.value = match.id
+  }, { immediate: true })
+
   // En mode édition : retrouver l'occupation depuis le nom sauvegardé
   watch([occupationList, () => form['Occupation']], () => {
     if (selectedOccupationId.value || !occupationList.value || !form['Occupation']) return

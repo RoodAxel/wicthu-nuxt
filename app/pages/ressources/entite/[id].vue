@@ -25,7 +25,7 @@ const id = route.params.id as string
 const { data: entite, status, error } = await useFetch<EntiteDetail>(`/api/entite/${id}`)
 
 useSeoMeta({
-  title: () => entite.value ? `${entite.value.name} — Entité` : 'Entité',
+  title: () => entite.value ? `${entite.value.name} · Entité` : 'Entité',
   description: () => entite.value
     ? `${entite.value.name} : caractéristiques, attaques et description de cette entité du Mythe de Cthulhu.`
     : 'Détail d\'une entité du Mythe de Cthulhu.'
@@ -42,16 +42,20 @@ useSeoMeta({
 
     <div v-else-if="error || !entite" class="state-message state-error">
       <p>Entité introuvable ou erreur de chargement.</p>
-      <NuxtLink to="/ressources/entite" class="back-link">← Retour au entité</NuxtLink>
+      <NuxtLink to="/ressources/entite" class="back-link">← Retour aux entités</NuxtLink>
     </div>
 
     <template v-else>
       <!-- Breadcrumb -->
-      <div class="breadcrumb">
-        <NuxtLink to="/ressources/entite" class="breadcrumb-link">Entité</NuxtLink>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">{{ entite.name }}</span>
-      </div>
+      <ResourceDetailNav
+        :items="[
+          { label: 'Entités', to: '/ressources/entite' },
+          { label: entite.name }
+        ]"
+        back-to="/ressources/entite"
+        back-label="Toutes les entités"
+        accent="arcane"
+      />
 
       <!-- Header -->
       <div class="page-header" :class="`page-header--${entite.categorie.toLowerCase()}`">
@@ -204,20 +208,6 @@ useSeoMeta({
 }
 
 /* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-xl);
-  font-family: var(--font-heading);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.breadcrumb-link { color: var(--color-arcane); text-decoration: none; transition: opacity var(--transition-fast); }
-.breadcrumb-link:hover { opacity: 0.7; }
-.breadcrumb-sep { color: var(--color-text-muted); }
-.breadcrumb-current { color: var(--color-text-muted); }
 
 /* Header */
 .page-header {
