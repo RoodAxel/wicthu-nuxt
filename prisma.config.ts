@@ -11,7 +11,11 @@ export default defineConfig({
   datasource: {
     url: process.env['DATABASE_URL']
   },
+  // Les occupations sont importées depuis `prisma/data/occupations.json` par
+  // un script dédié (simulation par défaut, `--apply` pour écrire) plutôt que
+  // par `prisma db seed` : il purge les tables et ne doit pas partir tout seul.
+  //   npx tsx prisma/import-occupations.ts [--apply]
   seed: {
-    run: 'npx tsx prisma/seed.ts'
+    run: 'echo "Utiliser: npx tsx prisma/import-occupations.ts [--apply]" && exit 1'
   }
 })

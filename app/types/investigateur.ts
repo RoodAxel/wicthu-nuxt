@@ -1,26 +1,59 @@
+export type OccupationEra = 'CLASSIQUE' | 'MODERNE'
+
 export type OccupationListItem = {
   id: number
   name: string
+  slug: string | null
   credit_min: number | null
   credit_max: number | null
   point_competence: string | null
   is_lovecraftian: boolean
   is_modern: boolean
+  era: OccupationEra | null
+  autre_name: string[]
+  parentId: number | null
+  parent: { id: number, name: string, slug: string | null } | null
+  _count: { children: number }
+  /** Compétences acquises d'office (FIXED, FIXED_SPEC, FREE_SPEC). */
+  skillsSure: string[]
+  /** Compétences accessibles via un choix (options de CHOICE_FROM_LIST). */
+  skillsMaybe: string[]
+}
+
+/** Variante d'une occupation, telle que servie par `/api/occupation/[id]`. */
+export type OccupationChild = {
+  id: number
+  name: string
+  slug: string | null
+  credit_min: number | null
+  credit_max: number | null
+  point_competence: string | null
+  contacts: string | null
+  era: OccupationEra | null
+  is_lovecraftian: boolean
 }
 
 type ChildComp = { id: number, name: string }
 type CompetenceRef = { id: number, name: string, isCategory: boolean | null, children: ChildComp[] }
 
 export type OccupationSkill = {
+  id: number
   type: 'FIXED' | 'FIXED_SPEC' | 'FREE_SPEC' | 'CHOICE_FROM_LIST' | 'FREE_CHOICE'
   competence: CompetenceRef | null
   specName: string | null
   choiceCount: number | null
   note: string | null
-  options: { competence: CompetenceRef }[]
+  options: { competence: CompetenceRef, specName: string | null }[]
 }
 
-export type OccupationDetail = OccupationListItem & { skills: OccupationSkill[] }
+export type OccupationDetail = OccupationListItem & {
+  description: string | null
+  contacts: string | null
+  note: string | null
+  voir_aussi: string[]
+  children: OccupationChild[]
+  skills: OccupationSkill[]
+}
 
 // ── Pickers occupation (tout type sauf FIXED) ────────────────────────────────
 type PickerBase = { i: number }

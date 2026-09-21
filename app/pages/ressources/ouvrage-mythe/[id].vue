@@ -7,7 +7,7 @@ const id = route.params.id as string
 const { data: ouvrage, status, error } = await useFetch<OuvrageMytheDetail>(`/api/ouvrage-mythe/${id}`)
 
 useSeoMeta({
-  title: () => ouvrage.value ? `${ouvrage.value.titre} — Ouvrages du Mythe` : 'Ouvrage du Mythe',
+  title: () => ouvrage.value ? `${ouvrage.value.titre} · Ouvrages du Mythe` : 'Ouvrage du Mythe',
   description: () => ouvrage.value
     ? `${ouvrage.value.titre} : sorts enseignés, gain en Mythe de Cthulhu et perte de Santé mentale de cet ouvrage.`
     : 'Détail d\'un ouvrage du Mythe de Cthulhu.'
@@ -42,11 +42,15 @@ const filteredSorts = computed(() => {
     </div>
 
     <template v-else>
-      <div class="breadcrumb">
-        <NuxtLink to="/ressources/ouvrage-mythe" class="breadcrumb-link">Ouvrages du Mythe</NuxtLink>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">{{ ouvrage.titre }}</span>
-      </div>
+      <ResourceDetailNav
+        :items="[
+          { label: 'Ouvrages du Mythe', to: '/ressources/ouvrage-mythe' },
+          { label: ouvrage.titre }
+        ]"
+        back-to="/ressources/ouvrage-mythe"
+        back-label="Tous les ouvrages"
+        accent="gold"
+      />
 
       <div class="page-header">
         <h1 class="page-title">{{ ouvrage.titre }}</h1>
@@ -134,25 +138,6 @@ const filteredSorts = computed(() => {
   max-width: 900px;
   margin: 0 auto;
 }
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-xl);
-  font-family: var(--font-heading);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.breadcrumb-link {
-  color: var(--color-gold);
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-.breadcrumb-link:hover { opacity: 0.7; }
-.breadcrumb-sep { color: var(--color-text-muted); }
-.breadcrumb-current { color: var(--color-text-muted); }
 
 .page-header {
   margin-bottom: var(--space-xl);

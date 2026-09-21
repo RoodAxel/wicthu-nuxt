@@ -7,7 +7,7 @@ import type { InjectionKey } from 'vue'
  * section pour éviter le prop-drilling.
  *
  * L'ordre d'instanciation (form → occupations → richesse → âge → génération →
- * armes → persistance) est significatif : il fixe l'ordre d'enregistrement des
+ * armes → genre → persistance) est significatif : il fixe l'ordre d'enregistrement des
  * watchers/watchEffect et doit rester identique au comportement d'origine.
  */
 export function useCharacterCreation() {
@@ -30,12 +30,15 @@ export function useCharacterCreation() {
   // Bibliothèque d'armes (perso + catalogue)
   const library = useWeaponLibrary(form)
 
+  // Genre de l'investigateur (synchronisé avec `form['Sexe']`), pilote le tirage du prénom
+  const gender = useGender(form)
+
   // Sauvegarde / export PDF / portrait / nom aléatoire (+ chargement en mode édition)
-  const persistence = useCharacterPersistence(form)
+  const persistence = useCharacterPersistence(form, gender.nameGender)
 
   return {
     form, pv_max, pm_max, sm_initial, impact, carrure, mvt,
-    ...occupations, ...wealth, ...age, ...gen, ...library, ...persistence
+    ...occupations, ...wealth, ...age, ...gen, ...library, ...gender, ...persistence
   }
 }
 

@@ -27,3 +27,7 @@ logs
 
 # IDE
 .claude/
+
+# Sources sous droits d'auteur (extraits du Manuel de l'Investigateur)
+# Utilisés localement pour alimenter la base, jamais versionnés.
+docs/*.pdf

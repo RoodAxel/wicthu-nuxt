@@ -7,7 +7,7 @@ const id = route.params.id as string
 const { data: sort, status, error } = await useFetch<SortDetail>(`/api/sort/${id}`)
 
 useSeoMeta({
-  title: () => sort.value ? `${sort.value.name} — Sorts` : 'Sort',
+  title: () => sort.value ? `${sort.value.name} · Sorts` : 'Sort',
   description: () => sort.value
     ? `${sort.value.name} : coût en points de magie, en Santé mentale, temps d'incantation et effets de ce sort de L'Appel de Cthulhu.`
     : 'Détail d\'un sort de L\'Appel de Cthulhu.'
@@ -37,15 +37,16 @@ const filteredChildren = computed(() => {
     </div>
 
     <template v-else>
-      <div class="breadcrumb">
-        <NuxtLink to="/ressources/sort" class="breadcrumb-link">Sorts</NuxtLink>
-        <span class="breadcrumb-sep">›</span>
-        <template v-if="sort.parent">
-          <NuxtLink :to="`/ressources/sort/${sort.parent.id}`" class="breadcrumb-link">{{ sort.parent.name }}</NuxtLink>
-          <span class="breadcrumb-sep">›</span>
-        </template>
-        <span class="breadcrumb-current">{{ sort.name }}</span>
-      </div>
+      <ResourceDetailNav
+        :items="[
+          { label: 'Sorts', to: '/ressources/sort' },
+          ...(sort.parent ? [{ label: sort.parent.name, to: `/ressources/sort/${sort.parent.id}` }] : []),
+          { label: sort.name }
+        ]"
+        back-to="/ressources/sort"
+        back-label="Tous les sorts"
+        accent="arcane"
+      />
 
       <div class="page-header">
         <div class="header-top">
@@ -122,25 +123,6 @@ const filteredChildren = computed(() => {
   max-width: 900px;
   margin: 0 auto;
 }
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-xl);
-  font-family: var(--font-heading);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.breadcrumb-link {
-  color: var(--color-arcane);
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-.breadcrumb-link:hover { opacity: 0.7; }
-.breadcrumb-sep { color: var(--color-text-muted); }
-.breadcrumb-current { color: var(--color-text-muted); }
 
 .page-header {
   margin-bottom: var(--space-xl);

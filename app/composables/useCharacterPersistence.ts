@@ -1,8 +1,17 @@
+import type { Ref } from 'vue'
+import type { NameGender } from '~/composables/useRandomName'
+
 /**
  * Sauvegarde / chargement / export PDF de la fiche, gestion du portrait, et
  * génération d'un nom aléatoire. Charge la fiche en mode édition (`?edit=<id>`).
+ *
+ * `nameGender` (optionnel) restreint le tirage du prénom à la liste masculine ou
+ * féminine ; `null` pioche dans les deux.
  */
-export function useCharacterPersistence(form: Record<string, string>) {
+export function useCharacterPersistence(
+  form: Record<string, string>,
+  nameGender?: Ref<NameGender | null>
+) {
   const route = useRoute()
   const router = useRouter()
 
@@ -17,7 +26,7 @@ export function useCharacterPersistence(form: Record<string, string>) {
 
   const { generateName } = useRandomName()
   function generateRandomName() {
-    form['Nom'] = generateName()
+    form['Nom'] = generateName(nameGender?.value ?? null)
   }
 
   function handlePortraitFile(e: Event) {
