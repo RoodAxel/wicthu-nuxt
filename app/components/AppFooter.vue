@@ -12,6 +12,7 @@
         <span class="footer-separator">·</span>
         <NuxtLink to="/mentions-legales" class="footer-link">Mentions légales</NuxtLink>
       </div>
+      <OfflineSync />
     </div>
   </footer>
 </template>
