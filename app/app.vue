@@ -25,7 +25,9 @@ defineOgImageComponent('Default')
 
 <template>
   <UApp class="app-layout">
+    <NuxtPwaManifest />
     <AppHeader />
+    <OfflineBanner />
 
     <UMain class="app-main">
       <NuxtPage />

@@ -153,6 +153,24 @@ portabilité Windows→Linux.
 
 ---
 
+## 5. Mode hors ligne (PWA) — branche `feat/offline-pwa`
+
+Besoin : consulter les **ressources** (lecture seule) en session, sur PC, sans aucun réseau.
+Hors périmètre : création/édition de fiches, auth, armes perso, PDF (restent réseau-only).
+
+- `@vite-pwa/nuxt` en `injectManifest` ; SW custom `app/service-worker/sw.ts`, constantes
+  partagées `shared/offline.ts` (noms de cache, liste des ressources, URL de la coquille).
+- **Précache** : assets du build + `/offline-shell` (route `ssr: false`, révision = date du build).
+- **Navigations** : réseau uniquement (SSR/SEO intacts) ; sans réseau → coquille SPA qui rend la
+  route côté client. Ne pas mettre en cache le HTML SSR (il pointerait vers d'anciens chunks).
+- **`GET /api/<ressource>`** : NetworkFirst (timeout 4 s) dans le cache `wicthu-api`.
+  `/api/arme-perso`, `investigateur`, `user`… ne sont **jamais** mis en cache.
+- **Préchargement** : bouton « Rendre disponible hors ligne » dans le pied de page
+  (`OfflineSync` → `useOfflineCache`) : 12 listes + toutes les fiches détail (~340 requêtes).
+  Nouvelle ressource avec page détail → l'ajouter à `OFFLINE_RESOURCES` / `DETAIL_RESOURCES`.
+- Bandeau `OfflineBanner` quand `navigator.onLine` est faux. SW désactivé en `nuxt dev`
+  (tester avec `npm run build && npx nuxt preview`).
+
 ### Notes / vérifs utiles
 - Lint : `npm run lint` · Types : `npm run typecheck` · Build : `npm run build` (lance `prisma generate`).
 - Le générateur PDF actif est `server/api/investigateur/generate-pdf.post.ts` (pdf-lib), template
